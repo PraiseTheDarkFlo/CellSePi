@@ -3,3 +3,5 @@ pillow
 pandas
 openpyxl
 cellpose
+flet
+flet-desktop
