@@ -5,3 +5,5 @@ openpyxl
 cellpose
 flet
 flet-desktop
+matplotlib
+readlif
