@@ -1,9 +1,10 @@
 import flet as ft
-import gui
 
-import flet as ft
+from src.CellSePi import CellSePi
+from src.GUI.gui import gui
 
-def main_gui(page: ft.Page):
+
+def main(page: ft.Page):
     page.window.width = 1200
     page.window.height = 825
     page.window.min_width = page.window.width
@@ -11,8 +12,6 @@ def main_gui(page: ft.Page):
     page.title = "CellSePi"
     directory_path = ft.Text(weight="bold",value='Directory Path')
     image_gallery = ft.ListView()
-    gui.gui(page,image_gallery,directory_path)
+    gui(page, image_gallery, directory_path)
 
-ft.app(target=main_gui)
-
-
+ft.app(target=main)

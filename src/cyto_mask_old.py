@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from data_util import load_image_to_numpy
+from data_util_old import load_image_to_numpy
 import scipy.signal as sig
 import scipy.ndimage as ndimg
 import numpy as np

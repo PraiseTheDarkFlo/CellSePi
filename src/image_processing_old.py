@@ -4,7 +4,7 @@ import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-from data_util import load_image_to_numpy
+from data_util_old import load_image_to_numpy
 import pandas as pd
 
 

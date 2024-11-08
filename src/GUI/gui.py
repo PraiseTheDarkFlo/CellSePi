@@ -3,8 +3,7 @@ import flet as ft
 import flet.canvas as fc
 import os
 
-
-import gui_options as op
+from . import gui_options as op
 
 def gui(page: ft.Page,image_gallery: ft.ListView,directory_path: ft.Text):
     main_image = ft.Container(ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",

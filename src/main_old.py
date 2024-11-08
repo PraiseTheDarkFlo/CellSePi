@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import ImageTk, Image
 
-import custom_widgets
-from data_util import load_directory, extract_from_lif_file, copy_files_between_directories
-from image_processing import BatchImageSegmentation, BatchImageReadout
+import custom_widgets_old
+from data_util_old import load_directory, extract_from_lif_file, copy_files_between_directories
+from image_processing_old import BatchImageSegmentation, BatchImageReadout
 import torch
 
 
@@ -20,7 +20,6 @@ class App(tk.Tk):
         super().__init__()
         self.segmentation_running = False
         self.segmentation_thread = None
-
         self.readout_running = False
         self.readout_thread = None
         self.readout_path = None
