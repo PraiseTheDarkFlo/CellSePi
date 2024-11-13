@@ -1,7 +1,9 @@
+import flet as ft
+from src.GUI.GUI import GUI
 class CellSePi:
-    def __init__(self):
-        self.page = None
+    def __init__(self,page: ft.Page):
         super().__init__()
+        self.gui = GUI(self,page)
         self.segmentation_running = False
         self.segmentation_thread = None
         self.readout_running = False

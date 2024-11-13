@@ -1,2 +1,2 @@
 # src/GUI/__init__.py
-__all__ = ["gui", "gui_options"]
+__all__ = ["GUI.py", "gui_options"]
