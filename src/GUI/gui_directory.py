@@ -118,7 +118,7 @@ def create_directory_card(gui: GUI):
             files_row.visible = False
             directory_row.visible = True
         gui.page.update()
-
+    update_view(None)
     gui.is_lif.on_change = update_view
 
     #creates the directory_card and returns it
