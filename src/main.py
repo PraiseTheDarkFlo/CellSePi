@@ -1,10 +1,7 @@
-
 import flet as ft
-
-from src.CellSePi import CellSePi
-
+from src.GUI.GUI import GUI
 
 def main(page: ft.Page):
-    csp = CellSePi(page)
-    csp.gui.build()
+    gui = GUI(page)
+    gui.build()
 ft.app(target=main)

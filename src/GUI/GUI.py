@@ -11,8 +11,8 @@ from .. import CellSePi
 
 
 class GUI:
-    def __init__(self, csp: CellSePi,page: ft.Page):
-        self.csp = csp
+    def __init__(self,page: ft.Page):
+        self.csp = CellSePi
         self.page = page
         self.directory_path = ft.Text(weight="bold",value='Directory Path')
         self.image_gallery = ft.ListView()
@@ -30,7 +30,6 @@ class GUI:
         self.segmentation_card = create_segmentation_card(self)
 
     def build(self):
-
         tf_cp = ft.TextField(
             label="Channel Prefix:",
             border_color=ft.colors.BLUE_ACCENT
