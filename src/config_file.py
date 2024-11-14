@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 
-
+#return the current config_file
 def load_config(file_directory):
     config_on_file = {}
     try:
@@ -12,6 +12,7 @@ def load_config(file_directory):
         config_on_file = create_default_config()
     return config_on_file
 
+#default config_file used when the config is empty or is deleted
 def create_default_config():
      return {
         "Profiles": {
@@ -29,7 +30,7 @@ def create_default_config():
                 }
             }
      }
-
+#Class that manges the config file
 class ConfigFile:
     def __init__(self,filename="config.json"):
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,6 +45,9 @@ class ConfigFile:
     def update_config(self):
         self.config = load_config(self.file_directory)
 
+    #add the profile with the parameter, but also checks if the inputs are fine
+    #returns error if parameter is not fine, returns True if it worked and return False
+    #if the name is already taken
     def add_profile(self, name:str, bf_channel: int, mask_suffix:str, channel_prefix:str, diameter: float):
         self.update_config()
         if not all([name, mask_suffix, channel_prefix]):
@@ -62,6 +66,9 @@ class ConfigFile:
         else:
             return False
 
+    #updates the profile that is named in the name parameter,
+    #you can update all or only some parameters if you try to update every parameter gets check if it's fine
+    #returns error when a parameter is not fine
     def update_profile(self, name: str, bf_channel: int = None, mask_suffix: str = None,
                        channel_prefix: str = None, diameter: float = None):
         self.update_config()
@@ -83,7 +90,8 @@ class ConfigFile:
                     raise ValueError("diameter must be greater than 0.")
                 self.config['Profiles'][name]["diameter"] = diameter
             self.save_config()
-
+    #rename check if the names are fine
+    #and only update it when the new != old and returns false if the new name is already taken
     def rename_profile(self,old_name: str,new_name: str):
         self.update_config()
         if not all([old_name,new_name]):
@@ -108,6 +116,8 @@ class ConfigFile:
             del self.config['Profiles'][name]
             self.save_config()
 
+    #-----------------------------------------------------
+    #only for test_config
     def clear_config(self):
         backup_filepath = os.path.join(self.project_root, 'config_backup.json')
         shutil.copy(self.file_directory, backup_filepath)
