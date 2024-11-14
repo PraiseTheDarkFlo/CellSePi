@@ -1,0 +1,16 @@
+{
+    "Profiles": {
+        "Lif": {
+            "bf_channel": "2",
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": "125.0"
+        },
+        "Tif": {
+            "bf_channel": "1",
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": "250.0"
+        }
+    }
+}

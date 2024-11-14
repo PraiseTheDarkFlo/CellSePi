@@ -7,3 +7,4 @@ flet
 flet-desktop
 matplotlib
 readlif
+pytest
