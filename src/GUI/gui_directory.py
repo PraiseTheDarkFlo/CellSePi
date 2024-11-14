@@ -4,7 +4,7 @@ import flet as ft
 from . import GUI
 from .gui_canvas import on_image_click
 
-
+#format the directory so that it can be shown in the card
 def format_directory_path(dir_path, max_length=30):
     parts = dir_path.value.split('/')
     path = dir_path.value
@@ -23,16 +23,16 @@ def update_results_text(gui: GUI):
     gui.count_results_txt.value = f"Results: {len(gui.image_gallery.controls)}"
     gui.count_results_txt.update()
 
+#adds the directory in to the clipboard and opens the snack_bar and say that it has been copied
 def copy_directory_to_clipboard(e,gui: GUI):
     gui.page.set_clipboard(gui.directory_path.value)
     gui.page.snack_bar = ft.SnackBar(ft.Text("Directory path copied to clipboard!"))
     gui.page.snack_bar.open = True
     gui.page.update()
 
-
+#creates the directory card with all event handlers
 def create_directory_card(gui: GUI):
-
-    # Ergebnisbehandler für das Verzeichnis
+    #handels the directory picking result
     def get_directory_result(e: ft.FilePickerResultEvent):
         if e.path:
             gui.directory_path.value = e.path
@@ -43,23 +43,22 @@ def create_directory_card(gui: GUI):
         gui.formatted_path.value = format_directory_path(gui.directory_path)
         gui.formatted_path.update()
 
-    get_directory_dialog = ft.FilePicker(on_result=get_directory_result)
-    # Ergebnisbehandler für die Dateiauswahl
+    #handels the files picking result
     def pick_files_result(e: ft.FilePickerResultEvent):
         # TODO
         gui.directory_path.value = "in development"
         gui.formatted_path.value = format_directory_path(gui.directory_path)
         gui.formatted_path.update()
 
-    pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
 
-    # Bilder aus dem Verzeichnis laden
+
     def load_images_from_directory(path):
         image_files = [f for f in os.listdir(path) if
                        f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.lif', '.tif'))]
         images = [os.path.join(path, f) for f in image_files]
         load_images(images)
-        # Bilder in die Galerie laden
+
+    #load images to gallery in order and with names
     def load_images(images):
             gui.image_gallery.controls.clear()
             for img_path in images:
@@ -84,7 +83,7 @@ def create_directory_card(gui: GUI):
             update_results_text(gui)
 
 
-
+    #create the rows for directory/file picking
     directory_row = ft.Row(
         [
             ft.ElevatedButton(
@@ -95,7 +94,6 @@ def create_directory_card(gui: GUI):
             ),
         ], alignment=ft.MainAxisAlignment.END
     )
-    # Buttons und Textanzeigen für Dateien und Verzeichnisse
     files_row = ft.Row(
         [
             ft.ElevatedButton(
@@ -105,23 +103,25 @@ def create_directory_card(gui: GUI):
             )
         ], alignment=ft.MainAxisAlignment.END
     )
-    # UI zusammenstellen
+    #create the handlers
+    get_directory_dialog = ft.FilePicker(on_result=get_directory_result)
+    pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
+    #add the handlers to the page
     gui.page.overlay.extend([pick_files_dialog, get_directory_dialog])
 
-    # Button-Aktion für den Switch
+    #changes the visibility of the directory/file picking
     def update_view(e):
-        if gui.is_lif.value:  # Wenn der Switch aktiviert ist
+        if gui.is_lif.value:
             files_row.visible = True
             directory_row.visible = False
-        else:  # Wenn der Switch deaktiviert ist
+        else:
             files_row.visible = False
             directory_row.visible = True
         gui.page.update()
 
-    update_view(None)  # Initiale Ansicht festlegen
-    gui.is_lif.on_change = update_view  # Ereignis für den Switch hinzufügen
+    gui.is_lif.on_change = update_view
 
-
+    #creates the directory_card and returns it
     return ft.Card(
         content=ft.Container(
             content=ft.Stack(

@@ -1,7 +1,9 @@
 import flet as ft
 from . import GUI
 
+#build the segmentation_card with all events methods
 def create_segmentation_card(gui: GUI):
+    #methode that do something with the result of the selection of the FIle
     def pick_model_result(e: ft.FilePickerResultEvent):
         # TODO
         print("pick Model")
@@ -12,7 +14,6 @@ def create_segmentation_card(gui: GUI):
 
     pick_model_row = ft.Row(
         [
-            # wenn es läuft könnte man anstatt Start segmentation cancel machen und progressbar nur wenn es gestartet ist sonst nur start button
             ft.ProgressBar(value=0.2, width=180),
             ft.Text("2%"),
             ft.ElevatedButton(

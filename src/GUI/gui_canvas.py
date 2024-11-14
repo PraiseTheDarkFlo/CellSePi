@@ -2,7 +2,7 @@ import flet as ft
 import flet.canvas as fc
 from . import GUI
 
-
+#method that handles what happens when the image is clicked
 def on_image_click(event, img_path,gui: GUI):
     gui.canvas.main_image.content = ft.Image(src=img_path, height=700, width=500, fit=ft.ImageFit.COVER,
                                        expand=True,
@@ -10,11 +10,12 @@ def on_image_click(event, img_path,gui: GUI):
     gui.page.update()
 
 
-
+#class that handles the states of the canvas
 class State:
     x: float
     y: float
 
+#includes every thing about the canvas like drawing,the states, ...
 class Canvas:
     def __init__(self):
         self.state = State()
@@ -31,8 +32,6 @@ class Canvas:
                                                     aspect_ratio=2))
         self.canvas_card = self.create_canvas_card()
 
-    def create_canvas_container(self):
-        return
     def create_canvas_card(self):
         return ft.Card(
             content=ft.Stack([self.main_image, ft.Container(self.canvas,

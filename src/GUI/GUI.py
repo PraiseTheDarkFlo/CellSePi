@@ -9,7 +9,7 @@ from .gui_directory import format_directory_path, copy_directory_to_clipboard, c
 from .gui_segmentation import create_segmentation_card
 from .. import CellSePi
 
-
+#class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
     def __init__(self,page: ft.Page):
         self.csp = CellSePi
@@ -29,7 +29,7 @@ class GUI:
         self.canvas = Canvas()
         self.segmentation_card = create_segmentation_card(self)
 
-    def build(self):
+    def build(self): #build up the main page of the GUI
         tf_cp = ft.TextField(
             label="Channel Prefix:",
             border_color=ft.colors.BLUE_ACCENT
@@ -44,7 +44,7 @@ class GUI:
         )
         dropdown_bf_channel = ft.Dropdown(
             label="Bright Field Channel:",
-            options=[  # hier sollte je nach den bilder auswählbar sein welches bild das BrightFiled Channel ist...
+            options=[
                 ft.dropdown.Option("1"),
                 ft.dropdown.Option("2"),
                 ft.dropdown.Option("3"),
@@ -53,19 +53,14 @@ class GUI:
             border_color=ft.colors.BLUE_ACCENT
         )
 
-        def update_view_mask(e):
-            if self.switch_mask.value:
-                print("on")
-            else:
-                print("off")
-            self.page.update()
 
         self.page.add(
-            ft.Column(  # Hauptspalte für die gesamte UI
+            ft.Column(
                 [
-                    ft.Row(  # Linke und rechte Seite in einer Zeile anordnen
+                    ft.Row(
                         [
-                            ft.Column(  # Linke Spalte mit Steuerungselementen
+                            #LEFT COLUMN that handles all elements on the left side(canvas,switch_mask,segmentation)
+                            ft.Column(
                                 [
                                     self.canvas.canvas_card
                                     ,
@@ -77,10 +72,11 @@ class GUI:
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
                             ),
-                            ft.Column(  # Rechte Spalte mit Galerie und Verzeichnispfad
+                            #RIGHT COLUMN that handles gallery and directory_card
+                            ft.Column(
                                 [
                                     self.directory_card,
-                                    ft.Card(  # Galerie als Container
+                                    ft.Card(
                                         content=self.image_gallery,
                                         width=self.page.width * (1 / 3),
                                         expand=True,
@@ -90,15 +86,21 @@ class GUI:
                                 expand=True,
                             ), op.switch(self.page)
                         ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Abstand zwischen linkem und rechtem Bereich
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,
                     ),
                 ],
                 expand=True
             )
         )
+        #method that controls what happened when switch is on/off
+        def update_view_mask(e):
+            if self.switch_mask.value:
+                print("on")
+            else:
+                print("off")
+            self.page.update()
 
-        # Initiale Sichtbarkeit setzen
         self.switch_mask.on_change = update_view_mask
 
 

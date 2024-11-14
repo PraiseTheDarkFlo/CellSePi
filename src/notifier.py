@@ -1,8 +1,4 @@
-
-
-
 class Notifier:
-
     def __init__(self):
         self._start_listeners = set()
         self._update_listeners = set()
