@@ -2,7 +2,8 @@ import pytest
 
 from src import config_file
 
-from src.config_file import create_default_config
+from src.config_file import create_default_config, DeletionForbidden
+
 
 @pytest.fixture
 def config():
@@ -50,6 +51,10 @@ def test_selected_profile_name(config):
     config.select_profile("Tif")
     assert config.get_selected_profile_name() == "Tif", "Selected profile was not changed"
     assert config.get_selected_profile() == create_default_config()["Profiles"]["Tif"], "Selected profile is wrong"
+def test_delete_selected_profile_name(config):
+    config.select_profile("Tif")
+    config.delete_profile("Tif")
+    assert config.get_selected_profile_name() == "Lif", "Selected profile was not changed after deleted"
 
 def test_attribute_getter(config):
     assert config.get_bf_channel() == int(create_default_config()["Profiles"]["Lif"]["bf_channel"]), "bf_channel is wrong"
@@ -70,3 +75,6 @@ def test_invalid_profile(config):
             config.rename_profile("","")
         with pytest.raises(ValueError):
             config.select_profile("")
+        with pytest.raises(DeletionForbidden):
+            config.delete_profile("Lif")
+            config.delete_profile("Tif")

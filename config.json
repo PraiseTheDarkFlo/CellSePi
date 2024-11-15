@@ -1,19 +1,67 @@
 {
     "Profiles": {
-        "Lif": {
+        "Tifa": {
+            "bf_channel": 1,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 125.1
+        },
+        "Lif3a": {
+            "bf_channel": 2,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 125.0
+        },
+        "Lif6aaaaaaa": {
+            "bf_channel": 2,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 125.1
+        },
+        "Tifaaaaaa": {
+            "bf_channel": 1,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 250.0
+        },
+        "2Lif2a1": {
+            "bf_channel": 2,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 125.0
+        },
+        "Tif2a1234212": {
+            "bf_channel": 1,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 250.0
+        },
+        "2Lif2a11": {
+            "bf_channel": 2,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 125.0
+        },
+        "3Lif2a11": {
+            "bf_channel": 2,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 20.2
+        },
+        "Lif2": {
+            "bf_channel": 1,
+            "mask_suffix": "_seg",
+            "channel_prefix": "ca",
+            "diameter": 1.2
+        },
+        "Lif22": {
             "bf_channel": "2",
             "mask_suffix": "_seg",
             "channel_prefix": "c",
-            "diameter": "125.0"
-        },
-        "Tif": {
-            "bf_channel": "1",
-            "mask_suffix": "_seg",
-            "channel_prefix": "c",
-            "diameter": "250.0"
+            "diameter": 23.1
         }
     },
     "Selected Profile": {
-        "name": "Lif"
+        "name": "Lif6aaaaaaa"
     }
 }

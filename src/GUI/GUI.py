@@ -5,14 +5,16 @@ import os
 
 from . import gui_options as op
 from .gui_canvas import Canvas
+from .gui_config import GUIConfig
 from .gui_directory import format_directory_path, copy_directory_to_clipboard, create_directory_card
 from .gui_segmentation import create_segmentation_card
-from .. import CellSePi
+from src.CellSePi import CellSePi
+
 
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
     def __init__(self,page: ft.Page):
-        self.csp = CellSePi
+        self.csp = CellSePi()
         self.page = page
         self.directory_path = ft.Text(weight="bold",value='Directory Path')
         self.image_gallery = ft.ListView()
@@ -27,33 +29,11 @@ class GUI:
         self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
         self.directory_card = create_directory_card(self)
         self.canvas = Canvas()
+        guiconfig = GUIConfig(self)
+        self.gui_config = guiconfig.create_gui_column()
         self.segmentation_card = create_segmentation_card(self)
 
     def build(self): #build up the main page of the GUI
-        tf_cp = ft.TextField(
-            label="Channel Prefix:",
-            border_color=ft.colors.BLUE_ACCENT
-        )
-        tf_d = ft.TextField(
-            label="Diameter:",
-            border_color=ft.colors.BLUE_ACCENT
-        )
-        tf_ms = ft.TextField(
-            label="Masked Suffix:",
-            border_color=ft.colors.BLUE_ACCENT
-        )
-        dropdown_bf_channel = ft.Dropdown(
-            label="Bright Field Channel:",
-            options=[
-                ft.dropdown.Option("1"),
-                ft.dropdown.Option("2"),
-                ft.dropdown.Option("3"),
-                ft.dropdown.Option("4"),
-            ],
-            border_color=ft.colors.BLUE_ACCENT
-        )
-
-
         self.page.add(
             ft.Column(
                 [
@@ -65,8 +45,7 @@ class GUI:
                                     self.canvas.canvas_card
                                     ,
                                     ft.Row([self.switch_mask]),
-                                    ft.Row([dropdown_bf_channel, tf_cp]),
-                                    ft.Row([tf_ms, tf_d]),
+                                    self.gui_config,
                                     self.segmentation_card
                                 ],
                                 expand=True,
@@ -100,7 +79,6 @@ class GUI:
             else:
                 print("off")
             self.page.update()
-
         self.switch_mask.on_change = update_view_mask
 
 

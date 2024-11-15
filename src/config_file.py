@@ -1,60 +1,60 @@
 import json
 import os
 import shutil
+import time
 
 
+class DeletionForbidden(Exception):
+    pass
 
 #return the current config_file
 def load_config(file_directory):
-    config_on_file = {}
-    try:
-        with open(file_directory, 'r') as file:
-            config_on_file = json.load(file)
-    except (json.JSONDecodeError, FileNotFoundError):
-        config_on_file = create_default_config()
-    return config_on_file
+    for _ in range(5):  # Versuche bis zu 5 Mal
+        try:
+            with open(file_directory, 'r') as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            print("Error reading the file. Retrying...")
+            time.sleep(0.1)
+    return create_default_config()
 
 #default config_file used when the config is empty or is deleted
 def create_default_config():
      return {
         "Profiles": {
             "Lif": {
-                "bf_channel": "2",
+                "bf_channel": 2,
                 "mask_suffix": "_seg",
                 "channel_prefix": "c",
-                "diameter": "125.0"
+                "diameter": 125.0
                 },
             "Tif": {
-                "bf_channel": "1",
+                "bf_channel": 1,
                 "mask_suffix": "_seg",
                 "channel_prefix": "c",
-                "diameter": "250.0"
+                "diameter": 250.0
                 }
             },
             "Selected Profile": {
                 "name": "Lif"
             }
      }
+
 #Class that manges the config file
 class ConfigFile:
     def __init__(self,filename="config.json"):
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.file_directory = os.path.join(self.project_root, filename)
         self.config = load_config(self.file_directory)
-        self.save_config()
 
     def save_config(self):
         with open(self.file_directory, 'w') as file:
             json.dump(self.config, file, indent=4)
 
-    def update_config(self):
-        self.config = load_config(self.file_directory)
-
     #add the profile with the parameter, but also checks if the inputs are fine
     #returns error if parameter is not fine, returns True if it worked and return False
     #if the name is already taken
     def add_profile(self, name:str, bf_channel: int, mask_suffix:str, channel_prefix:str, diameter: float):
-        self.update_config()
         if not all([name, mask_suffix, channel_prefix]):
             raise ValueError("Name, mask_suffix, and channel_prefix must not be empty.")
         if diameter <= 0 and bf_channel <= 0:
@@ -76,7 +76,6 @@ class ConfigFile:
     #returns error when a parameter is not fine
     def update_profile(self, name: str, bf_channel: int = None, mask_suffix: str = None,
                        channel_prefix: str = None, diameter: float = None):
-        self.update_config()
         if name in self.config["Profiles"]:
             if bf_channel is not None:
                 if bf_channel <= 0:
@@ -95,37 +94,43 @@ class ConfigFile:
                     raise ValueError("diameter must be greater than 0.")
                 self.config["Profiles"][name]["diameter"] = diameter
             self.save_config()
+
     #rename check if the names are fine
     #and only update it when the new != old and returns false if the new name is already taken
     def rename_profile(self,old_name: str,new_name: str):
-        self.update_config()
         if not all([old_name,new_name]):
             raise ValueError("old_name, new_name must not be empty.")
-        if old_name == new_name:
+        elif old_name == new_name:
             return True
-        elif old_name in self.config["Profiles"] and not new_name in self.config["Profiles"]:
+        elif old_name in self.config["Profiles"] and new_name not in self.config["Profiles"]:
             self.config["Profiles"][new_name] = self.config["Profiles"].pop(old_name)
             self.save_config()
+            if old_name == self.get_selected_profile_name():
+                self.select_profile(new_name)
             return True
         else:
+            print("why")
             return False
 
     def get_profile(self, name):
-        self.update_config()
         if name in self.config["Profiles"]:
             return self.config["Profiles"][name]
 
+    #delte the profile
+    #size of profiles must be minimum 1
+    #throw error if error would minimize the profiles to 1 or smaller or if the name is not in the profiles
     def delete_profile(self, name: str):
-        self.update_config()
-        if name in self.config["Profiles"]:
+        if name in self.config["Profiles"] and len(self.config["Profiles"]) > 1:
             del self.config["Profiles"][name]
-            if self.config["Selected Profile"] == name:
+            if self.config["Selected Profile"]["name"] == name:
                 first_key = next(iter(self.config["Profiles"]))
                 self.config["Selected Profile"]["name"] = first_key
             self.save_config()
+        else:
+            raise DeletionForbidden
+
 
     def select_profile(self,name: str):
-        self.update_config()
         if not name:
             raise ValueError("name must not be empty.")
         elif name in self.config["Profiles"]:
@@ -133,16 +138,33 @@ class ConfigFile:
             self.save_config()
 
     def get_selected_profile_name(self):
-        self.update_config()
         if self.config["Selected Profile"]["name"] is not None:
             return self.config["Selected Profile"]["name"]
         else:
+            print("Test")
             first_key = next(iter(self.config["Profiles"]))
             self.config["Selected Profile"]["name"] = first_key
-            self.update_config()
             return first_key
+
+    #TODO: Testen n to i
+    def name_to_index(self, name: str):
+        profiles = list(self.config["Profiles"].keys())
+        if name in profiles:
+            return profiles.index(name)
+        else:
+            raise ValueError("Profile with that name does not exists")
+
+    #TODO: Testen i to n
+    def index_to_name(self, index: int):
+        profiles = list(self.config["Profiles"].keys())
+        if 0 <= index < len(profiles):
+            return profiles[index]
+        else:
+            raise ValueError("Didnt find a profile at this index")
+
     #------------------------------------------
     #getter for the selected profiles Attributes
+
     def get_selected_profile(self):
         name = self.get_selected_profile_name()
         return self.config["Profiles"][name]
