@@ -1,6 +1,10 @@
+from src.config_file import ConfigFile
+
+
 class CellSePi:
     def __init__(self):
         super().__init__()
+        self.config = ConfigFile()
         self.segmentation_running = False
         self.segmentation_thread = None
         self.readout_running = False

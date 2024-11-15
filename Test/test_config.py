@@ -15,11 +15,11 @@ def test_add_and_delete_profile(config):
     config.add_profile("test", 42, "n", "j", 2.0)
     default_config = create_default_config()
     assert config.config != default_config, "The config did not change"
-    assert "test" in config.config['Profiles'], "The new profile was not added"
-    assert 42 == config.config['Profiles']['test']['bf_channel'], "The bf_channel is not right"
-    assert "n" == config.config['Profiles']['test']['mask_suffix'], "The mask_suffix is not right"
-    assert "j" == config.config['Profiles']['test']['channel_prefix'], "The channel_prefix is not right"
-    assert 2.0 == config.config['Profiles']['test']['diameter'], "The diameter is not right"
+    assert "test" in config.config["Profiles"], "The new profile was not added"
+    assert 42 == config.config["Profiles"]["test"]["bf_channel"], "The bf_channel is not right"
+    assert "n" == config.config["Profiles"]["test"]["mask_suffix"], "The mask_suffix is not right"
+    assert "j" == config.config["Profiles"]["test"]["channel_prefix"], "The channel_prefix is not right"
+    assert 2.0 == config.config["Profiles"]["test"]["diameter"], "The diameter is not right"
     config.delete_profile("test")
     assert config.config == default_config, "test is not deleted"
 
@@ -41,10 +41,21 @@ def test_add_profile_name_fail(config):
 
 def test_rename_profile_name(config):
     assert True == config.rename_profile("Lif", "Lif2"), "Something went wrong with renaming"
-    assert "Lif2" in config.config['Profiles'], "The profile name was not renamed"
+    assert "Lif2" in config.config["Profiles"], "The profile name was not renamed"
     assert True == config.rename_profile("Lif2", "Lif2"), "Renaming should just return True because old and new are equal"
     assert False == config.rename_profile("Lif3","Lif2"), "Renaming should fail, because Lif3 not exists"
     assert False == config.rename_profile("Lif3", "Tif"), "Renaming should fail, because Tif is already taken"
+
+def test_selected_profile_name(config):
+    config.select_profile("Tif")
+    assert config.get_selected_profile_name() == "Tif", "Selected profile was not changed"
+    assert config.get_selected_profile() == create_default_config()["Profiles"]["Tif"], "Selected profile is wrong"
+
+def test_attribute_getter(config):
+    assert config.get_bf_channel() == int(create_default_config()["Profiles"]["Lif"]["bf_channel"]), "bf_channel is wrong"
+    assert config.get_mask_suffix() == create_default_config()["Profiles"]["Lif"]["mask_suffix"], "mask_suffix is wrong"
+    assert config.get_channel_prefix() == create_default_config()["Profiles"]["Lif"]["channel_prefix"],"channel_prefix is wrong"
+    assert config.get_diameter() == float(create_default_config()["Profiles"]["Lif"]["diameter"]),"diameter is wrong"
 
 def test_invalid_profile(config):
         with pytest.raises(ValueError):
@@ -52,6 +63,10 @@ def test_invalid_profile(config):
         with pytest.raises(ValueError):
             config.update_profile("Lif", 42, "", "", 2)
         with pytest.raises(ValueError):
+            config.update_profile("Lif", 42, "a", "", 2)
+        with pytest.raises(ValueError):
            config.update_profile("Lif", 42, "d", "a", -50)
         with pytest.raises(ValueError):
             config.rename_profile("","")
+        with pytest.raises(ValueError):
+            config.select_profile("")

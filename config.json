@@ -12,5 +12,8 @@
             "channel_prefix": "c",
             "diameter": "250.0"
         }
+    },
+    "Selected Profile": {
+        "name": "Lif"
     }
 }
