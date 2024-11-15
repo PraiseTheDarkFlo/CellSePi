@@ -141,7 +141,8 @@ class ConfigFile:
             self.config["Selected Profile"]["name"] = first_key
             self.update_config()
             return first_key
-
+    #------------------------------------------
+    #getter for the selected profiles Attributes
     def get_selected_profile(self):
         name = self.get_selected_profile_name()
         return self.config["Profiles"][name]
