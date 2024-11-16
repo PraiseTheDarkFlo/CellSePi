@@ -8,8 +8,9 @@ class DeletionForbidden(Exception):
     pass
 
 #return the current config_file
+#try 5 times to read before resetting the data
 def load_config(file_directory):
-    for _ in range(5):  # Versuche bis zu 5 Mal
+    for _ in range(5):
         try:
             with open(file_directory, 'r') as file:
                 return json.load(file)
@@ -146,7 +147,7 @@ class ConfigFile:
             self.config["Selected Profile"]["name"] = first_key
             return first_key
 
-    #TODO: Testen n to i
+    #translates name to idx
     def name_to_index(self, name: str):
         profiles = list(self.config["Profiles"].keys())
         if name in profiles:
@@ -154,7 +155,7 @@ class ConfigFile:
         else:
             raise ValueError("Profile with that name does not exists")
 
-    #TODO: Testen i to n
+    #translates idx to the name
     def index_to_name(self, index: int):
         profiles = list(self.config["Profiles"].keys())
         if 0 <= index < len(profiles):

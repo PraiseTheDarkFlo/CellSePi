@@ -62,6 +62,10 @@ def test_attribute_getter(config):
     assert config.get_channel_prefix() == create_default_config()["Profiles"]["Lif"]["channel_prefix"],"channel_prefix is wrong"
     assert config.get_diameter() == float(create_default_config()["Profiles"]["Lif"]["diameter"]),"diameter is wrong"
 
+def test_idx_name(config):
+    assert config.name_to_index("Lif") == 0, "Idx is wrong for Lif"
+    assert config.index_to_name(0) == "Lif", "Lif is wrong for this IDX"
+
 def test_invalid_profile(config):
         with pytest.raises(ValueError):
             config.add_profile("", 42, "", "", -10)
