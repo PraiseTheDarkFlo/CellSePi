@@ -15,7 +15,6 @@ def load_config(file_directory):
             with open(file_directory, 'r') as file:
                 return json.load(file)
         except json.JSONDecodeError:
-            print("Error reading the file. Retrying...")
             time.sleep(0.1)
     return create_default_config()
 
@@ -110,7 +109,6 @@ class ConfigFile:
                 self.select_profile(new_name)
             return True
         else:
-            print("why")
             return False
 
     def get_profile(self, name):
@@ -142,7 +140,6 @@ class ConfigFile:
         if self.config["Selected Profile"]["name"] is not None:
             return self.config["Selected Profile"]["name"]
         else:
-            print("Test")
             first_key = next(iter(self.config["Profiles"]))
             self.config["Selected Profile"]["name"] = first_key
             return first_key
