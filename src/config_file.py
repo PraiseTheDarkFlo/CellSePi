@@ -5,11 +5,25 @@ import time
 
 
 class DeletionForbidden(Exception):
+    """
+    Exception for deletion forbidden.
+    """
     pass
 
-#return the current config_file
-#try 5 times to read before resetting the data
 def load_config(file_directory):
+    """
+    Return the current config.json.
+
+    It tries 5 times to read the file,
+    before resetting the file to the default config.
+
+    Args:
+        file_directory (str): The directory of the file.
+
+    Returns:
+        create_default_config() (dict): If the current config.json is corrupted or not existing.
+        json.load(config.json) (dict): If the current config.json is readable.
+    """
     for _ in range(5):
         try:
             with open(file_directory, 'r') as file:
@@ -18,9 +32,15 @@ def load_config(file_directory):
             time.sleep(0.1)
     return create_default_config()
 
-#default config_file used when the config is empty or is deleted
 def create_default_config():
-     return {
+    """
+    Create the default config.
+
+    Returns:
+        default_config (dict): the default config.json.
+    """
+
+    return {
         "Profiles": {
             "Lif": {
                 "bf_channel": 2,
@@ -38,23 +58,58 @@ def create_default_config():
             "Selected Profile": {
                 "name": "Lif"
             }
-     }
+    }
 
-#Class that manges the config file
 class ConfigFile:
+    """
+    Manages the application's configuration file (config.json).
+
+    This class provides methods to read, write, and modify the configuration
+    file. It ensures proper validation of profile attributes and manages
+    selected profiles.
+
+    Attributes:
+        project_root (str): The root directory of the project.
+        file_directory (str): The full path to the configuration file.
+        config (dict): The loaded configuration data.
+    """
     def __init__(self,filename="config.json"):
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.file_directory = os.path.join(self.project_root, filename)
         self.config = load_config(self.file_directory)
 
     def save_config(self):
+        """
+        Saves the current configuration to the config.json file.
+
+        This method writes the current state of the "config" attribute
+        to the "config.json" file.
+        """
         with open(self.file_directory, 'w') as file:
             json.dump(self.config, file, indent=4)
 
-    #add the profile with the parameter, but also checks if the inputs are fine
-    #returns error if parameter is not fine, returns True if it worked and return False
-    #if the name is already taken
     def add_profile(self, name:str, bf_channel: int, mask_suffix:str, channel_prefix:str, diameter: float):
+        """
+        Adds a new profile to the config.
+
+        Args:
+            name (str): Name of the new profile.
+            bf_channel (int): Bright field channel for the profile.
+            mask_suffix (str): Mask suffix for the profile.
+            channel_prefix (str): Channel prefix for the profile.
+            diameter (float): Diameter value for the profile.
+
+        Invalid:
+            - Strings ("mask_suffix" and "channel_prefix") must not be empty ("").
+            - Numeric values ("bf_channel" and "diameter") must be greater than 0.
+
+        Raises:
+            ValueError: If any provided parameter is invalid.
+
+        Returns:
+            False: If the profile name is already taken.
+            True: If the profile is successfully added.
+        """
         if not all([name, mask_suffix, channel_prefix]):
             raise ValueError("Name, mask_suffix, and channel_prefix must not be empty.")
         if diameter <= 0 and bf_channel <= 0:
@@ -71,11 +126,25 @@ class ConfigFile:
         else:
             return False
 
-    #updates the profile that is named in the name parameter,
-    #you can update all or only some parameters if you try to update every parameter gets check if it's fine
-    #returns error when a parameter is not fine
     def update_profile(self, name: str, bf_channel: int = None, mask_suffix: str = None,
                        channel_prefix: str = None, diameter: float = None):
+        """
+        Updates the attributes of a profile.
+
+        Args:
+            name (str): Name of the profile to update.
+            bf_channel (int, optional): New bright field channel.
+            mask_suffix (str, optional): New mask suffix.
+            channel_prefix (str, optional): New channel prefix.
+            diameter (float, optional): New diameter value.
+
+        Invalid:
+            - Strings ("mask_suffix" and "channel_prefix") must not be empty ("").
+            - Numeric values ("bf_channel" and "diameter") must be greater than 0.
+
+        Raises:
+            ValueError: If any provided parameter is invalid.
+        """
         if name in self.config["Profiles"]:
             if bf_channel is not None:
                 if bf_channel <= 0:
@@ -95,9 +164,21 @@ class ConfigFile:
                 self.config["Profiles"][name]["diameter"] = diameter
             self.save_config()
 
-    #rename check if the names are fine
-    #and only update it when the new != old and returns false if the new name is already taken
     def rename_profile(self,old_name: str,new_name: str):
+        """
+        Renames the old name to the new name.
+
+        Args:
+            old_name (str): The current/old name of the profile.
+            new_name (str): The new name for the profile.
+
+        Raises:
+            ValueError: If any provided parameter is empty ("").
+
+        Returns:
+            False: If the new profile name is already taken or the old name does not exist.
+            True: If the new profile is successfully renamed.
+        """
         if not all([old_name,new_name]):
             raise ValueError("old_name, new_name must not be empty.")
         elif old_name == new_name:
@@ -112,13 +193,28 @@ class ConfigFile:
             return False
 
     def get_profile(self, name):
+        """
+        Gets a profile by name.
+
+        Args:
+            name (str): The name of the profile.
+
+        Returns:
+            profile (dict): A dictionary containing the profile's attributes.
+        """
         if name in self.config["Profiles"]:
             return self.config["Profiles"][name]
 
-    #delte the profile
-    #size of profiles must be minimum 1
-    #throw error if error would minimize the profiles to 1 or smaller or if the name is not in the profiles
     def delete_profile(self, name: str):
+        """
+        Deletes a profile by name.
+
+        Args:
+            name (str): The name of the profile.
+
+        Raises:
+             DeletionForbidden: If the profile count is equal to 1 or the profile does not exist.
+        """
         if name in self.config["Profiles"] and len(self.config["Profiles"]) > 1:
             del self.config["Profiles"][name]
             if self.config["Selected Profile"]["name"] == name:
@@ -130,6 +226,15 @@ class ConfigFile:
 
 
     def select_profile(self,name: str):
+        """
+        Selects a profile by name.
+
+        Args:
+            name (str): The name of the profile to select.
+
+        Raises:
+              ValueError: If the profile is empty ("").
+        """
         if not name:
             raise ValueError("name must not be empty.")
         elif name in self.config["Profiles"]:
@@ -137,23 +242,51 @@ class ConfigFile:
             self.save_config()
 
     def get_selected_profile_name(self):
+        """
+        Gets the name of the selected profile.
+
+        Returns:
+            profile name (str): The name of the selected profile or if the no profile is selected the first profile.
+        """
         if self.config["Selected Profile"]["name"] is not None:
             return self.config["Selected Profile"]["name"]
         else:
             first_key = next(iter(self.config["Profiles"]))
-            self.config["Selected Profile"]["name"] = first_key
+            self.select_profile(first_key)
             return first_key
 
-    #translates name to idx
     def name_to_index(self, name: str):
+        """
+        Converts a profile name to its index.
+
+        Args:
+            name (str): The name of the profile.
+
+        Raises:
+            ValueError: If the profile does not exist.
+
+        Returns:
+            index (int): The index of the profile.
+        """
         profiles = list(self.config["Profiles"].keys())
         if name in profiles:
             return profiles.index(name)
         else:
             raise ValueError("Profile with that name does not exists")
 
-    #translates idx to the name
     def index_to_name(self, index: int):
+        """
+        Converts a profile index to its name.
+
+        Args:
+            index (int): The index of the profile.
+
+        Raises:
+            ValueError: If no profile is at this index.
+
+        Returns:
+            profile name (str): The name of the profile.
+        """
         profiles = list(self.config["Profiles"].keys())
         if 0 <= index < len(profiles):
             return profiles[index]
@@ -164,39 +297,78 @@ class ConfigFile:
     #getter for the selected profiles Attributes
 
     def get_selected_profile(self):
+        """
+        Gets the selected profile.
+
+        Returns:
+            profile (dict): A dictionary containing the profile's attributes.
+        """
         name = self.get_selected_profile_name()
         return self.config["Profiles"][name]
 
     def get_bf_channel(self):
+        """
+        Gets the bright field channel for the profile.
+
+        Returns:
+            bright field channel (int): The bright field channel for the profile.
+        """
         profile = self.get_selected_profile()
         return int(profile["bf_channel"])
 
     def get_mask_suffix(self):
+        """
+        Gets the mask suffix for the profile.
+
+        Returns:
+            mask_suffix (str): The mask suffix for the profile.
+        """
         profile = self.get_selected_profile()
         return profile["mask_suffix"]
 
     def get_channel_prefix(self):
+        """
+        Gets the channel prefix for the profile.
+
+        Returns:
+            channel_prefix (str): The channel prefix for the profile.
+        """
         profile = self.get_selected_profile()
         return profile["channel_prefix"]
 
     def get_diameter(self):
+        """
+        Gets the diameter for the profile.
+
+        Returns:
+            diameter (float): The diameter for the profile.
+        """
         profile = self.get_selected_profile()
         return float(profile["diameter"])
 
     #-----------------------------------------------------
     #only for test_config
     def clear_config(self):
+        """
+        Only for Testing
+        ___________________________
+        Makes a backup of the current config
+        and deletes the original config.
+        Then it loads the deleted config to trigger the default config to load.
+        """
         backup_filepath = os.path.join(self.project_root, "config_backup.json")
         shutil.copy(self.file_directory, backup_filepath)
         open(self.file_directory, 'w').close()
         self.config = load_config(self.file_directory)
 
-    def delete_config(self):
-        backup_filepath = os.path.join(self.project_root, "config_backup.json")
-        shutil.copy(self.file_directory, backup_filepath)
-        os.remove(self.file_directory)
-
     def restore_config(self):
+        """
+        Only for Testing
+        ___________________________
+        Copy's the backup back into the config.json file and
+        refreshes the ConfigFile class with the "new" values.
+        Then deletes the backup.
+        """
         backup_filepath = os.path.join(self.project_root, "config_backup.json")
         shutil.copy(backup_filepath, self.file_directory)
         self.config = load_config(self.file_directory)

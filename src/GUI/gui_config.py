@@ -1,13 +1,25 @@
 import flet as ft
 from . import GUI
 
-#This class handles everything about the gui part of the config
 class GUIConfig:
+    """
+    Handles everything about the gui part of the config
+
+    Attributes:
+        config_class (ConfigFile): The config file.
+        page (Page): The page to display in the GUI.
+        name_items (List): A List of buttons/text fields for every profile to edit or select them.
+        profile_chooser_overlay (CupertinoBottomSheet): The overlay that is opened when the profile name button is pressed to select profiles.
+        profile_ref (Ref): The reference of the selected profile name button.
+        txt_bf_ref (Ref): The reference of the bright field Textfield.
+        txt_ms_ref (Ref): The reference of the mask suffix Textfield.
+        txt_cp_ref (Ref): The reference of the channel prefix Textfield.
+        txt_d_ref (Ref): The reference of the diameter Textfield.
+    """
     def __init__(self,gui: GUI):
          self.config_class = gui.csp.config
          self.page = gui.page
-         self.items = self.create_name_items_profiles()
-         self.selected_profile_ref = ft.Ref[ft.Text]()
+         self.name_items = self.create_name_items_profiles()
          self.profile_chooser_overlay = self.create_profile_overlay()
          #--------------------------------
          #creates attributes to reference to the text boxes to changes their values or color etc...
@@ -17,8 +29,15 @@ class GUIConfig:
          self.txt_cp_ref = ft.Ref[ft.Text]()
          self.txt_d_ref = ft.Ref[ft.Text]()
 
-    # creates the overlay to choose or edit the profiles it pops up when the current profile is clicked on
     def create_profile_overlay(self):
+        """
+        Creates the profile overlay.
+
+        The overlay to choose or edit the profiles it pops up when the current profile is clicked on.
+
+        Returns:
+            Overlay (ft.CupertinoBottomSheet)
+        """
         return ft.CupertinoBottomSheet(
             content=ft.Column(
                 [ft.ListView(
@@ -35,33 +54,51 @@ class GUIConfig:
             padding=ft.padding.only(top=6),
         )
 
-    #calculates the height of the list so the list is when it's less than 9
-    #exaclty so big like the items
     def calc_height(self):
+        """
+        Calculates the height of the list of profiles.
+
+        Returns:
+            calc (int): Returns the Calculation if it's smaller than 9.
+            400 (int): If the profile count is greater than 8.
+        """
         if len(self.config_class.config["Profiles"]) < 9:
             return 49 * len(self.config_class.config["Profiles"])
         else:
             return 400
 
-    #handels the event that the edit button is pressed
-    #=> makes the textfield visible and the choose button invisible
-    #and makes sure that only one textfield is activ at a time
     def text_field_activate(self,e, idx):
-        if not self.items[idx]["textfield"].visible:
-            self.items[idx]["textfield"].visible = True
-            self.items[idx]["button"].visible = False
+        """
+        Handles the text field activation.
+
+        Makes the textfield visible and the choose button invisible
+        and makes sure that only one textfield is activ at a time.
+
+        Args:
+            e (Event): The event to handle.
+            idx (int): The index of the profile to activate or deactivate the TextField.
+        """
+        if not self.name_items[idx]["textfield"].visible:
+            self.name_items[idx]["textfield"].visible = True
+            self.name_items[idx]["button"].visible = False
             for i in range(len(self.config_class.config["Profiles"])):
                 if not i ==  idx:
-                    self.items[i]["textfield"].visible = False
-                    self.items[i]["button"].visible = True
+                    self.name_items[i]["textfield"].visible = False
+                    self.name_items[i]["button"].visible = True
             self.page.update()
         else:
-            self.items[idx]["textfield"].visible = False
-            self.items[idx]["button"].visible = True
+            self.name_items[idx]["textfield"].visible = False
+            self.name_items[idx]["button"].visible = True
             self.page.update()
 
-    #handels the event that the text field of the profile has been updated
     def text_field_written(self,e, idx):
+        """
+        Handles the text field written event.
+
+        Args:
+            e (Event): The event to handle.
+            idx (int): The index of the profile to try to rename.
+        """
         try:
             renamed = self.config_class.rename_profile(self.config_class.index_to_name(idx), e.control.value)
             if not renamed:
@@ -70,9 +107,9 @@ class GUIConfig:
                 self.page.snack_bar.open = True
                 self.page.update()
             else:
-                self.items[idx]["textfield"].visible = False
-                self.items[idx]["button"].visible = True
-                self.items[idx]["textfield"].color = None
+                self.name_items[idx]["textfield"].visible = False
+                self.name_items[idx]["button"].visible = True
+                self.name_items[idx]["textfield"].color = None
                 self.profile_ref.current.value = self.config_class.get_selected_profile_name()
                 self.update_overlay()
                 self.page.update()
@@ -82,8 +119,10 @@ class GUIConfig:
             self.page.snack_bar.open = True
             self.page.update()
 
-    #creates the name items of the profiles so they can be selected and the name could be edited
     def create_name_items_profiles(self):
+        """
+        Creates the TextField and Button items of a profile.
+        """
         return [
             {
                 "textfield": ft.TextField(
@@ -103,8 +142,14 @@ class GUIConfig:
             for i, profile in enumerate(self.config_class.config["Profiles"])
         ]
 
-    #handels the event that a other profile has been selected and closes the overlay
     def selected_profile_changed(self,e, index):
+        """
+        Handles when a profile is selected and closes the overlay.
+
+        Args:
+            e (Event): The event to handle.
+            index (int): The index of the selected profile.
+        """
         self.config_class.select_profile(self.config_class.index_to_name(index))
         self.profile_ref.current.value = self.config_class.get_selected_profile_name()
         self.txt_bf_ref.current.value = self.config_class.get_bf_channel()
@@ -118,15 +163,25 @@ class GUIConfig:
         self.page.close(self.profile_chooser_overlay)
         self.page.update()
 
-    #handels the removing event of a profile when the button is pressed
     def remove_profile(self,e, idx):
+        """
+        Handles the removing event of a profile.
+
+        Args:
+            e (Event): The event to handle.
+            idx (int): The index of the profile that should be removed.
+        """
         self.config_class.delete_profile(self.config_class.index_to_name(idx))
         self.profile_ref.current.value = self.config_class.get_selected_profile_name()
         self.update_overlay()
         self.page.update()
 
-    #recreates the items for the list because they have changed
     def update_overlay(self):
+        """
+        Updates the overlay.
+
+        The list needed to be rebuilt if the name of a profile is changed or a profile is deleted.
+        """
         new_picker_items = self.create_list_items()
         new_content = ft.Column(
             controls=[
@@ -142,16 +197,22 @@ class GUIConfig:
         )
         self.profile_chooser_overlay.content = new_content
 
-    #creates the items for the list that is displayed in the overlay
-    #and only adds the delete button if the profiles size is greater than 1
     def create_list_items(self):
-        self.items = self.create_name_items_profiles()
+        """
+        Creates the full List with the name_items and the buttons to trigger the event.
+
+        The delete button is only added if the size of profiles is greater than 1.
+
+        Returns:
+            scroll List (List): the List of items for the profiles to change or selected them.
+        """
+        self.name_items = self.create_name_items_profiles()
         if len(self.config_class.config["Profiles"]) > 1:
             return [
                 ft.Row(
                     controls=[
-                        self.items[i]["textfield"],
-                        self.items[i]["button"],
+                        self.name_items[i]["textfield"],
+                        self.name_items[i]["button"],
                         ft.IconButton(
                             icon=ft.icons.DELETE,
                             icon_color=ft.colors.RED,
@@ -171,8 +232,8 @@ class GUIConfig:
             return [
                 ft.Row(
                     controls=[
-                        self.items[i]["textfield"],  # Verwende das gespeicherte TextField
-                        self.items[i]["button"],  # Verwende das gespeicherte TextButton
+                        self.name_items[i]["textfield"],
+                        self.name_items[i]["button"],
                         ft.IconButton(
                             icon=ft.icons.DRAW,
                             icon_color=ft.colors.BLUE,
@@ -185,8 +246,16 @@ class GUIConfig:
             ]
 
 
-    #handels the update event of the Bright Field Channel and checks if the value is valid
     def bf_updater(self, e):
+        """
+        Handles the bright field channel updating event.
+
+        Checks if the value is valid.
+        If it's not the methode creates a visible error for the user.
+
+        Args:
+            e (Event): The event to handle.
+        """
         try:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(),
                                              bf_channel=int(e.control.value))
@@ -198,8 +267,16 @@ class GUIConfig:
             self.txt_bf_ref.current.color = ft.colors.RED
             self.page.update()
 
-    #handels the update event of the mask suffix and checks if the value is valid
     def ms_updater(self, e):
+        """
+        Handles the mask suffix updating event.
+
+        Checks if the value is valid.
+        If it's not the methode creates a visible error for the user.
+
+        Args:
+            e (Event): The event to handle.
+        """
         if e.control.value:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), mask_suffix=e.control.value)
             self.txt_ms_ref.current.color = None
@@ -210,8 +287,16 @@ class GUIConfig:
             self.txt_ms_ref.current.color = ft.colors.RED
             self.page.update()
 
-    #handels the update event of the Channel Prefix and checks if the value is valid
     def cp_updater(self,e):
+        """
+        Handles the channel prefix updating event.
+
+        Checks if the value is valid.
+        If it's not the methode creates a visible error for the user.
+
+        Args:
+            e (Event): The event to handle.
+        """
         if e.control.value:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), channel_prefix=e.control.value)
             self.txt_cp_ref.current.color = None
@@ -222,8 +307,16 @@ class GUIConfig:
             self.txt_cp_ref.current.color = ft.colors.RED
             self.page.update()
 
-    #handels the update event of the Diameter and checks if the value is valid
     def d_updater(self,e):
+        """
+        Handles the diameter updating event.
+
+        Checks if the value is valid.
+        If it's not the methode creates a visible error for the user.
+
+        Args:
+            e (Event): The event to handle.
+        """
         try:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), diameter=float(e.control.value))
             self.txt_d_ref.current.color = None
@@ -234,9 +327,15 @@ class GUIConfig:
             self.txt_d_ref.current.color = ft.colors.RED
             self.page.update()
 
-    #create the gui container where you can choose the profile and change the attribute values
-    #of the profiles
-    def create_gui_container(self):
+    def create_profile_container(self):
+        """
+        Creates the profile container for the class GUI.
+
+        Where you are able to choose the profile you want or change the attribute values
+        of the profiles.
+        Returns:
+            profile container (Container)
+        """
         #--------------------------------------
         #creates the TextFields for the diffrent attributes of a profile
         tf_bf = ft.TextField(
@@ -250,7 +349,7 @@ class GUIConfig:
         )
 
         tf_ms = ft.TextField(
-            label="Masked Suffix:",
+            label="Mask Suffix:",
             border_color=ft.colors.BLUE_ACCENT,
             value=self.config_class.get_mask_suffix(),
             ref=self.txt_ms_ref,

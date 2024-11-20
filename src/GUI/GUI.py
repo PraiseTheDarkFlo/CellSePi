@@ -30,7 +30,7 @@ class GUI:
         self.directory_card = create_directory_card(self)
         self.canvas = Canvas()
         guiconfig = GUIConfig(self)
-        self.gui_config = guiconfig.create_gui_container()
+        self.gui_config = guiconfig.create_profile_container()
         self.segmentation_card = create_segmentation_card(self)
 
     def build(self): #build up the main page of the GUI
