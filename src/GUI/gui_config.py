@@ -1,5 +1,6 @@
 import flet as ft
 from . import GUI
+from ..config_file import ConfigFile
 
 class GUIConfig:
     """
@@ -23,7 +24,7 @@ class GUIConfig:
         Args:
             gui (GUI): The GUI instance containing ConfigFile and Page references.
         """
-        self.config_class = gui.csp.config
+        self.config_class: ConfigFile = gui.csp.config
         self.page = gui.page
         self.name_items = self.create_name_items_profiles()
         self.profile_chooser_overlay = self.create_profile_overlay()
