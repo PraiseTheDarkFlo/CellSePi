@@ -1,7 +1,4 @@
-from functools import partial
-
 import flet as ft
-import os
 
 from . import gui_options as op
 from .gui_canvas import Canvas
