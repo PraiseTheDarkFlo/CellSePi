@@ -6,7 +6,7 @@ class GUIConfig:
     Manages the GUI config and its elements.
 
     Attributes:
-        config_class (ConfigFile): The configuration file object.
+        config_class (ConfigFile): The instance of the ConfigFile class used to read and update profile data.
         page (Page): The page instance to display GUI elements.
         name_items (List): A list of buttons and text fields for editing or selecting profiles.
         profile_chooser_overlay (CupertinoBottomSheet): The overlay shown when the profile name button is clicked.
@@ -21,7 +21,7 @@ class GUIConfig:
         Initializes the GUIConfig instance.
 
         Args:
-            gui (GUI): The GUI instance containing configuration and page references.
+            gui (GUI): The GUI instance containing ConfigFile and Page references.
         """
         self.config_class = gui.csp.config
         self.page = gui.page
@@ -368,12 +368,12 @@ class GUIConfig:
         Creates and returns the profile container for the GUI.
 
         This method generates a container that includes:
-        - A row with the current selected profile and a button to open the profile chooser overlay.
-        - Text fields for modifying various attributes of the selected profile:
-          - Bright Field Channel
-          - Mask Suffix
-          - Channel Prefix
-          - Diameter
+        -   A row with the current selected profile and a button to open the profile chooser overlay.
+        -   Text fields for modifying various attributes of the selected profile:
+            -   Bright Field Channel
+            -   Mask Suffix
+            -   Channel Prefix
+            -   Diameter
 
         Each text field is associated with an updater method to handle value changes and validate inputs.
 
