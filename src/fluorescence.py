@@ -11,6 +11,7 @@ import threading
 from src.CellSePi import CellSePi
 import flet as ft
 
+#the class readout the fluorescence values of the segmented cells
 class Fluorescence:
     def __init__(self):
         self.csp= CellSePi()
@@ -21,6 +22,9 @@ class Fluorescence:
                                                     visible=False)
 
 
+#method handling the readout
+    #if currently no readout is done-> the process is started and the file saved
+    #else readout not possible -> error message occurs
     def readout_fluorescence(self):
         if self.check_readout_possible():
             def on_update(progress):
@@ -42,6 +46,7 @@ class Fluorescence:
             prefix = self.csp.config.get_channel_prefix()
             working_directory = self.csp.working_directory
 
+            #creates the readout image and fills the mask_path
             batch_image_readout = image.BatchImageReadout(image_paths=self.csp.image_paths,
                                                           mask_paths=self.csp.mask_paths,
                                                           segmentation_channel=brightfield_channel,
@@ -61,6 +66,7 @@ class Fluorescence:
             print("Readout not possible. Try later")
             return
 
+    #error handling. All error that can possibly occur
     def check_readout_possible(self):
         if self.csp.readout_running:
             print("Readout is already running")
@@ -72,9 +78,5 @@ class Fluorescence:
             print("No image to process")
             return False
         return True
-
-
-
-
 
 

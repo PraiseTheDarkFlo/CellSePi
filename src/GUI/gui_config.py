@@ -1,42 +1,50 @@
 import flet as ft
 from . import GUI
+from ..config_file import ConfigFile
 
 class GUIConfig:
     """
-    Handles everything about the gui part of the config
+    Manages the GUI config and its elements.
 
     Attributes:
-        config_class (ConfigFile): The config file.
-        page (Page): The page to display in the GUI.
-        name_items (List): A List of buttons/text fields for every profile to edit or select them.
-        profile_chooser_overlay (CupertinoBottomSheet): The overlay that is opened when the profile name button is pressed to select profiles.
-        profile_ref (Ref): The reference of the selected profile name button.
-        txt_bf_ref (Ref): The reference of the bright field Textfield.
-        txt_ms_ref (Ref): The reference of the mask suffix Textfield.
-        txt_cp_ref (Ref): The reference of the channel prefix Textfield.
-        txt_d_ref (Ref): The reference of the diameter Textfield.
+        config_class (ConfigFile): The instance of the ConfigFile class used to read and update profile data.
+        page (Page): The page instance to display GUI elements.
+        name_items (List): A list of buttons and text fields for editing or selecting profiles.
+        profile_chooser_overlay (CupertinoBottomSheet): The overlay shown when the profile name button is clicked.
+        profile_ref (Ref): Reference to the currently selected profile name button.
+        txt_bf_ref (Ref): Reference to the bright field channel text field.
+        txt_ms_ref (Ref): Reference to the mask suffix text field.
+        txt_cp_ref (Ref): Reference to the channel prefix text field.
+        txt_d_ref (Ref): Reference to the diameter text field.
     """
     def __init__(self,gui: GUI):
-         self.config_class = gui.csp.config
-         self.page = gui.page
-         self.name_items = self.create_name_items_profiles()
-         self.profile_chooser_overlay = self.create_profile_overlay()
-         #--------------------------------
-         #creates attributes to reference to the text boxes to changes their values or color etc...
-         self.profile_ref = ft.Ref[ft.Text]()
-         self.txt_bf_ref = ft.Ref[ft.Text]()
-         self.txt_ms_ref = ft.Ref[ft.Text]()
-         self.txt_cp_ref = ft.Ref[ft.Text]()
-         self.txt_d_ref = ft.Ref[ft.Text]()
+        """
+        Initializes the GUIConfig instance.
+
+        Args:
+            gui (GUI): The GUI instance containing ConfigFile and Page references.
+        """
+        self.config_class: ConfigFile = gui.csp.config
+        self.page = gui.page
+        self.name_items = self.create_name_items_profiles()
+        self.profile_chooser_overlay = self.create_profile_overlay()
+        #--------------------------------
+        #creates attributes to reference to the text boxes to changes their values or color etc...
+        self.profile_ref = ft.Ref[ft.Text]()
+        self.txt_bf_ref = ft.Ref[ft.Text]()
+        self.txt_ms_ref = ft.Ref[ft.Text]()
+        self.txt_cp_ref = ft.Ref[ft.Text]()
+        self.txt_d_ref = ft.Ref[ft.Text]()
 
     def create_profile_overlay(self):
         """
-        Creates the profile overlay.
+        Creates the overlay for selecting or editing profiles.
 
-        The overlay to choose or edit the profiles it pops up when the current profile is clicked on.
+        The overlay is displayed when clicking the profile name button.
+        It allows users to view, edit, or delete profiles in a scrollable list.
 
         Returns:
-            Overlay (ft.CupertinoBottomSheet)
+            overlay (CupertinoBottomSheet): The configured overlay for profile selection and editing.
         """
         return ft.CupertinoBottomSheet(
             content=ft.Column(
@@ -56,11 +64,10 @@ class GUIConfig:
 
     def calc_height(self):
         """
-        Calculates the height of the list of profiles.
+        Calculates the height of the profile list in the overlay.
 
         Returns:
-            calc (int): Returns the Calculation if it's smaller than 9.
-            400 (int): If the profile count is greater than 8.
+            int: The height of the list. If the profile count exceeds 8, the height is capped at 400.
         """
         if len(self.config_class.config["Profiles"]) < 9:
             return 49 * len(self.config_class.config["Profiles"])
@@ -69,14 +76,14 @@ class GUIConfig:
 
     def text_field_activate(self,e, idx):
         """
-        Handles the text field activation.
+        Toggles the activation of a profile's text field for editing.
 
-        Makes the textfield visible and the choose button invisible
-        and makes sure that only one textfield is activ at a time.
+        Ensures only one text field is active at a time, making the corresponding
+        button invisible.
 
         Args:
-            e (Event): The event to handle.
-            idx (int): The index of the profile to activate or deactivate the TextField.
+            e (Event): The triggering event.
+            idx (int): The index of the profile to activate or deactivate.
         """
         if not self.name_items[idx]["textfield"].visible:
             self.name_items[idx]["textfield"].visible = True
@@ -93,11 +100,16 @@ class GUIConfig:
 
     def text_field_written(self,e, idx):
         """
-        Handles the text field written event.
+        Handles the event when a text field is updated and attempts to rename
+        the associated profile.
 
         Args:
-            e (Event): The event to handle.
-            idx (int): The index of the profile to try to rename.
+            e (Event): The text_field update event.
+            idx (int): The index of the profile try to rename.
+
+        Behavior:
+        -   Displays an error message if the name is invalid or taken.
+        -   Updates the user interface on successful renaming.
         """
         try:
             renamed = self.config_class.rename_profile(self.config_class.index_to_name(idx), e.control.value)
@@ -121,7 +133,10 @@ class GUIConfig:
 
     def create_name_items_profiles(self):
         """
-        Creates the TextField and Button items of a profile.
+        Creates TextField and Button for every profile and returns the set as a list.
+
+        Returns:
+            List[Dict]: A list of dictionaries, each representing a set of profile item.
         """
         return [
             {
@@ -144,11 +159,19 @@ class GUIConfig:
 
     def selected_profile_changed(self,e, index):
         """
-        Handles when a profile is selected and closes the overlay.
+        Handles the event when a profile is selected, updates the profile attributes,
+        and closes the profile selection overlay.
 
         Args:
-            e (Event): The event to handle.
+            e (Event): The event representing the user's profile selection.
             index (int): The index of the selected profile.
+
+        Behavior:
+        -   Selects the profile based on the provided index.
+        -   Updates the UI elements with the corresponding profile attributes (e.g.,
+            channel, mask suffix, diameter, etc.).
+        -   resets the colors of the input fields to their default state, clearing any error indications (such as red color).
+        -   Closes the profile chooser overlay and updates the page.
         """
         self.config_class.select_profile(self.config_class.index_to_name(index))
         self.profile_ref.current.value = self.config_class.get_selected_profile_name()
@@ -165,11 +188,14 @@ class GUIConfig:
 
     def remove_profile(self,e, idx):
         """
-        Handles the removing event of a profile.
+        Handles the event for removing a profile.
+
+        This method deletes the profile at the specified index and updates the UI accordingly.
+        It also ensures that the selected profile is updated and the overlay is refreshed.
 
         Args:
-            e (Event): The event to handle.
-            idx (int): The index of the profile that should be removed.
+            e (Event): The event triggered by the action to remove the profile.
+            idx (int): The index of the profile to be removed.
         """
         self.config_class.delete_profile(self.config_class.index_to_name(idx))
         self.profile_ref.current.value = self.config_class.get_selected_profile_name()
@@ -178,9 +204,11 @@ class GUIConfig:
 
     def update_overlay(self):
         """
-        Updates the overlay.
+        Updates the profile chooser overlay with the latest list of profiles.
 
-        The list needed to be rebuilt if the name of a profile is changed or a profile is deleted.
+        This method rebuilds the list of profile items when a profile's name is changed
+        or a profile is deleted. It then updates the overlay content to reflect the
+        changes and ensures the profile list is displayed correctly.
         """
         new_picker_items = self.create_list_items()
         new_content = ft.Column(
@@ -199,12 +227,17 @@ class GUIConfig:
 
     def create_list_items(self):
         """
-        Creates the full List with the name_items and the buttons to trigger the event.
+        Creates and returns a list of profile items with corresponding buttons for interaction.
 
-        The delete button is only added if the size of profiles is greater than 1.
+        This method generates a list of items, where each item includes:
+        -   A text field for displaying and editing the profile name.
+        -   A button to select the profile by name.
+        -   A delete button, which is only included if there are more than one profile.
+        -   A edit button to activate the text field for profile renaming.
 
         Returns:
-            scroll List (List): the List of items for the profiles to change or selected them.
+            List[ft.Row]: A list of rows containing the profile controls for interaction,
+                          including buttons for deleting, editing, and selecting profiles.
         """
         self.name_items = self.create_name_items_profiles()
         if len(self.config_class.config["Profiles"]) > 1:
@@ -248,13 +281,14 @@ class GUIConfig:
 
     def bf_updater(self, e):
         """
-        Handles the bright field channel updating event.
+        Handles the event of updating the bright field (BF) channel.
 
-        Checks if the value is valid.
-        If it's not the methode creates a visible error for the user.
+        This method validates the entered value for the BF channel. If the value is invalid,
+        an error message is displayed to the user. A valid BF channel is expected to be a
+        positive integer.
 
         Args:
-            e (Event): The event to handle.
+            e (Event): The event triggered by the user interaction, containing the new BF channel value.
         """
         try:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(),
@@ -269,13 +303,14 @@ class GUIConfig:
 
     def ms_updater(self, e):
         """
-        Handles the mask suffix updating event.
+        Handles the event of updating the mask suffix.
 
-        Checks if the value is valid.
-        If it's not the methode creates a visible error for the user.
+        This method checks if the entered mask suffix is valid. If the suffix is empty,
+        an error message is displayed to the user. Otherwise, the mask suffix is updated
+        for the selected profile.
 
         Args:
-            e (Event): The event to handle.
+            e (Event): The event triggered by the user interaction, containing the new mask suffix value.
         """
         if e.control.value:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), mask_suffix=e.control.value)
@@ -289,13 +324,14 @@ class GUIConfig:
 
     def cp_updater(self,e):
         """
-        Handles the channel prefix updating event.
+        Handles the event of updating the channel prefix.
 
-        Checks if the value is valid.
-        If it's not the methode creates a visible error for the user.
+        This method checks if the entered channel prefix is valid. If the prefix is empty,
+        an error message is displayed to the user. Otherwise, the channel prefix is updated
+        for the selected profile.
 
         Args:
-            e (Event): The event to handle.
+            e (Event): The event triggered by the user interaction, containing the new channel prefix value.
         """
         if e.control.value:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), channel_prefix=e.control.value)
@@ -309,13 +345,14 @@ class GUIConfig:
 
     def d_updater(self,e):
         """
-        Handles the diameter updating event.
+        Handles the event of updating the diameter.
 
-        Checks if the value is valid.
-        If it's not the methode creates a visible error for the user.
+        This method checks if the entered diameter is a valid decimal number. If the value is
+        invalid or not greater than 0, an error message is displayed to the user. Otherwise,
+        the diameter is updated for the selected profile.
 
         Args:
-            e (Event): The event to handle.
+            e (Event): The event triggered by the user interaction, containing the new diameter value.
         """
         try:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(), diameter=float(e.control.value))
@@ -329,12 +366,20 @@ class GUIConfig:
 
     def create_profile_container(self):
         """
-        Creates the profile container for the class GUI.
+        Creates and returns the profile container for the GUI.
 
-        Where you are able to choose the profile you want or change the attribute values
-        of the profiles.
+        This method generates a container that includes:
+        -   A row with the current selected profile and a button to open the profile chooser overlay.
+        -   Text fields for modifying various attributes of the selected profile:
+            -   Bright Field Channel
+            -   Mask Suffix
+            -   Channel Prefix
+            -   Diameter
+
+        Each text field is associated with an updater method to handle value changes and validate inputs.
+
         Returns:
-            profile container (Container)
+            ft.Container: The container holding the text fields for modifying selected profile attributes and the button to open the overlay.
         """
         #--------------------------------------
         #creates the TextFields for the diffrent attributes of a profile
@@ -386,9 +431,9 @@ class GUIConfig:
         profiles_row = ft.Row(
             tight=True,
             controls=[
-                ft.Text("Profile:", size=23),
+                ft.Text("Profile:", size=18),
                 ft.TextButton(
-                    content=ft.Text(self.config_class.get_selected_profile_name(), size=23,ref=self.profile_ref),
+                    content=ft.Text(self.config_class.get_selected_profile_name(), size=18,ref=self.profile_ref),
                     style=ft.ButtonStyle(color=ft.colors.BLUE),
                     on_click=lambda e: e.control.page.open(
                         self.profile_chooser_overlay

@@ -30,12 +30,6 @@
             "channel_prefix": "c",
             "diameter": 125.1
         },
-        "Lif6aaaaaaa333da": {
-            "bf_channel": 3,
-            "mask_suffix": "_seg",
-            "channel_prefix": "Test!!!!!!!!!!",
-            "diameter": 325.3
-        },
         "JINX": {
             "bf_channel": 5,
             "mask_suffix": "_seg",
@@ -59,6 +53,12 @@
             "mask_suffix": "_seg",
             "channel_prefix": "c",
             "diameter": 125.0
+        },
+        "Lif6aaaaaaa333da": {
+            "bf_channel": 3,
+            "mask_suffix": "_seg",
+            "channel_prefix": "Test!!!!!!!!!!",
+            "diameter": 325.3
         }
     },
     "Selected Profile": {

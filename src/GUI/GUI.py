@@ -14,7 +14,7 @@ from src.CellSePi import CellSePi
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
     def __init__(self,page: ft.Page):
-        self.csp = CellSePi()
+        self.csp: CellSePi = CellSePi()
         self.page = page
         self.directory_path = ft.Text(weight="bold",value='Directory Path')
         self.image_gallery = ft.ListView()
@@ -29,9 +29,10 @@ class GUI:
         self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
         self.directory_card = create_directory_card(self)
         self.canvas = Canvas()
-        guiconfig = GUIConfig(self)
-        self.gui_config = guiconfig.create_profile_container()
+        gui_config = GUIConfig(self)
+        self.gui_config = gui_config.create_profile_container()
         self.segmentation_card = create_segmentation_card(self)
+
 
     def build(self): #build up the main page of the GUI
         self.page.add(

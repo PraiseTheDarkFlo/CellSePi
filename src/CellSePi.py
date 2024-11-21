@@ -4,7 +4,7 @@ from src.config_file import ConfigFile
 class CellSePi:
     def __init__(self):
         super().__init__()
-        self.config = ConfigFile()
+        self.config: ConfigFile = ConfigFile()
         self.segmentation_running = False
         self.segmentation_thread = None
         self.readout_running = False
@@ -23,5 +23,7 @@ class CellSePi:
         self.image_paths = None
         self.mask_paths = None
         self.image_views = []
+
+        self.working_directory = None
 
 

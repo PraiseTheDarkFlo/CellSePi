@@ -6,7 +6,11 @@ import time
 
 class DeletionForbidden(Exception):
     """
-    Exception for deletion forbidden.
+    Custom exception raised when a profile deletion is not allowed.
+
+    This exception is used to indicate that a profile cannot be deleted,
+    either because it is the last remaining profile or because the specified
+    profile name does not exist.
     """
     pass
 
