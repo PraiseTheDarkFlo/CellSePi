@@ -7,6 +7,7 @@ class CellSePi:
         self.config: ConfigFile = ConfigFile()
         self.segmentation_running = False
         self.segmentation_thread = None
+        self.model_path = None
         self.readout_running = False
         self.readout_thread = None
         self.readout_path = None

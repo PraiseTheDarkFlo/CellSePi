@@ -4,7 +4,7 @@ import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-from data_util import load_image_to_numpy
+#from data_util import load_image_to_numpy
 import pandas as pd
 
 from notifier import Notifier
@@ -39,7 +39,6 @@ class BatchImageSegmentation(Notifier):
         device = self.device
         device = torch.device(device)
 
-        segmentation_model = "models/CP_20240715_171241"
 
         n_images = len(image_paths)
 
