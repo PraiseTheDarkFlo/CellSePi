@@ -10,10 +10,13 @@ import images as image
 import threading
 from src.CellSePi import CellSePi
 import flet as ft
+import GUI.gui_segmentation as seg
+from notifier import Notifier
 
 #the class readout the fluorescence values of the segmented cells
-class Fluorescence:
+class Fluorescence(Notifier):
     def __init__(self):
+        super().__init__()
         self.csp= CellSePi()
         self.fluorescence_button= ft.ElevatedButton(text= "Readout fluorescence",
                                                     icon=ft.icons.PLAY_CIRCLE,
@@ -29,7 +32,9 @@ class Fluorescence:
         if self.check_readout_possible():
             def on_update(progress):
                 print(f"{progress}% is progressed")
-                #nikes progressbar update methode
+                self._call_update_listeners(progress.get("progress"))
+
+
             def completed_readout(readout, readout_path):
                 print("fluorescence values readout")
                 self.csp.readout= readout

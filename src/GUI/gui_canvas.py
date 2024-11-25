@@ -26,6 +26,7 @@ class Canvas:
                 drag_interval=10,
             ),
         )
+        self.container_canvas= ft.Container(self.canvas,border_radius=5)
         self.main_image = ft.Container(ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                        height=700, width=500, fit=ft.ImageFit.COVER,
                                                     expand=True,
@@ -34,8 +35,7 @@ class Canvas:
 
     def create_canvas_card(self):
         return ft.Card(
-            content=ft.Stack([self.main_image, ft.Container(self.canvas,
-                                                            border_radius=5)]),
+            content=ft.Stack([self.main_image, self.container_canvas ]),
             width=700,
             height=500,
             expand=True,

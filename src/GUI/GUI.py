@@ -74,8 +74,11 @@ class GUI:
         def update_view_mask(e):
             if self.switch_mask.value:
                 print("on")
+                self.canvas.container_canvas.visible=True
             else:
                 print("off")
+                self.canvas.container_canvas.visible=False
+
             self.page.update()
         self.switch_mask.on_change = update_view_mask
 
