@@ -18,6 +18,10 @@ class segmentation(Notifier):
         self.diameter = gui.csp.config.get_diameter()
         self.segmentation_running = False
 
+    def update(self, update):
+        self._call_update_listeners(update.get("progress"))
+        pass
+
     def run(self):
         print("run segmentation")
         self._call_update_listeners("Preparing segmentation")
@@ -26,10 +30,6 @@ class segmentation(Notifier):
             print("Segmentation already running")
             self._call_completion_listeners()
             return
-
-        def update(update):
-            self._call_update_listeners(update.get("progress"))
-            pass
 
         def finished(mask_paths, args):
             self.csp.mask_paths = mask_paths
@@ -46,7 +46,7 @@ class segmentation(Notifier):
                                                           diameter,
                                                           device,
                                                           self.csp.model_path)
-        batch_image_segmentation.add_update_listener(listener=update)
+        batch_image_segmentation.add_update_listener(listener=segmentation.update)
         batch_image_segmentation.add_completion_listener(listener=finished)
         batch_image_segmentation.run()
         self._call_completion_listeners()

@@ -29,6 +29,7 @@ class BatchImageSegmentation(Notifier):
         self.segmentation_model = segmentation_model
 
     def run(self):
+        #TODO zu jedem Zeitpunkt einen Listener, ob gestoppt werden soll
         self._call_start_listeners()
 
         image_paths = self.image_paths
