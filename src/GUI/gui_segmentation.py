@@ -9,7 +9,9 @@ def create_segmentation_card(gui: GUI):
 
     #method that does something with the result of the selection of the FIle
     def pick_model_result(e: ft.FilePickerResultEvent):
-        if e.files[0].path != None:
+        if e.files is None:
+            print("no model selected")
+        elif e.files[0].path is not None:
             print("picked file")
             gui.csp.model_path = e.files[0].path
             progress_bar_text.value = "Ready to Start"
