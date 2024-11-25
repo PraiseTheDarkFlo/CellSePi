@@ -14,7 +14,7 @@ class segmentation(Notifier):
     def __init__(self, gui):
         super().__init__()
         self.csp = gui.csp
-        self.config = gui.config
+        self.config = gui.csp.config
         self.segmentation_running = False
 
     def run(self):
