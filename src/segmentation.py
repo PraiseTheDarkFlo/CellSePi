@@ -54,20 +54,6 @@ class segmentation(Notifier):
     def stop(self):
         print("stop")
         pass
-#Todo segmentation GUI:
 
-    # modell muss ausgewählt werden -> modell in CellSePi.model abspeichern
-    # button um segmentation zu starten
-    # dann erscheint progress bar, welche wärenddessen aktualisiert wird
-    # und button zum abbrechen der berechnung
-    # wenn berechnung fertig ist...
-
-
-    #Todo segmentation
-
-    # holt model von cellSePi
-    # starte segmentation + batchImageSegmentation
-    # wärenddessen muss notified werden mit dem progress, d.h. wie viele bilder schon bearbeitet wurden
-    # wenn fertig ist muss notifien
 
 
