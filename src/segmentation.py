@@ -14,8 +14,7 @@ class segmentation(Notifier):
     def __init__(self, gui):
         super().__init__()
         self.csp = gui.csp
-        self.bright_field_channel = gui.csp.config.get_bf_channel()
-        self.diameter = gui.csp.config.get_diameter()
+        self.config = gui.config
         self.segmentation_running = False
 
     def run(self):
@@ -37,8 +36,8 @@ class segmentation(Notifier):
             pass
 
         self.segmentation_running = True
-        segmentation_channel = self.bright_field_channel
-        diameter = self.diameter
+        segmentation_channel = self.config.get_bf_channel()
+        diameter = self.config.get_diameter()
         device = "cpu"
 
         batch_image_segmentation = BatchImageSegmentation(self.csp.image_paths,
