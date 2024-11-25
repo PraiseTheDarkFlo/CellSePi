@@ -10,7 +10,6 @@ import images as image
 import threading
 from src.CellSePi import CellSePi
 import flet as ft
-import GUI.gui_segmentation as seg
 from notifier import Notifier
 
 #the class readout the fluorescence values of the segmented cells
