@@ -1,5 +1,6 @@
 import flet as ft
 from . import GUI
+from ..fluorescence import Fluorescence
 from ..segmentation import segmentation
 
 
@@ -39,6 +40,7 @@ def create_segmentation_card(gui: GUI):
         on_click = None,
     )
 
+
     progress_bar = ft.ProgressBar(value=0, width=180)
     progress_bar_text = ft.Text("Waiting for Input")
     segmentation_instance = segmentation(gui)
@@ -71,8 +73,11 @@ def create_segmentation_card(gui: GUI):
     def finished_segmentation():
         print("finished segmentation")
         progress_bar_text.value = "Finished"
+        fl_button = Fluorescence().fluorescence_button
+        fl_button.visible = True
+
         gui.page.update()
-        #TODO fluoreszenz auslesen button erscheint anstatt stop button
+        #TODO fluoreszenz button soll on click die funktion starten
 
     def update_progress_bar(progress):
         print("update")
