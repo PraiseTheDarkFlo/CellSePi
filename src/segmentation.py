@@ -35,6 +35,7 @@ class segmentation(Notifier):
             self._call_update_listeners(update.get("progress"))
             pass
 
+
         self.segmentation_running = True
         segmentation_channel = self.config.get_bf_channel()
         diameter = self.config.get_diameter()
@@ -47,6 +48,7 @@ class segmentation(Notifier):
                                                           self.csp.model_path)
         batch_image_segmentation.add_update_listener(listener=update)
         batch_image_segmentation.add_completion_listener(listener=finished)
+
         batch_image_segmentation.run()
         self._call_completion_listeners()
 

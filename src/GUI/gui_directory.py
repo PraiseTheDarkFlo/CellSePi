@@ -84,6 +84,7 @@ def create_directory_card(gui: GUI):
 
 
     #create the rows for directory/file picking
+    home_dir = os.path.expanduser("~")
     directory_row = ft.Row(
         [
             ft.ElevatedButton(
@@ -99,7 +100,7 @@ def create_directory_card(gui: GUI):
             ft.ElevatedButton(
                 "Pick Files",
                 icon=ft.icons.UPLOAD_FILE,
-                on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False),
+                on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False, initial_directory=home_dir),
             )
         ], alignment=ft.MainAxisAlignment.END
     )

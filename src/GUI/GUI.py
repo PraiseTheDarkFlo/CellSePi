@@ -1,3 +1,4 @@
+
 import flet as ft
 
 from . import gui_options as op
@@ -20,6 +21,8 @@ class GUI:
         self.switch_mask = ft.Switch(label="Mask", value=True)
         self.page.window.width = 1200
         self.page.window.height = 825
+        self.page.window_left = 200
+        self.page.window_top = 50
         self.page.window.min_width = self.page.window.width
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"

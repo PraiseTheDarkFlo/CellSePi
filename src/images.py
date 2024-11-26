@@ -55,7 +55,6 @@ class BatchImageSegmentation(Notifier):
         mask_paths = {}
         for iN, image_id in enumerate(image_paths):
             image_path = image_paths[image_id][segmentation_channel]
-
             image = imread(image_path)
 
             res = model.eval(image, diameter=diameter, channels=[0, 0])
@@ -69,7 +68,7 @@ class BatchImageSegmentation(Notifier):
                       "current_image": {"image_id": image_id,
                                         "path": image_path}}
             self._call_update_listeners(**kwargs)
-
+        # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         kwargs = {}
         self._call_completion_listeners(mask_paths, **kwargs)
 

@@ -1,7 +1,10 @@
+import os
+
 import flet as ft
 from . import GUI
 from ..fluorescence import Fluorescence
 from ..segmentation import segmentation
+from ..notifier import Notifier
 
 
 #build the segmentation_card with all events methods
@@ -16,11 +19,9 @@ def create_segmentation_card(gui: GUI):
             gui.csp.model_path = e.files[0].path
             progress_bar_text.value = "Ready to Start"
             start_button.disabled = False
-            start_button.visible = True
             model_text.title.value = e.files[0].name
             gui.page.update()
             print("start_button is disabled", start_button.disabled)
-            #TODO name des ausgewählten modells soll angezeigt werden
         else:
             print("no model selected")
 
@@ -56,10 +57,11 @@ def create_segmentation_card(gui: GUI):
         choose_model.disabled = True
         gui.page.update()
         segmentation_instance.run()
-        #TODO what happens when segmentation is done
 
     def stop_segmentation(e):
         print("stop segmentation")
+        #TODO hier muss ein notifier hin, der segmentation notified, dass die berechnung gestoppt werden soll
+        #TODO in der Wartezeit soll klar sein, dass gerade gecancelt wird (weil es dauern könnte bis aktuelles Bild fertig bearbeitet wird)
         start_button.visible = True
         stop_button.visible = False
         progress_bar_text.value = "Ready to Start"
@@ -91,15 +93,14 @@ def create_segmentation_card(gui: GUI):
 
     pick_model_row = ft.Row(
         [
-            progress_bar,
-            progress_bar_text,
+            ft.Container(content=ft.Row([progress_bar,progress_bar_text])),
             start_button,
             stop_button
-        ], alignment=ft.MainAxisAlignment.CENTER
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
     )
 
     model_text = ft.ListTile(
-                                    leading=ft.Icon(name=ft.icons.COMPUTER_ROUNDED),
+                                    leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
                                     title=ft.Text("Choose Model"),
                                 )
 
@@ -111,11 +112,13 @@ def create_segmentation_card(gui: GUI):
                         )
                     )
 
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    model_directory = os.path.join(project_root, "models")
     choose_model = ft.Container(
                         content=ft.IconButton(
                             icon=ft.icons.UPLOAD_FILE,
                             tooltip="Choose Model",
-                            on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False),
+                            on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False, initial_directory=model_directory),
                         ), alignment=ft.alignment.bottom_right,
                     )
 

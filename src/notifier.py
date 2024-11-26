@@ -34,3 +34,12 @@ class Notifier:
 
     def _call_completion_listeners(self, *args, **kwargs):
         self._call_listeners(self._completion_listeners, args, kwargs)
+
+    def add_cancel_listener(self, listener):
+        self._completion_listeners.add(listener)
+
+    def remove_cancel_listener(self, listener):
+        self._completion_listeners.remove(listener)
+
+    def _call_cancel_listeners(self, *args, **kwargs):
+        self._call_listeners(self._completion_listeners, args, kwargs)
