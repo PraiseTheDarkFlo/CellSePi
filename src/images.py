@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
@@ -41,7 +43,7 @@ class BatchImageSegmentation(Notifier):
         device = torch.device(device)
 
 
-        n_images = len(image_paths)
+        #n_images = len(image_paths)
 
         io.logger_setup()
         # model_type='cyto' or 'nuclei' or 'cyto2' or 'cyto3'
@@ -51,26 +53,39 @@ class BatchImageSegmentation(Notifier):
         # images = [imread(image_paths[image_id][segmentation_channel]) for image_id in image_paths]
 
         # res = model.eval(images, diameter=diameter, channels=[[0, 0]])
-
+        kwargs = {}
         mask_paths = {}
-        for iN, image_id in enumerate(image_paths):
-            image_path = image_paths[image_id][segmentation_channel]
+        for iN in range(2):
+            # for iN, image_id in enumerate(image_paths):
+            # image_path = image_paths[image_id][segmentation_channel]
+            if iN == 0:
+                image_path = "/Users/nikedratt/Downloads/data/04072024_HEK293_CellMaskDR_01/xy01c1.tif"
+            if iN == 1:
+                image_path = "/Users/nikedratt/Downloads/data/04072024_HEK293_CellMaskDR_01/xy01c2.tif"
+
             image = imread(image_path)
 
             res = model.eval(image, diameter=diameter, channels=[0, 0])
             mask, flow, style = res[:3]
 
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+
+            directory, filename = os.path.split(image_path)
+            name, _ = os.path.splitext(filename)
+            new_filename = f"{name}_seg.npy"
+            mask_paths.update({str(iN): os.path.join(directory, new_filename)})
+            print(mask_paths.get(str(iN)))
             """ 
             Report current state
             """
-            kwargs = {"progress": (iN + 1) / n_images * 100,
-                      "current_image": {"image_id": image_id,
+
+            kwargs = {"progress": (iN + 1) / 2 * 100,
+                      "current_image": {"image_id": iN,
                                         "path": image_path}}
-            self._call_update_listeners(**kwargs)
+            self._call_update_listeners(str(round(kwargs.get("progress")))+" %")
+
         # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
-        kwargs = {}
-        self._call_completion_listeners(mask_paths, **kwargs)
+        self._call_completion_listeners(mask_paths)
 
 
 class BatchImageReadout(Notifier):

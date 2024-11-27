@@ -18,9 +18,8 @@ class Fluorescence(Notifier):
         super().__init__()
         self.csp= CellSePi()
         self.fluorescence_button= ft.ElevatedButton(text= "Readout fluorescence",
-                                                    icon=ft.icons.PLAY_CIRCLE,
+                                                    icon=ft.icons.FILE_DOWNLOAD,
                                                     disabled=True,
-                                                    on_click=lambda _: ft.FilePicker().pick_files(allow_multiple=False),
                                                     visible=False)
 
 
@@ -28,6 +27,7 @@ class Fluorescence(Notifier):
     #if currently no readout is done-> the process is started and the file saved
     #else readout not possible -> error message occurs
     def readout_fluorescence(self):
+        #TODO hier noch einen aufruf von start_listeners hin, der mitbekommt , ob ein fehler geworfen wird
         if self.check_readout_possible():
             def on_update(progress):
                 print(f"{progress}% is progressed")
@@ -41,6 +41,7 @@ class Fluorescence(Notifier):
                 self.csp.readout_running=False
                 self.fluorescence_button.disabled =False #hier den fluorescence button auf normal setzen
                 print(f"values are stored in {readout_path}")
+                self._call_completion_listeners()
 
             print("Preparing readout")
             self.csp.readout_running=True

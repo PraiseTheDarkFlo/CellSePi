@@ -1,11 +1,13 @@
 import os
-
+import re
 import flet as ft
 from . import GUI
 from ..fluorescence import Fluorescence
 from ..segmentation import segmentation
 from ..notifier import Notifier
 
+
+#class gui_segmentation(GUI):
 
 #build the segmentation_card with all events methods
 def create_segmentation_card(gui: GUI):
@@ -43,6 +45,9 @@ def create_segmentation_card(gui: GUI):
         on_click = None,
     )
 
+    fluorescence = Fluorescence()
+
+    fl_button = fluorescence.fluorescence_button
 
     progress_bar = ft.ProgressBar(value=0, width=180)
     progress_bar_text = ft.Text("Waiting for Input")
@@ -77,17 +82,41 @@ def create_segmentation_card(gui: GUI):
     def finished_segmentation():
         print("finished segmentation")
         progress_bar_text.value = "Finished"
-        fl_button = Fluorescence().fluorescence_button
+        stop_button.visible = False
         fl_button.visible = True
-
+        fl_button.disabled = False
         gui.page.update()
         #TODO fluoreszenz button soll on click die funktion starten
 
     def update_progress_bar(progress):
         print("update")
         progress_bar_text.value = progress
+        extracted_num = re.search(r'\d+', progress)
+        if extracted_num is not None:
+            progress_bar.value = int(extracted_num.group())/100
         gui.page.update()
 
+    def fluorescence_readout(e):
+        fluorescence.readout_fluorescence()
+        fl_button.disabled = True
+        progress_bar_text.value = "Reading fluorescence"
+        gui.page.update()
+
+    def start_fl(e):
+        progress_bar.value = 0
+        progress_bar_text.value = "0 %"
+        gui.page.update()
+
+    def complete_fl(e):
+        progress_bar.value = 0
+        progress_bar_text.value = "Ready to start"
+        gui.page.update()
+
+
+    fl_button.on_click = fluorescence_readout
+    fluorescence.add_start_listener(listener=start_fl)
+    fluorescence.add_update_listener(listener=update_progress_bar)
+    fluorescence.add_completion_listener(listener=complete_fl)
     segmentation_instance.add_update_listener(listener=update_progress_bar)
     segmentation_instance.add_completion_listener(listener=finished_segmentation)
 
@@ -95,7 +124,8 @@ def create_segmentation_card(gui: GUI):
         [
             ft.Container(content=ft.Row([progress_bar,progress_bar_text])),
             start_button,
-            stop_button
+            stop_button,
+            fl_button
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
     )
 

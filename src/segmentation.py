@@ -26,14 +26,17 @@ class segmentation(Notifier):
             self._call_completion_listeners()
             return
 
-        def finished(mask_paths, args):
+        def finished(mask_paths):
             self.csp.mask_paths = mask_paths
             self._call_completion_listeners()
-            pass
+
 
         def update(update):
-            self._call_update_listeners(update.get("progress"))
-            pass
+            self._call_update_listeners(update)
+            print(update)
+
+        def start():
+            self._call_update_listeners("0 %")
 
 
         self.segmentation_running = True
@@ -46,6 +49,7 @@ class segmentation(Notifier):
                                                           diameter,
                                                           device,
                                                           self.csp.model_path)
+        batch_image_segmentation.add_start_listener(listener=start)
         batch_image_segmentation.add_update_listener(listener=update)
         batch_image_segmentation.add_completion_listener(listener=finished)
 
