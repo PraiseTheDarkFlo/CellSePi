@@ -1,6 +1,7 @@
 import flet as ft
 import flet.canvas as fc
 from . import GUI
+from ..mask import Mask
 
 #method that handles what happens when the image is clicked
 def on_image_click(event, img_path,gui: GUI):
@@ -26,7 +27,9 @@ class Canvas:
                 drag_interval=10,
             ),
         )
+
         self.container_canvas= ft.Container(self.canvas,border_radius=5)
+
         self.main_image = ft.Container(ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                        height=700, width=500, fit=ft.ImageFit.COVER,
                                                     expand=True,
@@ -55,4 +58,5 @@ class Canvas:
         self.canvas.update()
         self.state.x = e.local_x
         self.state.y = e.local_y
+
 
