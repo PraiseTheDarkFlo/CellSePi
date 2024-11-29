@@ -85,7 +85,7 @@ class BatchImageSegmentation(Notifier):
                                         "path": image_path}}
             self._call_update_listeners(str(round(kwargs.get("progress")))+" %")
 
-        # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
+        #TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(mask_paths)
 
 
