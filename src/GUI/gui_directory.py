@@ -43,13 +43,14 @@ def create_directory_card(gui: GUI):
         else:
             path = e.path
         if path:
+            gui.directory_path.value = path
             select_directory(path)
             load_images_from_directory(path)
         else:
             gui.image_gallery.controls.clear()
             gui.image_gallery.update()
-        #gui.formatted_path.value = format_directory_path(path)
-        #gui.formatted_path.update()
+        gui.formatted_path.value = format_directory_path(gui.directory_path)
+        gui.formatted_path.update()
 
 
 
@@ -80,7 +81,6 @@ def create_directory_card(gui: GUI):
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
 
-        gui.directory_path.value = path
         gui.csp.working_directory = working_directory
         set_paths(working_directory)
 

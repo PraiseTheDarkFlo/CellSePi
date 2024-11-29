@@ -5,9 +5,7 @@ from ..mask import Mask
 
 #method that handles what happens when the image is clicked
 def on_image_click(event, img_path,gui: GUI):
-    gui.canvas.main_image.content = ft.Image(src=img_path, height=700, width=500, fit=ft.ImageFit.SCALE_DOWN,
-                                       expand=True,
-                                       aspect_ratio=2)
+    gui.canvas.main_image.content = ft.Image(src=img_path, fit=ft.ImageFit.SCALE_DOWN)
     gui.page.update()
 
 
@@ -29,12 +27,10 @@ class Canvas:
         )
 
         self.container_canvas= ft.Container(self.canvas,border_radius=5)
-        self.container_mask=ft.Container(ft.Image(src="image_xy01c1_seg.png",height=700, width=500,fit=ft.ImageFit.SCALE_DOWN,),visible=False)
+        self.container_mask=ft.Container(ft.Image(src="image_xy01c1_seg.png",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
 
         self.main_image = ft.Container(ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
-                                       height=700, width=500, fit=ft.ImageFit.SCALE_DOWN,
-                                                    expand=True,
-                                                    aspect_ratio=2))
+                                    fit=ft.ImageFit.SCALE_DOWN),alignment=ft.alignment.center)
         self.canvas_card = self.create_canvas_card()
 
     def create_canvas_card(self):
