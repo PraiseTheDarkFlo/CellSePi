@@ -15,18 +15,19 @@ def listdir(directory):
 def organize_files(files, channel_prefix, mask_suffix=""):
     id_to_file = {}
     for file in files:
-        image_id, channel_id = file.stem.replace(mask_suffix, "").split(channel_prefix)
-        channel_id = int(channel_id)
-        if image_id not in id_to_file:
-            id_to_file[image_id] = {}
+        if channel_prefix in file.name:
+            image_id, channel_id = file.stem.replace(mask_suffix, "").split(channel_prefix)
+            channel_id = int(channel_id)
+            if image_id not in id_to_file:
+                id_to_file[image_id] = {}
 
-        if channel_id in id_to_file[image_id]:
-            raise Exception(
-                f"""The directory already includes a file with the same image and channel ids.
-                            Image Id: {image_id}
-                            Channel Id: {channel_id}
-                            Path: {file}""")
-        id_to_file[image_id][channel_id] = file
+            if channel_id in id_to_file[image_id]:
+                raise Exception(
+                    f"""The directory already includes a file with the same image and channel ids.
+                                Image Id: {image_id}
+                                Channel Id: {channel_id}
+                                Path: {file}""")
+            id_to_file[image_id][channel_id] = file
 
     return id_to_file
 

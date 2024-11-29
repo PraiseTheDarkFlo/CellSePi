@@ -10,7 +10,7 @@ import numpy as np
 from PIL import ImageTk, Image
 
 import custom_widgets_old
-from data_util_old import load_directory, extract_from_lif_file, copy_files_between_directories
+from data_util import load_directory, extract_from_lif_file, copy_files_between_directories
 from image_processing_old import BatchImageSegmentation, BatchImageReadout
 import torch
 

@@ -45,7 +45,7 @@
         "Lif223ada": {
             "bf_channel": "2",
             "mask_suffix": "_seg",
-            "channel_prefix": "dasd",
+            "channel_prefix": "c",
             "diameter": 23.12
         },
         "Lif3123": {
@@ -62,6 +62,6 @@
         }
     },
     "Selected Profile": {
-        "name": "JINX"
+        "name": "Lif223ada"
     }
 }

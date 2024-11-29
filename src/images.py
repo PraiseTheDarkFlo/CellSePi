@@ -43,7 +43,7 @@ class BatchImageSegmentation(Notifier):
         device = torch.device(device)
 
 
-        #n_images = len(image_paths)
+        n_images = len(image_paths)
 
         io.logger_setup()
         # model_type='cyto' or 'nuclei' or 'cyto2' or 'cyto3'
@@ -55,13 +55,8 @@ class BatchImageSegmentation(Notifier):
         # res = model.eval(images, diameter=diameter, channels=[[0, 0]])
         kwargs = {}
         mask_paths = {}
-        for iN in range(2):
-            # for iN, image_id in enumerate(image_paths):
-            # image_path = image_paths[image_id][segmentation_channel]
-            if iN == 0:
-                image_path = "/Users/nikedratt/Downloads/data/04072024_HEK293_CellMaskDR_01/xy01c1.tif"
-            if iN == 1:
-                image_path = "/Users/nikedratt/Downloads/data/04072024_HEK293_CellMaskDR_01/xy01c2.tif"
+        for iN, image_id in enumerate(image_paths):
+            image_path = image_paths[image_id][segmentation_channel]
 
             image = imread(image_path)
 
@@ -80,7 +75,7 @@ class BatchImageSegmentation(Notifier):
             Report current state
             """
 
-            kwargs = {"progress": (iN + 1) / 2 * 100,
+            kwargs = {"progress": (iN + 1) / n_images * 100,
                       "current_image": {"image_id": iN,
                                         "path": image_path}}
             self._call_update_listeners(str(round(kwargs.get("progress")))+" %")

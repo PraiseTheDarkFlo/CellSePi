@@ -1,5 +1,6 @@
 
 import flet as ft
+from scipy.constants import value
 
 from . import gui_options as op
 from .gui_canvas import Canvas
