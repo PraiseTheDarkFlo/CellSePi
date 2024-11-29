@@ -68,6 +68,7 @@ class BatchImageSegmentation(Notifier):
             res = model.eval(image, diameter=diameter, channels=[0, 0])
             mask, flow, style = res[:3]
 
+            #TODO output benennung muss variabel sein (nicht immer _seg)
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
             directory, filename = os.path.split(image_path)
@@ -84,7 +85,7 @@ class BatchImageSegmentation(Notifier):
                                         "path": image_path}}
             self._call_update_listeners(str(round(kwargs.get("progress")))+" %")
 
-        # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
+        #TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(mask_paths)
 
 

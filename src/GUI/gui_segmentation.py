@@ -60,6 +60,7 @@ def create_segmentation_card(gui: GUI):
         #progress_bar_text.value = "0%"
         model_text.disabled = True
         choose_model.disabled = True
+        fl_button.visible = False
         gui.page.update()
         segmentation_instance.run()
 
@@ -85,8 +86,11 @@ def create_segmentation_card(gui: GUI):
         stop_button.visible = False
         fl_button.visible = True
         fl_button.disabled = False
+        start_button.visible = True
+        start_button.disabled = False
+        model_text.disabled = False
+        choose_model.disabled = False
         gui.page.update()
-        #TODO fluoreszenz button soll on click die funktion starten
 
     def update_progress_bar(progress):
         print("update")
@@ -96,9 +100,12 @@ def create_segmentation_card(gui: GUI):
             progress_bar.value = int(extracted_num.group())/100
         gui.page.update()
 
+#TODO wenn neue files ausgewählt werden muss fluoreszenz button verschwinden
+#TODO modell muss neu ausgewählt werden können
     def fluorescence_readout(e):
         fluorescence.readout_fluorescence()
         fl_button.disabled = True
+        start_button.disabled = True
         progress_bar_text.value = "Reading fluorescence"
         gui.page.update()
 
@@ -123,9 +130,7 @@ def create_segmentation_card(gui: GUI):
     pick_model_row = ft.Row(
         [
             ft.Container(content=ft.Row([progress_bar,progress_bar_text])),
-            start_button,
-            stop_button,
-            fl_button
+            ft.Container(content=ft.Row([start_button,stop_button,fl_button]))
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
     )
 
