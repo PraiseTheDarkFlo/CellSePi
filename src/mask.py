@@ -5,6 +5,7 @@ import flet.canvas as fc
 import numpy as np
 import pathlib
 import platform
+from PIL import Image
 
 #im Moment werden die immer überschrieben. Es wäre eigentlich besser wenn er sich die abspeichert, die er schon mal geladen hat
 #dann muss er nur noch darauf zugreifen
@@ -12,7 +13,8 @@ class Mask:
     def __init__(self):
         self.csp= CellSePi()
         self.cells=[]
-        self.rectangles=[]
+        self.rectangles=[] #[image_id, data points]
+        self.mask_outputs= [] #[image_id,path zu .png]
 
     def load_mask_into_canvas(self):
 
@@ -21,29 +23,44 @@ class Mask:
         #if self.csp.image_id in self.csp.mask_paths:
         #self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
 
-        # hier den Path setzen, wenn das Betriebssystem Windows ist.
-        current_path = pathlib.PosixPath
-        if platform.system() == "Windows":
-            pathlib.PosixPath=pathlib.WindowsPath
+        # if operating system is Windows set the pathLib to Windows path
+        if self.csp.image_id not in self.mask_outputs:
+            current_path = pathlib.PosixPath
+            if platform.system() == "Windows":
+                pathlib.PosixPath=pathlib.WindowsPath
 
-        mask_data = np.load("xy01c1_seg.npy", allow_pickle=True).item()
-        #print(type(mask_data))
-        mask= mask_data["masks"]
-        outline = mask_data["outlines"]
-        #mask_converted =self.convert_npy_to_canvas(mask,outline)
-        self.convert_npy_to_canvas(mask,outline)
+            #load the npy file and convert it to directory
+            mask_data = np.load("xy01c1_seg.npy", allow_pickle=True).item()
 
-        #convert the Path back to normal
-        pathlib.PosixPath=current_path
+            #extract the mask data and the outline of the cell
+            mask= mask_data["masks"]
+            outline = mask_data["outlines"]
+            #mask_converted =self.convert_npy_to_canvas(mask,outline)
+            self.convert_npy_to_canvas(mask,outline)
+
+            #convert the Path back to normal
+            pathlib.PosixPath=current_path
+        else:
+            print(f"mask of {self.csp.image_id} was fetched before")
+            return self.mask_outputs["image_id"==self.csp.image_id]
 
 
 
     def convert_npy_to_canvas(self,mask, outline):
-        mask_ids = np.unique(mask)[1:]
-       # image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
-       # image_mask[mask != 0] = (255, 0, 0, 128)
-       # image_mask[outline != 0] = (0, 255, 0, 255)
+        # Variant #1
 
+        mask_ids = np.unique(mask)[1:]
+
+        image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
+        image_mask[mask != 0] = (255, 0, 0, 128)
+        image_mask[outline != 0] = (0, 255, 0, 255)
+        im= Image.fromarray(image_mask).convert("RGBA")
+        im.resize(size=(700,500))
+        im.save(f"image_xy01c1_seg.png")
+        path="..\image_xy01c1_seg.png"
+        self.mask_outputs.append({"image_id":mask_ids,"path":path})
+
+        #Attempt #1 to save the cells as data points for the adaptation of cells
         for y in range(mask.shape[0]):
             for x in range(mask.shape[1]):
                 rgba = [0, 0, 0, 0]  # Standard schwarz/transparenz
@@ -57,6 +74,7 @@ class Mask:
 
 
         print("Ich bin in der Methode gewesen")
+        rectangles=[]
         cell_size = 50
         for cell in self.cells:
             x, y, color = cell["x"], cell["y"], cell["color"]
@@ -70,7 +88,9 @@ class Mask:
                     paint=ft.Paint(color=color)
                 )
                 print("Rec created ")
-                self.rectangles.append(rectangle)
+                rectangles.append(rectangle)
+                self.rectangles.append({"image_id":mask_ids,"data":rectangles})
+
             if outline[y,x] != 0:
                 rect=  fc.Rect(
                             x * cell_size,
@@ -80,13 +100,13 @@ class Mask:
                             paint=ft.Paint(color=color),
                         )
                 print("outline created ")
-                self.rectangles.append(rect)
+                rectangles.append(rect)
+                self.rectangles.append({"image_id": mask_ids, "data": rectangles})
 
-        print(len(self.rectangles))
 
-        #im= Image.fromarray(image_mask).convert("RGBA")
-        #im.resize(size=(700,500))
-        #im.save(f"image_xy01c1_seg.png")
+                print(len(self.rectangles))
+
+
 
 
 

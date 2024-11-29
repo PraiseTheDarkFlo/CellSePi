@@ -20,6 +20,7 @@ class GUI:
         self.count_results_txt = ft.Text(value="Results: 0")
         self.is_lif = ft.Switch(label="Lif", value=True)
         self.switch_mask = ft.Switch(label="Mask", value=False)
+        self.drawing_button= ft.ElevatedButton(text="Tools")
         self.page.window.width = 1200
         self.page.window.height = 825
         self.page.window_left = 200
@@ -47,7 +48,7 @@ class GUI:
                                 [
                                     self.canvas.canvas_card
                                     ,
-                                    ft.Row([self.switch_mask]),
+                                    ft.Row([self.switch_mask,self.drawing_button]),
                                     self.gui_config,
                                     self.segmentation_card
                                 ],
@@ -82,10 +83,12 @@ class GUI:
                 #self.mask.load_mask_into_canvas()
                 #self.canvas.canvas.shapes.append(self.mask.rectangles)
                 self.canvas.container_canvas.visible=True
+                self.canvas.container_mask.visible=True
 
             else:
                 print("off")
                 self.canvas.container_canvas.visible=False
+                self.canvas.container_mask.visible=False
 
             self.page.update()
         self.switch_mask.on_change = update_view_mask
