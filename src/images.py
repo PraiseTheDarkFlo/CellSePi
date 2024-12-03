@@ -6,7 +6,7 @@ import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-#from data_util import load_image_to_numpy
+from data_util import load_image_to_numpy
 import pandas as pd
 
 from notifier import Notifier
@@ -74,7 +74,7 @@ class BatchImageSegmentation(Notifier):
             """ 
             Report current state
             """
-
+            #review: vielleicht die kwargs an BatchImageReadout anpassen
             kwargs = {"progress": (iN + 1) / n_images * 100,
                       "current_image": {"image_id": iN,
                                         "path": image_path}}
@@ -188,7 +188,7 @@ class BatchImageReadout(Notifier):
             """ 
             Report current state
             """
-            kwargs = {"progress": (iN + 1) / n_images * 100,
+            kwargs = {"progress": int((iN + 1) / n_images * 100),
                       "current_image": {"image_id": image_id}}
             self._call_update_listeners(**kwargs)
 

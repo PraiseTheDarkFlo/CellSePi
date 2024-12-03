@@ -14,13 +14,13 @@ from notifier import Notifier
 
 #the class readout the fluorescence values of the segmented cells
 class Fluorescence(Notifier):
-    def __init__(self):
+    def __init__(self, CellSePi):
         super().__init__()
-        self.csp= CellSePi()
-        self.fluorescence_button= ft.ElevatedButton(text= "Readout fluorescence",
+        self.csp= CellSePi
+        self.fluorescence_button= ft.ElevatedButton(text= "Readout Fluorescence",
                                                     icon=ft.icons.FILE_DOWNLOAD,
-                                                    disabled=True,
-                                                    visible=False)
+                                                    disabled=False,
+                                                    visible=True)
 
 
 #method handling the readout
@@ -29,9 +29,9 @@ class Fluorescence(Notifier):
     def readout_fluorescence(self):
         #TODO hier noch einen aufruf von start_listeners hin, der mitbekommt , ob ein fehler geworfen wird
         if self.check_readout_possible():
-            def on_update(progress):
+            def on_update(progress,current_image):
                 print(f"{progress}% is progressed")
-                self._call_update_listeners(progress.get("progress"))
+                self._call_update_listeners(str(progress)+"%")
 
 
             def completed_readout(readout, readout_path):
@@ -79,7 +79,7 @@ class Fluorescence(Notifier):
         if self.csp.readout_thread is not None and self.csp.readout_thread.is_alive():
             print("Already occupied")
             return False
-        if self.csp.image_paths is None or len(self.csp.images) ==0 :
+        if self.csp.image_paths is None or len(self.csp.image_paths) ==0 :
             print("No image to process")
             return False
         return True

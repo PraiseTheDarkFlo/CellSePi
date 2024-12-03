@@ -21,7 +21,7 @@ class GUI:
         self.count_results_txt = ft.Text(value="Results: 0")
         self.is_lif = ft.Switch(label="Lif", value=True)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Tools")
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded")
         self.page.window.width = 1200
         self.page.window.height = 825
         self.page.window_left = 200
@@ -81,7 +81,8 @@ class GUI:
         def update_view_mask(e):
             if self.switch_mask.value:
                 print("on")
-                #self.mask.load_mask_into_canvas()
+                self.mask.load_mask_into_canvas()
+                self.canvas.container_mask.image.src=f"mask_{self.csp.image_id}.png"
                 #self.canvas.canvas.shapes.append(self.mask.rectangles)
                 self.canvas.container_canvas.visible=True
                 self.canvas.container_mask.visible=True

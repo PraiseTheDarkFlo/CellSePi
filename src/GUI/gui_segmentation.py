@@ -5,6 +5,7 @@ from . import GUI
 from ..fluorescence import Fluorescence
 from ..segmentation import segmentation
 from ..notifier import Notifier
+import src.GUI.gui_directory
 
 
 #class gui_segmentation(GUI):
@@ -45,7 +46,7 @@ def create_segmentation_card(gui: GUI):
         on_click = None,
     )
 
-    fluorescence = Fluorescence()
+    fluorescence = Fluorescence(gui.csp)
 
     fl_button = fluorescence.fluorescence_button
 
@@ -90,6 +91,7 @@ def create_segmentation_card(gui: GUI):
         start_button.disabled = False
         model_text.disabled = False
         choose_model.disabled = False
+
         gui.page.update()
 
     def update_progress_bar(progress):
@@ -114,7 +116,7 @@ def create_segmentation_card(gui: GUI):
         progress_bar_text.value = "0 %"
         gui.page.update()
 
-    def complete_fl(e):
+    def complete_fl():
         progress_bar.value = 0
         progress_bar_text.value = "Ready to start"
         gui.page.update()
