@@ -297,6 +297,18 @@ class ConfigFile:
         else:
             raise ValueError("Didnt find a profile at this index")
 
+    def is_profile_existing(self, name: str):
+        """
+        Checks if a profile exists.
+
+        Args:
+            name (str): The name of the profile.
+
+        Returns:
+            Boolean: True if the profile exists, False otherwise.
+        """
+        return name in self.config["Profiles"]
+
     #------------------------------------------
     #getter for the selected profiles Attributes
 

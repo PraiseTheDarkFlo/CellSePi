@@ -72,19 +72,19 @@ class App(tk.Tk):
                                                  )
         self.checkbutton_is_lif.pack(anchor=tk.W)
 
-        self.text_input_bright_field_channel = custom_widgets.TextInput(self.left_panel, label="Bright Field Channel:")
+        self.text_input_bright_field_channel = custom_widgets_old.TextInput(self.left_panel, label="Bright Field Channel:")
         self.text_input_bright_field_channel.pack(fill="x", padx=padx, pady=pady)
         self.text_input_bright_field_channel.entry.insert(0, 1)
 
-        self.text_input_channel_prefix = custom_widgets.TextInput(self.left_panel, label="Channel Prefix:")
+        self.text_input_channel_prefix = custom_widgets_old.TextInput(self.left_panel, label="Channel Prefix:")
         self.text_input_channel_prefix.pack(fill="x", padx=padx, pady=pady)
         self.text_input_channel_prefix.entry.insert(0, "c")
 
-        self.text_input_mask_suffix = custom_widgets.TextInput(self.left_panel, label="Mask Suffix:")
+        self.text_input_mask_suffix = custom_widgets_old.TextInput(self.left_panel, label="Mask Suffix:")
         self.text_input_mask_suffix.pack(fill="x", padx=padx, pady=pady)
         self.text_input_mask_suffix.entry.insert(0, "_seg")
 
-        self.text_input_diameter = custom_widgets.TextInput(self.left_panel, label="Diameter:")
+        self.text_input_diameter = custom_widgets_old.TextInput(self.left_panel, label="Diameter:")
         self.text_input_diameter.pack(fill="x", padx=padx, pady=pady)
         self.text_input_diameter.entry.insert(0, 250.0)
 
@@ -118,7 +118,7 @@ class App(tk.Tk):
         self.image_frame = ttk.Frame(self.right_panel, borderwidth=1, relief=tk.RAISED)
         self.image_frame.pack(fill='both', expand=True, padx=5, pady=5)
 
-        self.s_frame = custom_widgets.ScrollableFrame(self.image_frame, x=True, y=True)
+        self.s_frame = custom_widgets_old.ScrollableFrame(self.image_frame, x=True, y=True)
         self.s_frame.pack(fill="both", expand=True)
 
         # for iX in range(200):
@@ -211,7 +211,7 @@ class App(tk.Tk):
         self.image_views = []
         for image_id in image_paths:
             cur_image_paths = image_paths[image_id]
-            image_channel_view = custom_widgets.ImageChannelView(self.s_frame.frame, image_id, cur_image_paths,
+            image_channel_view = custom_widgets_old.ImageChannelView(self.s_frame.frame, image_id, cur_image_paths,
                                                                  bit_depth=bit_depth,
                                                                  on_click_listener=self.on_image_click)
             image_channel_view.pack(fill="x", pady=2)

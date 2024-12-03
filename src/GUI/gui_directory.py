@@ -24,7 +24,7 @@ def format_directory_path(dir_path, max_length=30):
     return path
 
 def update_results_text(gui: GUI):
-    gui.count_results_txt.value = f"Results: {len(gui.image_gallery.controls)}"
+    gui.count_results_txt.value = f"Results: {len(gui.csp.image_paths)}"
     gui.count_results_txt.update()
 
 #adds the directory in to the clipboard and opens the snack_bar and say that it has been copied
@@ -95,6 +95,7 @@ def create_directory_card(gui: GUI):
         gui.csp.mask_paths = mask_paths
         print(f"Selected Directory: {dirname}")
         print(f"This directory contains {len(image_paths)} unique image ids.")
+
         print(f"This directory contains {len(mask_paths)} unique mask ids.")
 
         is_lif = gui.is_lif.value

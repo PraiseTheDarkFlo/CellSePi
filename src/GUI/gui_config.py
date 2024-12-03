@@ -1,6 +1,7 @@
 import flet as ft
 from . import GUI
-from ..config_file import ConfigFile
+from ..config_file import ConfigFile, create_default_config
+
 
 class GUIConfig:
     """
@@ -149,7 +150,7 @@ class GUIConfig:
                 ),
                 "button": ft.TextButton(
                     content=ft.Text(profile, size=20),
-                    on_click=lambda e, i=i: self.selected_profile_changed(e, i),
+                    on_click=lambda e, i=i: self.selected_profile_changed(e, i,True),
                     width=200,
                     visible = True
                 )
@@ -157,7 +158,7 @@ class GUIConfig:
             for i, profile in enumerate(self.config_class.config["Profiles"])
         ]
 
-    def selected_profile_changed(self,e, index):
+    def selected_profile_changed(self,e, index, called_by_overlay: bool = None):
         """
         Handles the event when a profile is selected, updates the profile attributes,
         and closes the profile selection overlay.
@@ -165,6 +166,7 @@ class GUIConfig:
         Args:
             e (Event): The event representing the user's profile selection.
             index (int): The index of the selected profile.
+            called_by_overlay (bool): Whether the overlay is called by overlay.
 
         Behavior:
         -   Selects the profile based on the provided index.
@@ -183,7 +185,8 @@ class GUIConfig:
         self.txt_ms_ref.current.color = None
         self.txt_cp_ref.current.color = None
         self.txt_d_ref.current.color = None
-        self.page.close(self.profile_chooser_overlay)
+        if called_by_overlay:
+            self.page.close(self.profile_chooser_overlay)
         self.page.update()
 
     def remove_profile(self,e, idx):
@@ -224,6 +227,26 @@ class GUIConfig:
             alignment=ft.MainAxisAlignment.CENTER,
         )
         self.profile_chooser_overlay.content = new_content
+
+    def add_profile_pressed(self,e):
+        """
+        Handles the event for adding a new profile.
+
+        Args:
+            e (Event): The event triggered by the action to add a profile.
+        """
+        default = create_default_config()["Profiles"]["Tif"]
+        counter = 0
+        new_name = "new Profile"
+
+        while self.config_class.is_profile_existing(new_name):
+            counter += 1
+            new_name = "new Profile" + str(counter)
+
+        self.config_class.add_profile(new_name,default["bf_channel"],default["mask_suffix"],default["channel_prefix"],default["diameter"])
+        self.selected_profile_changed(e, self.config_class.name_to_index(new_name))
+        self.update_overlay()
+        self.page.update()
 
     def create_list_items(self):
         """
@@ -419,7 +442,6 @@ class GUIConfig:
             value=self.config_class.get_diameter(),
             ref=self.txt_d_ref,
             on_blur=lambda e: self.d_updater(e),
-            keyboard_type=ft.KeyboardType.NUMBER,
             width=200,
             height=60,
         )
@@ -433,12 +455,18 @@ class GUIConfig:
             controls=[
                 ft.Text("Profile:", size=18),
                 ft.TextButton(
-                    content=ft.Text(self.config_class.get_selected_profile_name(), size=18,ref=self.profile_ref),
+                    content=ft.Text(self.config_class.get_selected_profile_name(), size=18, ref=self.profile_ref),
                     style=ft.ButtonStyle(color=ft.colors.BLUE),
                     on_click=lambda e: e.control.page.open(
                         self.profile_chooser_overlay
                     ),
                 ),
+                ft.IconButton(
+                    icon=ft.Icons.LIBRARY_ADD_ROUNDED,
+                    content=ft.Text("Add Profile", size=18),
+                    on_click=lambda e: self.add_profile_pressed(e)
+                ),
+
             ],
         )
 
