@@ -319,7 +319,7 @@ class GUIConfig:
             self.txt_bf_ref.current.color = None
             self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel only allows counting numbers, greater than 0"))
+            self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel only allows counting numbers, greater than 0!"))
             self.page.snack_bar.open = True
             self.txt_bf_ref.current.color = ft.colors.RED
             self.page.update()
@@ -382,7 +382,7 @@ class GUIConfig:
             self.txt_d_ref.current.color = None
             self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Diameter only allows decimals numbers, greater than 0"))
+            self.page.snack_bar = ft.SnackBar(ft.Text("Diameter only allows decimals numbers, greater than 0!"))
             self.page.snack_bar.open = True
             self.txt_d_ref.current.color = ft.colors.RED
             self.page.update()
@@ -464,6 +464,7 @@ class GUIConfig:
                 ft.IconButton(
                     icon=ft.Icons.LIBRARY_ADD_ROUNDED,
                     content=ft.Text("Add Profile", size=18),
+                    tooltip="Add new Profile",
                     on_click=lambda e: self.add_profile_pressed(e)
                 ),
 

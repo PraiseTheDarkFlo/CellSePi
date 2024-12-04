@@ -62,9 +62,7 @@ class GUI:
                                     self.directory_card,
                                     ft.Card(
                                         content=ft.Container(self.image_gallery,padding=20),
-                                        width=self.page.width * (1 / 3),
-                                        expand=True,
-                                        aspect_ratio=4
+                                        expand=True
                                     ),
                                 ],
                                 expand=True,

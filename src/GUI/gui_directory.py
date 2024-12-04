@@ -38,19 +38,24 @@ def copy_directory_to_clipboard(e,gui: GUI):
 def create_directory_card(gui: GUI):
     #handels the directory picking result
     def get_directory_result(e: ft.FilePickerResultEvent):
-        if gui.is_lif.value:
-            path = e.files[0].path
+        if not(e.files is None and e.path is None):
+            if gui.is_lif.value:
+                path = e.files[0].path
+            else:
+                path = e.path
+            if path:
+                gui.directory_path.value = path
+                select_directory(path)
+                load_images()
+            else:
+                gui.image_gallery.controls.clear()
+                gui.image_gallery.update()
+            gui.formatted_path.value = format_directory_path(gui.directory_path)
+            gui.formatted_path.update()
         else:
-            path = e.path
-        if path:
-            gui.directory_path.value = path
-            select_directory(path)
-            load_images()
-        else:
-            gui.image_gallery.controls.clear()
-            gui.image_gallery.update()
-        gui.formatted_path.value = format_directory_path(gui.directory_path)
-        gui.formatted_path.update()
+            gui.page.snack_bar = ft.SnackBar(ft.Text("No directory selected or selection process canceled!"))
+            gui.page.snack_bar.open = True
+            gui.page.update()
 
 
     def select_directory(dir):
@@ -84,6 +89,14 @@ def create_directory_card(gui: GUI):
         ms = gui.csp.config.get_mask_suffix()
 
         image_paths, mask_paths = load_directory(dirname, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
+        if len(image_paths) == 0:
+            gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files!"))
+            gui.page.snack_bar.open = True
+            gui.page.update()
+            gui.count_results_txt.color = ft.Colors.RED
+        else:
+            gui.count_results_txt.color = None
+
         gui.csp.image_paths = image_paths
         gui.csp.mask_paths = mask_paths
         print(f"Selected Directory: {dirname}")
@@ -115,6 +128,9 @@ def create_directory_card(gui: GUI):
     #load images to gallery in order and with names
     def load_images():
         gui.image_gallery.controls.clear()
+        gui.canvas.main_image.content = ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+                                    fit=ft.ImageFit.SCALE_DOWN)
+        gui.canvas.main_image.update()
 
         # Display groups with side-by-side images
         for image_id in gui.csp.image_paths:
@@ -176,7 +192,7 @@ def create_directory_card(gui: GUI):
             ft.ElevatedButton(
                 "Pick Files",
                 icon=ft.icons.UPLOAD_FILE,
-                on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False, initial_directory=home_dir),
+                on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False),
             )
         ], alignment=ft.MainAxisAlignment.START  # Change alignment to extend fully to the left
     )
@@ -212,7 +228,7 @@ def create_directory_card(gui: GUI):
                                     subtitle=gui.count_results_txt
                                 ), ft.Row([gui.is_lif,
                                            directory_row,
-                                           files_row, ], alignment=ft.MainAxisAlignment.START  # Extend buttons fully
+                                           files_row, ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                                           )
                             ]
                         )
@@ -230,7 +246,6 @@ def create_directory_card(gui: GUI):
                 ]
 
             ),
-            width=gui.page.width * (2 / 3),  # Change to extend fully for wider view
-            padding=10
+            padding=10,
         )
     )

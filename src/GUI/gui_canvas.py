@@ -38,10 +38,7 @@ class Canvas:
     def create_canvas_card(self):
         return ft.Card(
             content=ft.Stack([self.main_image,self.container_mask ,self.container_canvas ]),
-            width=700,
-            height=500,
-            expand=True,
-            aspect_ratio=2
+            expand=True
         )
 
     def pan_start(self,e: ft.DragStartEvent):
