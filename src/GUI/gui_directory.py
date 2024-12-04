@@ -169,7 +169,7 @@ def create_directory_card(gui: GUI):
                 on_click=lambda _: get_directory_dialog.get_directory_path(),
                 disabled=gui.page.web,
             ),
-        ], alignment=ft.MainAxisAlignment.END
+        ], alignment=ft.MainAxisAlignment.START  # Change alignment to extend fully to the left
     )
     files_row = ft.Row(
         [
@@ -178,7 +178,7 @@ def create_directory_card(gui: GUI):
                 icon=ft.icons.UPLOAD_FILE,
                 on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False, initial_directory=home_dir),
             )
-        ], alignment=ft.MainAxisAlignment.END
+        ], alignment=ft.MainAxisAlignment.START  # Change alignment to extend fully to the left
     )
     #create the handlers
     get_directory_dialog = ft.FilePicker(on_result=get_directory_result)
@@ -212,7 +212,7 @@ def create_directory_card(gui: GUI):
                                     subtitle=gui.count_results_txt
                                 ), ft.Row([gui.is_lif,
                                            directory_row,
-                                           files_row, ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                           files_row, ], alignment=ft.MainAxisAlignment.START  # Extend buttons fully
                                           )
                             ]
                         )
@@ -230,8 +230,7 @@ def create_directory_card(gui: GUI):
                 ]
 
             ),
-            width=gui.page.width * (1 / 3),
+            width=gui.page.width * (2 / 3),  # Change to extend fully for wider view
             padding=10
         )
     )
-
