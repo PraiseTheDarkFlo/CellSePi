@@ -132,7 +132,7 @@ def create_directory_card(gui: GUI):
                                     width=150,
                                     fit=ft.ImageFit.CONTAIN
                                 ),
-                                on_tap=lambda e, path=img_path,img_id = image_id, g=gui: on_image_click(e, path,img_id, g)
+                                on_tap=lambda e, path=cur_image_paths[img_path],img_id = image_id, g=gui: on_image_click(e, path,img_id, g)
                             ),
                             ft.Text(img_path, size=10, text_align="center"),
                         ],
