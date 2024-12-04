@@ -154,7 +154,7 @@ def create_directory_card(gui: GUI):
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 spacing=10,
-                scroll=ft.ScrollMode.HIDDEN,
+                scroll=ft.ScrollMode.AUTO,
             )
             gui.image_gallery.controls.append(
                 ft.Column(
