@@ -1,9 +1,7 @@
 import os
 import pathlib
-from tkinter.filedialog import askopenfilename, askdirectory
 
 import flet as ft
-from PIL import Image
 
 from . import GUI
 from .gui_canvas import on_image_click
@@ -35,11 +33,6 @@ def copy_directory_to_clipboard(e,gui: GUI):
     gui.page.snack_bar = ft.SnackBar(ft.Text("Directory path copied to clipboard!"))
     gui.page.snack_bar.open = True
     gui.page.update()
-
-def on_row_hover(e,row:ft.Row,gui: GUI):
-    print("Test")
-    row.scroll = ft.ScrollMode.ALWAYS
-    gui.image_gallery.update()
 
 #creates the directory card with all event handlers
 def create_directory_card(gui: GUI):
