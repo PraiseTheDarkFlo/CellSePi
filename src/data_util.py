@@ -27,8 +27,14 @@ def organize_files(files, channel_prefix, mask_suffix=""):
                                 Image Id: {image_id}
                                 Channel Id: {channel_id}
                                 Path: {file}""")
+
             id_to_file[image_id][channel_id] = file
 
+    #sorting the Channel IDs
+    for image_id in id_to_file:
+        id_to_file[image_id] = dict(sorted(id_to_file[image_id].items()))
+    #sorting the Image IDs
+    id_to_file = dict(sorted(id_to_file.items()))
     return id_to_file
 
 

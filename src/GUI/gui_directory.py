@@ -3,6 +3,8 @@ import pathlib
 from tkinter.filedialog import askopenfilename, askdirectory
 
 import flet as ft
+from PIL import Image
+
 from . import GUI
 from .gui_canvas import on_image_click
 from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory
@@ -45,20 +47,13 @@ def create_directory_card(gui: GUI):
         if path:
             gui.directory_path.value = path
             select_directory(path)
-            load_images_from_directory(path)
+            load_images()
         else:
             gui.image_gallery.controls.clear()
             gui.image_gallery.update()
         gui.formatted_path.value = format_directory_path(gui.directory_path)
         gui.formatted_path.update()
 
-
-
-    def load_images_from_directory(path):
-        image_files = [f for f in os.listdir(path) if
-                       f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.lif', '.tif'))]
-        images = [os.path.join(path, f) for f in image_files]
-        load_images(images)
 
     def select_directory(dir):
         is_lif = gui.is_lif.value
@@ -120,28 +115,49 @@ def create_directory_card(gui: GUI):
         return image_paths, mask_paths"""
 
     #load images to gallery in order and with names
-    def load_images(images):
-            gui.image_gallery.controls.clear()
-            for img_path in images:
-                file_name = os.path.basename(img_path)
-                file_name = file_name.split('.')[0]
-                current_image = ft.Image(src=img_path, height=200, width=200, fit=ft.ImageFit.COVER)
-                current_image_container = ft.GestureDetector(
-                    content=current_image,
-                    on_tap=lambda e, path=img_path,g=gui: on_image_click(e, path,gui)
-                )
-                img_container = ft.Column(
+    def load_images():
+        gui.image_gallery.controls.clear()
+
+        # Display groups with side-by-side images
+        for image_id in gui.csp.image_paths:
+            cur_image_paths = gui.csp.image_paths[image_id]
+            group_row = ft.Row(
+                [
+                    ft.Column(
+                        [
+                            ft.GestureDetector(
+                                content=ft.Image(
+                                    src=cur_image_paths[img_path],
+                                    height=150,
+                                    width=150,
+                                    fit=ft.ImageFit.CONTAIN
+                                ),
+                                on_tap=lambda e, path=img_path,img_id = image_id, g=gui: on_image_click(e, path,img_id, g)
+                            ),
+                            ft.Text(img_path, size=10, text_align="center"),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=5
+                    )
+                    for img_path in cur_image_paths
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                spacing=10
+            )
+            gui.image_gallery.controls.append(
+                ft.Column(
                     [
-                        ft.Text(file_name, weight="bold"),  # Name über dem Bild
-                        current_image_container,
+                        ft.Text(f"{image_id}", weight="bold",text_align=ft.TextAlign.CENTER),
+                        group_row
                     ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=5  # Abstand zwischen Text und Bild
+                    spacing=10,
+                    alignment = ft.MainAxisAlignment.CENTER
                 )
-                gui.image_gallery.controls.append(img_container)
-            gui.image_gallery.update()
-            update_results_text(gui)
+            )
+
+        gui.image_gallery.update()
+        update_results_text(gui)
 
 
     #create the rows for directory/file picking
@@ -210,15 +226,13 @@ def create_directory_card(gui: GUI):
                                 on_click=lambda e,g=gui: copy_directory_to_clipboard(e,gui)
                             ),
                             alignment=ft.alignment.top_right,
-                        ),
-                        expand=True,
+                        )
                     )
                 ]
 
             ),
             width=gui.page.width * (1 / 3),
-            padding=10,
-            expand=True
+            padding=10
         )
     )
 
