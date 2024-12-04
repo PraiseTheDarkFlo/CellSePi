@@ -90,7 +90,7 @@ def create_directory_card(gui: GUI):
 
         image_paths, mask_paths = load_directory(dirname, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
         if len(image_paths) == 0:
-            gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files!"))
+            gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current Channel Prefix!"))
             gui.page.snack_bar.open = True
             gui.page.update()
             gui.count_results_txt.color = ft.Colors.RED
