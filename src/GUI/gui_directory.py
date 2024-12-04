@@ -36,6 +36,11 @@ def copy_directory_to_clipboard(e,gui: GUI):
     gui.page.snack_bar.open = True
     gui.page.update()
 
+def on_row_hover(e,row:ft.Row,gui: GUI):
+    print("Test")
+    row.scroll = ft.ScrollMode.ALWAYS
+    gui.image_gallery.update()
+
 #creates the directory card with all event handlers
 def create_directory_card(gui: GUI):
     #handels the directory picking result
@@ -143,7 +148,8 @@ def create_directory_card(gui: GUI):
                     for img_path in cur_image_paths
                 ],
                 alignment=ft.MainAxisAlignment.START,
-                spacing=10
+                spacing=10,
+                scroll=ft.ScrollMode.HIDDEN,
             )
             gui.image_gallery.controls.append(
                 ft.Column(
