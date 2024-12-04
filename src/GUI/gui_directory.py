@@ -52,10 +52,6 @@ def create_directory_card(gui: GUI):
                 gui.image_gallery.update()
             gui.formatted_path.value = format_directory_path(gui.directory_path)
             gui.formatted_path.update()
-        else:
-            gui.page.snack_bar = ft.SnackBar(ft.Text("No directory selected or selection process canceled!"))
-            gui.page.snack_bar.open = True
-            gui.page.update()
 
 
     def select_directory(dir):
