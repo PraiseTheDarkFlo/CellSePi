@@ -53,7 +53,6 @@ class GUIConfig:
                     controls=self.create_list_items(),
                     height=self.calc_height(),
                     width=350,
-                    auto_scroll=True,
                     spacing=10
                 )],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -220,7 +219,6 @@ class GUIConfig:
                     controls=new_picker_items,
                     height=self.calc_height(),
                     width=350,
-                    auto_scroll=True,
                     spacing=10
                 )
             ],
@@ -282,7 +280,7 @@ class GUIConfig:
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                 )
-                for i in range(len(self.config_class.config["Profiles"]))
+                for i in reversed(range(len(self.config_class.config["Profiles"])))
             ]
         else:
             return [
