@@ -22,7 +22,7 @@ class GUI:
         self.is_lif = ft.Switch(label="Lif", value=True)
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded")
-        self.page.window.width = 1200
+        self.page.window.width = 1400
         self.page.window.height = 825
         self.page.window_left = 200
         self.page.window_top = 50
@@ -61,10 +61,8 @@ class GUI:
                                 [
                                     self.directory_card,
                                     ft.Card(
-                                        content=self.image_gallery,
-                                        width=self.page.width * (1 / 3),
-                                        expand=True,
-                                        aspect_ratio=4
+                                        content=ft.Container(self.image_gallery,padding=20),
+                                        expand=True
                                     ),
                                 ],
                                 expand=True,

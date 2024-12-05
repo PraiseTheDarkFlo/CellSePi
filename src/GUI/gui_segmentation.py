@@ -166,7 +166,6 @@ def create_segmentation_card(gui: GUI):
                     choose_model
                 ]
             ),
-            width=gui.page.width * (3 / 4),
             padding=10
         ),
     )
