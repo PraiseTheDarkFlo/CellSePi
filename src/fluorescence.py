@@ -33,7 +33,7 @@ class Fluorescence(Notifier):
         if self.check_readout_possible():
             def on_update(progress,current_image):
                 print(f"{progress}% is progressed")
-                self._call_update_listeners(progress)
+                self._call_update_listeners(progress, current_image)
 
 
             def completed_readout(readout, readout_path):
