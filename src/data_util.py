@@ -91,18 +91,18 @@ def extract_from_lif_file(lif_path, target_dir):
     # target_dir = lif_path.parent / "output/"
 
     lif_path = pathlib.Path(lif_path)
+    if lif_path.suffix == ".lif":
+        lif = LifFile(lif_path)
 
-    lif = LifFile(lif_path)
+        os.makedirs(target_dir, exist_ok=True)
 
-    os.makedirs(target_dir, exist_ok=True)
-
-    for series in lif.get_iter_image():
-        img_id = series.info["name"]
-        n_channels = series.channels
-        for channel_id in range(n_channels):
-            img = series.get_frame(c=channel_id)
-            img.save(target_dir / f"{img_id}c{channel_id + 1}.tif")
-            pass
+        for series in lif.get_iter_image():
+            img_id = series.info["name"]
+            n_channels = series.channels
+            for channel_id in range(n_channels):
+                img = series.get_frame(c=channel_id)
+                img.save(target_dir / f"{img_id}c{channel_id + 1}.tif")
+                pass
 
 
 def load_image_to_numpy(path):

@@ -90,6 +90,7 @@ def create_directory_card(gui: GUI):
             gui.page.snack_bar.open = True
             gui.page.update()
             gui.count_results_txt.color = ft.Colors.RED
+            os.rmdir(gui.csp.working_directory)
         else:
             gui.count_results_txt.color = None
 
