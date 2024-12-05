@@ -14,6 +14,11 @@ from src.CellSePi import CellSePi
 import flet as ft
 from notifier import Notifier
 
+# REVIEW Conclusion: wir sollten uns überlegen, ob alle Funktionalität vom Button in gui_segmentation gelegt werden soll,
+# weil ein button halt zur GUI gehört, aber er gehört natürlich auch zur fluoreszenz (frage nach höherer cohesion).
+# Wenn man den button in gui_segmentation verlagert muss nur noch zusätzlich ein listener hinzugefügt werden. Ansonsten
+# müssen wir uns noch einigen, wie wir Kommentare handhaben wollen, damit wir es auch einheitlich machen (aber so hast du eigentlich genug Kommentare).
+
 #the class readout the fluorescence values of the segmented cells
 class Fluorescence(Notifier):
     def __init__(self, CellSePi):
@@ -23,18 +28,18 @@ class Fluorescence(Notifier):
                                                     icon=ft.icons.FILE_DOWNLOAD,
                                                     disabled=False,
                                                     visible=True)
-
+#REVIEW: vielleicht sollten wir den button lieber in gui_segmentation tun -> bessere "cohesion"
 
 #method handling the readout
     #if currently no readout is done-> the process is started and the file saved
     #else readout not possible -> error message occurs
     def readout_fluorescence(self):
-        #TODO hier noch einen aufruf von start_listeners hin, der mitbekommt , ob ein fehler geworfen wird
+        #REVIEW: hier noch einen aufruf von start_listeners hin, der mitbekommt, ob ein fehler geworfen wird (also False mitgeben) -> vielleicht wollen wir dann auch so einen Banner unten einfügen
+        #        -> damit ich in gui_segmentation das mitbekomme
         if self.check_readout_possible():
             def on_update(progress,current_image):
                 print(f"{progress}% is progressed")
                 self._call_update_listeners(progress, current_image)
-
 
             def completed_readout(readout, readout_path):
                 print("fluorescence values readout")
@@ -47,6 +52,7 @@ class Fluorescence(Notifier):
 
             print("Preparing readout")
             self.csp.readout_running=True
+            # REVIEW: hier könnte man einen start_listener aufrufen mit True, dass die fluorezenz-berechnung gestartet wurde
             self.fluorescence_button.disabled=True #button auf disabled setzen
 
             brightfield_channel = self.csp.config.get_bf_channel()
@@ -70,10 +76,14 @@ class Fluorescence(Notifier):
 
 
         else:
-            print("Readout not possible. Try later")
+            print("Readout not possible. Try later") #REVIEW: s. unten zur fehlerbehandlung
+            # REVIEW: hier könnte man start_listener mit false aufrufen
             return
 
     #error handling. All error that can possibly occur
+    # REVIEW: banner (snackbar) unten anzeigen, wenn fehler auftritt (so wie Flo oder wir einigen uns auf ein Aussehen, damit es einheitlich ist)
+    # REVIEW: kann diese fehler teilweise auch kontrollieren, indem der "readout fluoreszenz" button nur clickable ist, wenn folgende Bedingungen gegeben sind
+    #           -> nur eine Überlegung, ich weiß nicht was besser ist bzw, ob man beides machen möchte für bessere Absicherung
     def check_readout_possible(self):
         if self.csp.readout_running:
             print("Readout is already running")

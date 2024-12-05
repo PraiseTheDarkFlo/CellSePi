@@ -102,8 +102,12 @@ def create_segmentation_card(gui: GUI):
             progress_bar.value = int(extracted_num.group())/100
         gui.page.update()
 
+#TODO wenn vorher schon masken vorhanden sind, dann sollen diese als backup gespeichert werden bevor die segmentierung startet und wenn der abbrechen button gedrückt wird sollen die alten wiederhergestellt werden
 #TODO wenn neue files ausgewählt werden muss fluoreszenz button verschwinden
 #TODO modell muss neu ausgewählt werden können
+#TODO error anzeigen mit snack_bar (s.gui_config), z.B. wenn man starten will, ohne dass dateien ausgewählt sind
+    # wenn image_path==none len(image_path)==0, dann start button nicht anzeigen
+#TODO checken ob für alle bilder schon masken haben -> wenn ja, dann soll der fluoreszenz button schon erscheinen
     def fluorescence_readout(e):
         fluorescence.readout_fluorescence()
         fl_button.disabled = True

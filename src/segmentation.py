@@ -1,5 +1,3 @@
-from click.core import batch
-
 import images as image
 import threading
 from src.CellSePi import CellSePi

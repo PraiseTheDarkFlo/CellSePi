@@ -111,7 +111,6 @@ class BatchImageReadout(Notifier):
 
         for iN, image_id in enumerate(image_paths):
 
-            # ToDo
             # 1. Check if Image has Mask in mask_paths
             # 2. Iterate over all channels and skip segmentation channel
             # 3. Get Background and derive
