@@ -75,10 +75,10 @@ class BatchImageSegmentation(Notifier):
             Report current state
             """
             #review: vielleicht die kwargs an BatchImageReadout anpassen
-            kwargs = {"progress": (iN + 1) / n_images * 100,
+            kwargs = {"progress": str(round((iN + 1) / n_images * 100))+"%",
                       "current_image": {"image_id": iN,
                                         "path": image_path}}
-            self._call_update_listeners(str(round(kwargs.get("progress")))+" %")
+            self._call_update_listeners(**kwargs)
 
         #TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(mask_paths)
@@ -188,7 +188,7 @@ class BatchImageReadout(Notifier):
             """ 
             Report current state
             """
-            kwargs = {"progress": int((iN + 1) / n_images * 100),
+            kwargs = {"progress": str(int((iN + 1) / n_images * 100))+"%",
                       "current_image": {"image_id": image_id}}
             self._call_update_listeners(**kwargs)
 

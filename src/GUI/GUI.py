@@ -81,8 +81,8 @@ class GUI:
         def update_view_mask(e):
             if self.switch_mask.value:
                 print("on")
-                self.mask.load_mask_into_canvas()
-                self.canvas.container_mask.image.src=f"mask_{self.csp.image_id}.png"
+                #self.mask.load_mask_into_canvas()
+                #self.canvas.container_mask.image.src=f"mask_{self.csp.image_id}.png"
                 #self.canvas.canvas.shapes.append(self.mask.rectangles)
                 self.canvas.container_canvas.visible=True
                 self.canvas.container_mask.visible=True

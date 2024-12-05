@@ -6,6 +6,8 @@
 # if readout finished output file is created (npy ?)
 #save the file in output path
 
+#TODO: wenn execl-Datei vorhanden, kommt folgender Fehler: permission dinied
+
 import images as image
 import threading
 from src.CellSePi import CellSePi
@@ -31,7 +33,7 @@ class Fluorescence(Notifier):
         if self.check_readout_possible():
             def on_update(progress,current_image):
                 print(f"{progress}% is progressed")
-                self._call_update_listeners(str(progress)+"%")
+                self._call_update_listeners(progress)
 
 
             def completed_readout(readout, readout_path):

@@ -94,7 +94,7 @@ def create_segmentation_card(gui: GUI):
 
         gui.page.update()
 
-    def update_progress_bar(progress):
+    def update_progress_bar(progress,current_image):
         print("update")
         progress_bar_text.value = progress
         extracted_num = re.search(r'\d+', progress)

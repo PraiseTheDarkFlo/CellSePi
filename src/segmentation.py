@@ -31,7 +31,7 @@ class segmentation(Notifier):
             self._call_completion_listeners()
 
 
-        def update(update):
+        def update(update,current_image):
             self._call_update_listeners(update)
             print(update)
 
