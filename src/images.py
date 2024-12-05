@@ -18,7 +18,8 @@ class BatchImageSegmentation(Notifier):
                  segmentation_channel,
                  diameter=250,
                  device=None,
-                 segmentation_model=None):
+                 segmentation_model=None,
+                 suffix="_seg"):
         super().__init__()
 
         if device is None:
@@ -29,8 +30,9 @@ class BatchImageSegmentation(Notifier):
         self.diameter = diameter
         self.device = device
         self.segmentation_model = segmentation_model
+        self.suffix = suffix  # New suffix attribute
 
-    def run(self, suffix="_seg"):
+    def run(self):
         # TODO zu jedem Zeitpunkt einen Listener, ob gestoppt werden soll
         self._call_start_listeners()
 
@@ -45,8 +47,6 @@ class BatchImageSegmentation(Notifier):
         n_images = len(image_paths)
 
         io.logger_setup()
-        # model_type='cyto' or 'nuclei' or 'cyto2' or 'cyto3'
-        # model = models.Cellpose(model_type="cyto3", device=device)
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
         kwargs = {}
@@ -58,13 +58,15 @@ class BatchImageSegmentation(Notifier):
             res = model.eval(image, diameter=diameter, channels=[0, 0])
             mask, flow, style = res[:3]
 
-            # Output file naming with user-defined suffix
-            io.masks_flows_to_seg([image], [mask], [flow], [image_path])
-
+            # Generate the output filename directly using the suffix attribute
             directory, filename = os.path.split(image_path)
             name, _ = os.path.splitext(filename)
-            new_filename = f"{name}{suffix}.npy"  # Use the suffix argument here
-            mask_paths.update({str(iN): os.path.join(directory, new_filename)})
+            new_filename = f"{name}{self.suffix}.npy"
+            new_path = os.path.join(directory, new_filename)
+
+            # Save the segmentation results directly with the new filename
+            io.masks_flows_to_seg([image], [mask], [flow], [new_path])
+            mask_paths.update({str(iN): new_path})
             print(mask_paths.get(str(iN)))
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
@@ -156,12 +158,6 @@ class BatchImageReadout(Notifier):
                 background_mask = mask == 0
                 background_val = np.mean(np_image[background_mask])
 
-                # fig, axes = plt.subplots(ncols = 2)
-                # axes[0].imshow(np_image)
-                # axes[1].imshow(background_mask)
-                # plt.show()
-                # print(background_val)
-
                 for iX, cell_id in enumerate(cell_ids):
                     cell_mask = mask == cell_id
                     cell_val = np.mean(np_image[cell_mask])
@@ -169,21 +165,13 @@ class BatchImageReadout(Notifier):
                     cur_row_entries[iX][channel_name] = cell_val
                     cur_row_entries[iX][f"background {channel_name}"] = background_val
 
-                # Image ID | Cell ID | Channels ... | Background
-
-                pass
-            pass
-
             row_entries += cur_row_entries
 
-            """ 
-            Report current state
-            """
-            kwargs = {"progress": str(int((iN + 1) / n_images * 100))+"%",
+            kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": image_id}}
             self._call_update_listeners(**kwargs)
 
-        readout_path = self.directory / "readout.xlsx"
+        readout_path = os.path.join(self.directory, "readout.xlsx")
         df = pd.DataFrame(row_entries)
         df.to_excel(readout_path, index=False)
         kwargs = {}
