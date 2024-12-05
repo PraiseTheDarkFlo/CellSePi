@@ -10,7 +10,6 @@ from .gui_segmentation import create_segmentation_card
 from src.CellSePi import CellSePi
 from src.mask import Mask
 
-
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
     def __init__(self,page: ft.Page):
@@ -19,7 +18,9 @@ class GUI:
         self.directory_path = ft.Text(weight="bold",value='Directory Path')
         self.image_gallery = ft.ListView()
         self.count_results_txt = ft.Text(value="Results: 0")
-        self.is_lif = ft.Switch(label="Lif", value=True)
+        self.lif_txt = ft.Text("Lif",weight="bold")
+        self.tif_txt = ft.Text("Tif")
+        self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded")
         self.page.window.width = 1400
@@ -92,5 +93,3 @@ class GUI:
 
             self.page.update()
         self.switch_mask.on_change = update_view_mask
-
-

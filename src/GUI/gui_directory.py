@@ -90,6 +90,7 @@ def create_directory_card(gui: GUI):
             gui.page.snack_bar.open = True
             gui.page.update()
             gui.count_results_txt.color = ft.Colors.RED
+            os.rmdir(gui.csp.working_directory)
         else:
             gui.count_results_txt.color = None
 
@@ -186,7 +187,7 @@ def create_directory_card(gui: GUI):
     files_row = ft.Row(
         [
             ft.ElevatedButton(
-                "Pick Files",
+                "Pick File",
                 icon=ft.icons.UPLOAD_FILE,
                 on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=False),
             )
@@ -201,12 +202,17 @@ def create_directory_card(gui: GUI):
     #changes the visibility of the directory/file picking
     def update_view(e):
         if gui.is_lif.value:
+            gui.lif_txt.weight = "bold"
+            gui.tif_txt.weight = "normal"
             files_row.visible = True
             directory_row.visible = False
         else:
+            gui.lif_txt.weight = "normal"
+            gui.tif_txt.weight = "bold"
             files_row.visible = False
             directory_row.visible = True
         gui.page.update()
+
     update_view(None)
     gui.is_lif.on_change = update_view
 
@@ -222,7 +228,7 @@ def create_directory_card(gui: GUI):
                                     leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
                                     title=gui.formatted_path,
                                     subtitle=gui.count_results_txt
-                                ), ft.Row([gui.is_lif,
+                                ), ft.Row([ft.Container(content=ft.Row([gui.tif_txt,gui.is_lif,gui.lif_txt],spacing=0)),
                                            directory_row,
                                            files_row, ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                                           )
