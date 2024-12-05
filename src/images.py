@@ -65,13 +65,13 @@ class BatchImageSegmentation(Notifier):
             new_path = os.path.join(directory, new_filename)
 
             # Save the segmentation results directly with the new filename
-            io.masks_flows_to_seg([image], [mask], [flow], [new_path])
+            io.masks_flows_to_seg([image], [mask], [flow], [image_path])
             mask_paths.update({str(iN): new_path})
             print(mask_paths.get(str(iN)))
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": iN, "path": image_path}}
-            self._call_update_listeners(**kwargs)
+            self._call_update_listeners(kwargs.get("progress"), kwargs.get("current_image"))
 
         # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(mask_paths)

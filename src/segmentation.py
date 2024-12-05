@@ -17,7 +17,7 @@ class segmentation(Notifier):
 
     def run(self):
         print("run segmentation")
-        self._call_update_listeners("Preparing segmentation")
+        self._call_update_listeners("Preparing segmentation", None)
 
         if self.segmentation_running == True:
             print("Segmentation already running")
@@ -30,11 +30,11 @@ class segmentation(Notifier):
 
 
         def update(update,current_image):
-            self._call_update_listeners(update)
+            self._call_update_listeners(update, current_image)
             print(update)
 
         def start():
-            self._call_update_listeners("0 %")
+            self._call_update_listeners("0 %", None)
 
 
         self.segmentation_running = True
