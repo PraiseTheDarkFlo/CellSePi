@@ -30,8 +30,8 @@ class BatchImageSegmentation(Notifier):
         self.device = device
         self.segmentation_model = segmentation_model
 
-    def run(self):
-        #TODO zu jedem Zeitpunkt einen Listener, ob gestoppt werden soll
+    def run(self, suffix="_seg"):
+        # TODO zu jedem Zeitpunkt einen Listener, ob gestoppt werden soll
         self._call_start_listeners()
 
         image_paths = self.image_paths
@@ -42,7 +42,6 @@ class BatchImageSegmentation(Notifier):
         device = self.device
         device = torch.device(device)
 
-
         n_images = len(image_paths)
 
         io.logger_setup()
@@ -50,37 +49,29 @@ class BatchImageSegmentation(Notifier):
         # model = models.Cellpose(model_type="cyto3", device=device)
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
-        # images = [imread(image_paths[image_id][segmentation_channel]) for image_id in image_paths]
-
-        # res = model.eval(images, diameter=diameter, channels=[[0, 0]])
         kwargs = {}
         mask_paths = {}
         for iN, image_id in enumerate(image_paths):
             image_path = image_paths[image_id][segmentation_channel]
-
             image = imread(image_path)
 
             res = model.eval(image, diameter=diameter, channels=[0, 0])
             mask, flow, style = res[:3]
 
-            #TODO output benennung muss variabel sein (nicht immer _seg)
+            # Output file naming with user-defined suffix
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
             directory, filename = os.path.split(image_path)
             name, _ = os.path.splitext(filename)
-            new_filename = f"{name}_seg.npy"
+            new_filename = f"{name}{suffix}.npy"  # Use the suffix argument here
             mask_paths.update({str(iN): os.path.join(directory, new_filename)})
             print(mask_paths.get(str(iN)))
-            """ 
-            Report current state
-            """
-            #review: vielleicht die kwargs an BatchImageReadout anpassen
-            kwargs = {"progress": str(round((iN + 1) / n_images * 100))+"%",
-                      "current_image": {"image_id": iN,
-                                        "path": image_path}}
+
+            kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
+                      "current_image": {"image_id": iN, "path": image_path}}
             self._call_update_listeners(**kwargs)
 
-        #TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
+        # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(mask_paths)
 
 
