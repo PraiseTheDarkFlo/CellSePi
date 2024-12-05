@@ -125,7 +125,7 @@ def create_directory_card(gui: GUI):
     #load images to gallery in order and with names
     def load_images():
         gui.image_gallery.controls.clear()
-        gui.canvas.main_image.content = ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+        gui.canvas.main_image.content = ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN)
         gui.canvas.main_image.update()
 

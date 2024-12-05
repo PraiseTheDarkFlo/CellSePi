@@ -29,9 +29,10 @@ class Canvas:
         )
 
         self.container_canvas= ft.Container(self.canvas,border_radius=5)
+        #TODO mit os.path library Dateipfad an jedes Betriebssystem anpassen
         self.container_mask=ft.Container(ft.Image(src="image_xy01c1_seg.png",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
 
-        self.main_image = ft.Container(ft.Image(src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+        self.main_image = ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN),alignment=ft.alignment.center)
         self.canvas_card = self.create_canvas_card()
 
