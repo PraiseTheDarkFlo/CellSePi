@@ -15,7 +15,7 @@ class Mask:
     def __init__(self,CellSePi):
         self.csp= CellSePi
         self.output_saved=False
-        self.mask_outputs= [] #[image_id,path zu .png]
+        self.mask_outputs= {} #[image_id,path zu .png]
 
     def load_mask_into_canvas(self):
 
@@ -40,7 +40,7 @@ class Mask:
 
                 #convert the Path back to normal
                 pathlib.PosixPath=current_path
-                self.output_saved=True
+                #self.output_saved=True
                 return path
             else:
                 print(f"mask of {self.csp.image_id} was fetched before")
@@ -48,7 +48,7 @@ class Mask:
 
         else:
             print(f"{self.csp.image_id} is not in mask paths")
-            self.output_saved=False
+            #self.output_saved=False
 
 
     def convert_npy_to_canvas(self,mask, outline):
@@ -69,7 +69,7 @@ class Mask:
 
         #saves the already stored data.
        # path=f"..\mask_{self.csp.image_id}_seg.png"
-        self.mask_outputs.append({"image_id":self.csp.image_id,"path":file_path})
+        self.mask_outputs[self.csp.image_id]=file_path
         return file_path
 
 

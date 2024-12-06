@@ -80,18 +80,19 @@ class GUI:
         def update_view_mask(e):
             if self.switch_mask.value:
                 print("on")
-                if self.mask.output_saved:
-                    print("in gui i selected:",self.csp.image_id)
-                    #image=self.csp.image_id
-                    #mask=self.mask.mask_outputs[image]
-                    #print(mask)
-                    self.canvas.container_mask.image_src=self.mask.load_mask_into_canvas()
-                    self.canvas.container_canvas.visible=True
-                    self.canvas.container_mask.visible=True
-                    #hier wenn ein click event, dann soll sich die Maske ausschalten
-                else:
+                #if self.mask.output_saved:
+                path =self.mask.load_mask_into_canvas()
+                print("in gui i selected:",self.csp.image_id)
+                image=self.csp.image_id
+                mask=self.mask.mask_outputs[image]
+                print(mask)
+                self.canvas.container_mask.image_src= mask
+                self.canvas.container_canvas.visible=True
+                self.canvas.container_mask.visible=True
+                #TODO: hier wenn ein click event, dann soll sich die Maske ausschalten
+                #else:
                     #add page error message
-                    print("There is no mask to display")
+                 #   print("There is no mask to display")
 
             else:
                 print("off")
