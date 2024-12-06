@@ -36,7 +36,7 @@ class GUI:
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation_card = create_segmentation_card(self)
-        self.mask=Mask()
+        self.mask=Mask(self.csp)
 
 
     def build(self): #build up the main page of the GUI
@@ -80,11 +80,18 @@ class GUI:
         def update_view_mask(e):
             if self.switch_mask.value:
                 print("on")
-                #self.mask.load_mask_into_canvas()
-                #self.canvas.container_mask.image.src=f"mask_{self.csp.image_id}.png"
-                #self.canvas.canvas.shapes.append(self.mask.rectangles)
-                self.canvas.container_canvas.visible=True
-                self.canvas.container_mask.visible=True
+                if self.mask.output_saved:
+                    print("in gui i selected:",self.csp.image_id)
+                    #image=self.csp.image_id
+                    #mask=self.mask.mask_outputs[image]
+                    #print(mask)
+                    self.canvas.container_mask.image_src=self.mask.load_mask_into_canvas()
+                    self.canvas.container_canvas.visible=True
+                    self.canvas.container_mask.visible=True
+                    #hier wenn ein click event, dann soll sich die Maske ausschalten
+                else:
+                    #add page error message
+                    print("There is no mask to display")
 
             else:
                 print("off")
