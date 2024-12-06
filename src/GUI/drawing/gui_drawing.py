@@ -1,9 +1,5 @@
-import flet as ft
-import os
-os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QPushButton, QWidget
-import threading
 import sys
 
 # PyQt-Fenster definieren
