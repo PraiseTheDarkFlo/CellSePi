@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 import threading
 
@@ -10,9 +11,10 @@ from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
 from .gui_directory import format_directory_path, copy_directory_to_clipboard, create_directory_card
-from .gui_segmentation import create_segmentation_card
 from src.CellSePi import CellSePi
 from src.mask import Mask
+from .gui_segmentation import gui_segmentation
+
 
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
@@ -26,7 +28,7 @@ class GUI:
         self.tif_txt = ft.Text("Tif")
         self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: threading.Thread(target=open_qt_window, daemon=True).start())
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: multiprocessing.Process(target=open_qt_window).start())
         self.page.window.width = 1400
         self.page.window.height = 825
         self.page.window_left = 200
@@ -39,7 +41,7 @@ class GUI:
         self.canvas = Canvas()
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
-        self.segmentation_card = create_segmentation_card(self)
+        self.segmentation_card = gui_segmentation.create_segmentation_card(self)
         self.mask=Mask(self.csp)
 
 
