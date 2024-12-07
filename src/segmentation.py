@@ -40,13 +40,15 @@ class segmentation(Notifier):
         self.segmentation_running = True
         segmentation_channel = self.config.get_bf_channel()
         diameter = self.config.get_diameter()
+        suffix = self.config.get_mask_suffix()
         device = "cpu"
 
         batch_image_segmentation = BatchImageSegmentation(self.csp.image_paths,
                                                           segmentation_channel,
                                                           diameter,
                                                           device,
-                                                          self.csp.model_path)
+                                                          self.csp.model_path,
+                                                          suffix)
         batch_image_segmentation.add_start_listener(listener=start)
         batch_image_segmentation.add_update_listener(listener=update)
         batch_image_segmentation.add_completion_listener(listener=finished)
