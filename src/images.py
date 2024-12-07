@@ -1,5 +1,4 @@
 import os
-
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
@@ -10,7 +9,6 @@ from data_util import load_image_to_numpy
 import pandas as pd
 
 from notifier import Notifier
-
 
 class BatchImageSegmentation(Notifier):
 
@@ -64,8 +62,14 @@ class BatchImageSegmentation(Notifier):
             new_filename = f"{name}{self.suffix}.npy"
             new_path = os.path.join(directory, new_filename)
 
-            # Save the segmentation results directly with the new filename
+            # Save the segmentation results directly with the default name first
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+
+            # Rename the file to the desired name
+            default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
+            if os.path.exists(default_suffix_path):
+                os.rename(default_suffix_path, new_path)
+
             mask_paths.update({str(iN): new_path})
             print(mask_paths.get(str(iN)))
 
@@ -148,7 +152,6 @@ class BatchImageReadout(Notifier):
             for channel_id in channels:
                 if channel_id == segmentation_channel:
                     raise Exception("")
-                    continue
 
                 image_path = image_paths[image_id][channel_id]
                 channel_name = self._channel_name(channel_id)
