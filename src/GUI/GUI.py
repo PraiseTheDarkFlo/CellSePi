@@ -6,14 +6,13 @@ import flet as ft
 from PyQt5.QtWidgets import QApplication
 from scipy.constants import value
 
-from . import gui_options as op
+from . import gui_options as op, gui_segmentation
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
 from .gui_directory import format_directory_path, copy_directory_to_clipboard, create_directory_card
 from src.CellSePi import CellSePi
 from src.mask import Mask
-from .gui_segmentation import gui_segmentation
 
 
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
@@ -28,7 +27,7 @@ class GUI:
         self.tif_txt = ft.Text("Tif")
         self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: multiprocessing.Process(target=open_qt_window).start())
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: multiprocessing.Process(target=open_qt_window,args=(self.csp,)).start())
         self.page.window.width = 1400
         self.page.window.height = 825
         self.page.window_left = 200
@@ -107,5 +106,4 @@ class GUI:
 
             self.page.update()
         self.switch_mask.on_change = update_view_mask
-
 
