@@ -48,20 +48,20 @@
             "channel_prefix": "c",
             "diameter": 23.12
         },
-        "Lif3123": {
-            "bf_channel": 2,
-            "mask_suffix": "_seg",
-            "channel_prefix": "c",
-            "diameter": 125.0
-        },
         "Lif6aaaaaaa333da": {
             "bf_channel": 3,
             "mask_suffix": "_seg",
             "channel_prefix": "Test!!!!!!!!!!",
             "diameter": 325.3
+        },
+        "Tif": {
+            "bf_channel": 1,
+            "mask_suffix": "_seg",
+            "channel_prefix": "c",
+            "diameter": 250.0
         }
     },
     "Selected Profile": {
-        "name": "Lif223ada"
+        "name": "Tif"
     }
 }

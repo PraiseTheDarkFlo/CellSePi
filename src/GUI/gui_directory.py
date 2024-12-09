@@ -2,10 +2,11 @@ import os
 import pathlib
 
 import flet as ft
+from PIL import Image
 
 from . import GUI
 from .gui_canvas import on_image_click
-from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory
+from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory,transform_image_path
 
 
 #format the directory so that it can be shown in the card
@@ -64,9 +65,11 @@ def create_directory_card(gui: GUI):
         if is_lif:
             working_directory = path.parent / "output/"
             os.makedirs(working_directory, exist_ok=True)
-            # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
-            extract_from_lif_file(lif_path=path, target_dir=working_directory)
+            if path.suffix.lower() == ".lif":
+                # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
+                extract_from_lif_file(lif_path=path, target_dir=working_directory)
             pass
+
 
         # Tiff Case
         else:
@@ -74,6 +77,12 @@ def create_directory_card(gui: GUI):
             working_directory = path / "output/"
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
+            for path in working_directory.iterdir():
+                if path.is_file():
+                    transform_image_path(path, path)
+                if Image.open(path).mode in ["L", "RGB"]:
+                    print("8 bit")
+
 
         gui.csp.working_directory = working_directory
         set_paths(working_directory)

@@ -147,3 +147,22 @@ def remove_gradient(img):
 
     corrected_img = img + correction
     return corrected_img
+
+
+def transform_image_path(image_path,output_path):
+    # check bit depth
+    with Image.open(image_path) as img:
+        mode = img.mode
+        bit_depth = 0
+        if mode == "I;16":
+            bit_depth = 16
+        elif mode in ["L", "RGB"]:
+            bit_depth = 8
+        else:
+            raise ValueError(f"Unsupported image mode {mode}")
+        # convert to 8 bit if necessary
+        if bit_depth == 16:
+            array16 = np.array(img, dtype=np.uint16)
+            array8 = (array16 / 256).astype(np.uint8)
+            img8 = Image.fromarray(array8)
+            img8.save(output_path, format="TIFF")
