@@ -11,26 +11,11 @@ def on_image_click(event, img_path,img_id,gui: GUI):
     gui.page.update()
 
 
-#class that handles the states of the canvas
-class State:
-    x: float
-    y: float
-
 #includes every thing about the canvas like drawing,the states, ...
 class Canvas:
     def __init__(self):
-        self.state = State()
-        self.canvas = fc.Canvas(
-            content=ft.GestureDetector(
-                on_pan_start=self.pan_start,
-                on_pan_update=self.pan_update,
-                drag_interval=10,
-            ),
-        )
 
-        self.container_canvas= ft.Container(self.canvas,border_radius=5)
-        #TODO mit os.path library Dateipfad an jedes Betriebssystem anpassen
-        self.container_mask=ft.Container(ft.Image(src="image_xy01c1_seg.png",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
+        self.container_mask=ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
 
         self.main_image = ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN),alignment=ft.alignment.center)
@@ -38,22 +23,6 @@ class Canvas:
 
     def create_canvas_card(self):
         return ft.Card(
-            content=ft.Stack([self.main_image,self.container_mask ,self.container_canvas ]),
+            content=ft.Stack([self.main_image, self.container_mask]),
             expand=True
         )
-
-    def pan_start(self,e: ft.DragStartEvent):
-        self.state.x = e.local_x
-        self.state.y = e.local_y
-
-    def pan_update(self,e: ft.DragUpdateEvent):
-        self.canvas.shapes.append(
-            fc.Line(
-                self.state.x, self.state.y, e.local_x, e.local_y, paint=ft.Paint(stroke_width=3)
-            )
-        )
-        self.canvas.update()
-        self.state.x = e.local_x
-        self.state.y = e.local_y
-
-

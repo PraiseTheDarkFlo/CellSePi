@@ -92,7 +92,6 @@ class GUI:
                 mask=self.mask.mask_outputs[image]
                 print(mask)
                 self.canvas.container_mask.image_src= mask
-                self.canvas.container_canvas.visible=True
                 self.canvas.container_mask.visible=True
                 #TODO: hier wenn ein click event, dann soll sich die Maske ausschalten
                 #else:
@@ -101,7 +100,6 @@ class GUI:
 
             else:
                 print("off")
-                self.canvas.container_canvas.visible=False
                 self.canvas.container_mask.visible=False
 
             self.page.update()
