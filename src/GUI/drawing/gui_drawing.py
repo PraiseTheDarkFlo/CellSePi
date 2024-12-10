@@ -40,6 +40,9 @@ class MyQtWindow(QMainWindow):
         #layout.addWidget(button)
         #self.setLayout(layout)
 
+    def resizeEvent(self, event):
+        self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
+
 
 # start the window of the drawing tools
 def open_qt_window(csp: CellSePi):
@@ -50,15 +53,13 @@ def open_qt_window(csp: CellSePi):
 
 
 
+
 class DrawingCanvas(QGraphicsView):
 
     def __init__(self, csp: CellSePi):
         super().__init__()
         self.csp = csp
         self.scene = QGraphicsScene(self)
-        self.graphics_view = QGraphicsView(self.scene,self)
-        self.graphics_view.setMinimumSize(1000,650)
-        #self.graphics_view.setMaximumSize(800,600)
 
         self.setScene(self.scene)
         self.canvas = None
@@ -92,8 +93,8 @@ class DrawingCanvas(QGraphicsView):
         self.scale_image(pixmap,self.canvas)
 
     def scale_image(self,image,object,depth = 1):
-        view_width = self.graphics_view.width()
-        view_height = self.graphics_view.height()
+        view_width = self.width()
+        view_height = self.height()
 
         scaled_pixmap = image.scaled(view_width,view_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
