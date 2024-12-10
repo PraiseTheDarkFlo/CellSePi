@@ -44,14 +44,14 @@ class GUI:
         self.segmentation_card = gui_segmentation.create_segmentation_card(self)
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
-            min=0.5, max=2.0, value=1.0, label="Helligkeit {value}",
-            on_change=lambda e: self.update_style(e)
+            min=0, max=2.0, value=1.0, label="Helligkeit {value}",
+            on_change=lambda e: self.update_main_image()
         )
 
         # Slider für Kontrast
         self.contrast_slider = ft.Slider(
-            min=0.5, max=2.0, value=1.0, label="Kontrast {value}",
-            on_change=lambda e: self.update_style(e)
+            min=0, max=2.0, value=1.0, label="Kontrast {value}",
+            on_change=lambda e: self.update_main_image()
         )
 
     def build(self): #build up the main page of the GUI
@@ -115,12 +115,14 @@ class GUI:
             self.page.update()
         self.switch_mask.on_change = update_view_mask
 
-    def update_style(self,e):
-        tmp = self.adjust_image(self.brightness_slider.value,self.contrast_slider.value)
+    def update_main_image(self):
+        tmp = self.adjust_image(round(self.brightness_slider.value,2),round(self.contrast_slider.value,2))
         self.canvas.main_image.content = ft.Image(src=tmp, fit=ft.ImageFit.SCALE_DOWN)
         self.canvas.main_image.update()
         if self.csp.adjusted_image_path is not None:
-            os.remove(self.csp.adjusted_image_path)
+            if os.path.isfile(self.csp.adjusted_image_path):
+                print(tmp)
+                os.remove(self.csp.adjusted_image_path)
         self.csp.adjusted_image_path = tmp
 
     def adjust_image(self,brightness, contrast):
@@ -134,7 +136,7 @@ class GUI:
         image = enhancer.enhance(contrast)
 
         directory = os.path.dirname(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
-        temp_path= os.sep.join([directory, f"adjusted_image{brightness,contrast}.png"])
+        temp_path= os.sep.join([directory, f"adjusted_image{brightness,contrast,self.csp.image_id,self.csp.channel_id}.png"])
         image.save(temp_path)
         return temp_path
 

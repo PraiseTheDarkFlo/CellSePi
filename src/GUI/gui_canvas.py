@@ -4,12 +4,11 @@ from . import GUI
 from ..mask import Mask
 
 #method that handles what happens when the image is clicked
-def on_image_click(event, img_path,img_id,channel_id,gui: GUI):
+def on_image_click(event,img_id,channel_id,gui: GUI):
     print("selected img:",img_id)
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
-    gui.canvas.main_image.content = ft.Image(src=img_path, fit=ft.ImageFit.SCALE_DOWN)
-    gui.page.update()
+    gui.update_main_image()
 
 
 #includes every thing about the canvas like drawing,the states, ...
