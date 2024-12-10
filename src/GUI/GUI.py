@@ -48,13 +48,13 @@ class GUI:
         self.segmentation_card = gui_segmentation.create_segmentation_card(self)
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
-            min=0, max=2.0, value=1.0, label="Helligkeit {value}",
+            min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.update_main_image_async())
         )
 
         # Slider für Kontrast
         self.contrast_slider = ft.Slider(
-            min=0, max=2.0, value=1.0, label="Kontrast {value}",
+            min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.update_main_image_async())
         )
 
@@ -69,8 +69,8 @@ class GUI:
                                 [
                                     self.canvas.canvas_card
                                     ,
-                                    ft.Row([self.switch_mask,self.drawing_button,self.brightness_slider,self.contrast_slider]),
-                                    self.gui_config,
+                                    ft.Row([self.switch_mask,self.drawing_button]),
+                                    ft.Row([self.gui_config,ft.Column([ft.Text("Brightness"),self.brightness_slider,ft.Text("Contrast"),self.contrast_slider])]),
                                     self.segmentation_card
                                 ],
                                 expand=True,

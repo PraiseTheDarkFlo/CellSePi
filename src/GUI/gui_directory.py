@@ -51,9 +51,13 @@ def create_directory_card(gui: GUI):
             else:
                 gui.image_gallery.controls.clear()
                 gui.image_gallery.update()
+
             gui.formatted_path.value = format_directory_path(gui.directory_path)
             gui.formatted_path.update()
-
+            gui.contrast_slider.disabled = True
+            gui.brightness_slider.disabled = True
+            gui.contrast_slider.update()
+            gui.brightness_slider.update()
 
     def select_directory(dir):
         is_lif = gui.is_lif.value

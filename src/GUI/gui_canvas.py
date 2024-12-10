@@ -10,6 +10,10 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     print("selected img:",img_id)
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
+    gui.contrast_slider.disabled = False
+    gui.brightness_slider.disabled = False
+    gui.contrast_slider.update()
+    gui.brightness_slider.update()
     asyncio.run(gui.update_main_image_async())
 
 
