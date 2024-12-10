@@ -1,7 +1,9 @@
+import base64
 import multiprocessing
 import os
 import sys
 import threading
+
 from PIL import Image, ImageEnhance
 import flet as ft
 from PyQt5.QtWidgets import QApplication
@@ -116,14 +118,17 @@ class GUI:
         self.switch_mask.on_change = update_view_mask
 
     def update_main_image(self):
-        tmp = self.adjust_image(round(self.brightness_slider.value,2),round(self.contrast_slider.value,2))
-        self.canvas.main_image.content = ft.Image(src=tmp, fit=ft.ImageFit.SCALE_DOWN)
+        if self.csp.adjusted_image_path is None:
+            image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
+            directory = os.path.dirname(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
+            temp_path = os.sep.join([directory, f"adjusted_image.png"])
+            self.csp.adjusted_image_path = temp_path
+        self.adjust_image(round(self.brightness_slider.value,2),round(self.contrast_slider.value,2))
+
+        base64_image = self.get_base64_image(self.csp.adjusted_image_path)
+        self.canvas.main_image.content = ft.Image(src_base64=base64_image, fit=ft.ImageFit.SCALE_DOWN)
         self.canvas.main_image.update()
-        if self.csp.adjusted_image_path is not None:
-            if os.path.isfile(self.csp.adjusted_image_path):
-                print(tmp)
-                os.remove(self.csp.adjusted_image_path)
-        self.csp.adjusted_image_path = tmp
+
 
     def adjust_image(self,brightness, contrast):
         image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
@@ -135,9 +140,10 @@ class GUI:
         enhancer = ImageEnhance.Contrast(image)
         image = enhancer.enhance(contrast)
 
-        directory = os.path.dirname(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
-        temp_path= os.sep.join([directory, f"adjusted_image{brightness,contrast,self.csp.image_id,self.csp.channel_id}.png"])
-        image.save(temp_path)
-        return temp_path
+        image.save(self.csp.adjusted_image_path, format="PNG")
 
-
+    def get_base64_image(self, image_path):
+        with open(image_path, "rb") as image_file:
+            read = image_file.read()
+        # Generiere den Base64-String ohne den Präfix "data:image/png;base64,"
+        return base64.b64encode(read).decode('utf-8')
