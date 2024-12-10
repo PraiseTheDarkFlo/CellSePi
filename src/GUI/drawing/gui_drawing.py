@@ -9,7 +9,6 @@ from .. import GUI
 from ...CellSePi import CellSePi
 
 
-# PyQt-Fenster definieren
 class MyQtWindow(QMainWindow):
 
     """
@@ -32,20 +31,15 @@ class MyQtWindow(QMainWindow):
         self.canvas.load_image_to_scene()
 
         #window layout
-        layout = QVBoxLayout()
+        #layout = QVBoxLayout()
 
         #button = QPushButton("Close Window")
         #button.clicked.connect(self.close)
 
         #layout.addWidget(label)
         #layout.addWidget(button)
-        self.setLayout(layout)
+        #self.setLayout(layout)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.canvas.graphics_view.fitInView(self.canvas.scene.sceneRect(), Qt.KeepAspectRatio)
-        print(self.canvas.scene.height())
-        print(self.canvas.scene.width())
 
 # start the window of the drawing tools
 def open_qt_window(csp: CellSePi):
@@ -63,7 +57,7 @@ class DrawingCanvas(QGraphicsView):
         self.csp = csp
         self.scene = QGraphicsScene(self)
         self.graphics_view = QGraphicsView(self.scene,self)
-        #self.graphics_view.setMinimumSize(800,600)
+        self.graphics_view.setMinimumSize(1000,650)
         #self.graphics_view.setMaximumSize(800,600)
 
         self.setScene(self.scene)
@@ -96,7 +90,6 @@ class DrawingCanvas(QGraphicsView):
         #set the image into canvas
         pixmap = QPixmap.fromImage(image)
         self.scale_image(pixmap,self.canvas)
-        self.setScene(self.scene)
 
     def scale_image(self,image,object,depth = 1):
         view_width = self.graphics_view.width()
@@ -111,11 +104,11 @@ class DrawingCanvas(QGraphicsView):
 
     def load_image_to_scene(self):
 
-        #if self.csp.adjusted_image_path is not None:
-        #    image = QPixmap(self.csp.adjusted_image_path)
-        #else:
-         #   image= QPixmap(self.csp.image_paths[self.csp.image_id])
-        image = QPixmap("my grandmother send her regards.jpg")
+        if self.csp.adjusted_image_path is not None:
+            image = QPixmap(self.csp.adjusted_image_path)
+        else:
+            image= QPixmap(self.csp.image_paths[self.csp.image_id])
+      #  image = QPixmap("my grandmother send her regards.jpg")
 
         self.scale_image(image,self.background_image,-1)
 
