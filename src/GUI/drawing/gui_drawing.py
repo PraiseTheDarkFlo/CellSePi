@@ -5,7 +5,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QPushButton, QWidget,QGraphicsScene,QGraphicsView,QMainWindow
 import sys
-from .. import GUI
 from ...CellSePi import CellSePi
 
 
