@@ -119,7 +119,31 @@ class GUI:
             self.page.update()
         self.switch_mask.on_change = update_view_mask
 
+    import asyncio
+
     async def update_main_image_async(self):
+        if  round(self.brightness_slider.value, 2) == 1 and round(self.contrast_slider.value, 2) == 1:
+            self.cancel_all_tasks()
+            self.canvas.main_image.content.src_base64 = None
+            self.canvas.main_image.content.src = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
+            self.canvas.main_image.update()
+        else:
+            task = asyncio.create_task(self.update_image())
+            self.canvas.running_tasks.add(task)
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            finally:
+                self.canvas.running_tasks.discard(task)
+
+    def cancel_all_tasks(self):
+        for task in self.canvas.running_tasks:
+            print("canceled")
+            task.cancel()
+        self.canvas.running_tasks.clear()
+
+    async def update_image(self):
         base64_image = await self.adjust_image_async(
             round(self.brightness_slider.value, 2),
             round(self.contrast_slider.value, 2)
@@ -155,12 +179,16 @@ class GUI:
         return image
 
     def save_current_main_image(self):
-        image_data = base64.b64decode(self.canvas.main_image.content.src_base64)
-        buffer = BytesIO(image_data)
         if self.csp.adjusted_image_path is None:
             self.csp.adjusted_image_path = os.path.join(self.csp.working_directory, "adjusted_image.png")
-        image = Image.open(buffer)
-        image.save(self.csp.adjusted_image_path, format="PNG")
+        if round(self.brightness_slider.value, 2) == 1 and round(self.contrast_slider.value, 2) == 1:
+            image = self.load_image(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
+            image.save(self.csp.adjusted_image_path, format="PNG")
+        else:
+            image_data = base64.b64decode(self.canvas.main_image.content.src_base64)
+            buffer = BytesIO(image_data)
+            image = Image.open(buffer)
+            image.save(self.csp.adjusted_image_path, format="PNG")
 
     def start_drawing_window(self):
         self.save_current_main_image()
