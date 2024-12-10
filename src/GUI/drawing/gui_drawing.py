@@ -5,7 +5,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QPushButton, QWidget,QGraphicsScene,QGraphicsView,QMainWindow
 import sys
-from .. import GUI
 from ...CellSePi import CellSePi
 
 
@@ -21,7 +20,6 @@ class MyQtWindow(QMainWindow):
     def __init__(self, csp: CellSePi):
         super().__init__()
         self.csp = csp
-        print(csp.bit_depth)
         self.setWindowTitle("PyQt Window")
 
         self.canvas= DrawingCanvas(self.csp)
