@@ -78,7 +78,7 @@ def create_directory_card(gui: GUI):
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
             for path in working_directory.iterdir():
-                if path.suffix == ".tif" or path.suffix == ".tiff":
+                if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
                     if path.is_file():
                         transform_image_path(path, path)
                     if Image.open(path).mode in ["L", "RGB"]:
