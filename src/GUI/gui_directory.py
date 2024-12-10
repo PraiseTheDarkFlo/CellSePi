@@ -78,10 +78,11 @@ def create_directory_card(gui: GUI):
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
             for path in working_directory.iterdir():
-                if path.is_file():
-                    transform_image_path(path, path)
-                if Image.open(path).mode in ["L", "RGB"]:
-                    print("8 bit")
+                if path.suffix == ".tif" or path.suffix == ".tiff":
+                    if path.is_file():
+                        transform_image_path(path, path)
+                    if Image.open(path).mode in ["L", "RGB"]:
+                        print("8 bit")
 
 
         gui.csp.working_directory = working_directory
@@ -110,26 +111,6 @@ def create_directory_card(gui: GUI):
 
         print(f"This directory contains {len(mask_paths)} unique mask ids.")
 
-        is_lif = gui.is_lif.value
-        bit_depth = 8 if is_lif else 16
-        gui.csp.bit_depth = bit_depth
-
-        """# Add new images
-        self.image_views = []
-        for image_id in image_paths:
-            cur_image_paths = image_paths[image_id]
-            image_channel_view = custom_widgets.ImageChannelView(self.s_frame.frame, image_id, cur_image_paths,
-                                                                 bit_depth=bit_depth,
-                                                                 on_click_listener=self.on_image_click)
-            image_channel_view.pack(fill="x", pady=2)
-
-            self.image_views.append(image_channel_view)
-            pass
-
-        self.file_selector_model_button["state"] = tk.ACTIVE
-
-        self.button_readout["state"] = tk.ACTIVE
-        return image_paths, mask_paths"""
 
     #load images to gallery in order and with names
     def load_images():

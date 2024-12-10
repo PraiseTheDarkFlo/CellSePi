@@ -14,17 +14,12 @@ class CellSePi:
 
         self.image_id = None
         self.channel_id = None
-        self.image_view_update = True
 
         self.readout = None
-
-        self.bit_depth = 16
 
         self.adjusted_image_path = None
         self.image_paths = None #[image_id, different images sorted by channel]
         self.mask_paths = None
-        self.image_views = []
 
         self.working_directory = None
-
 
