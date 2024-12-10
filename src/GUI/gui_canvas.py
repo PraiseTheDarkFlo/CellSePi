@@ -4,9 +4,10 @@ from . import GUI
 from ..mask import Mask
 
 #method that handles what happens when the image is clicked
-def on_image_click(event, img_path,img_id,gui: GUI):
+def on_image_click(event, img_path,img_id,channel_id,gui: GUI):
     print("selected img:",img_id)
     gui.csp.image_id = img_id
+    gui.csp.channel_id = channel_id
     gui.canvas.main_image.content = ft.Image(src=img_path, fit=ft.ImageFit.SCALE_DOWN)
     gui.page.update()
 
@@ -19,10 +20,11 @@ class Canvas:
 
         self.main_image = ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN),alignment=ft.alignment.center)
-        self.canvas_card = self.create_canvas_card()
 
+        self.canvas_card = self.create_canvas_card()
     def create_canvas_card(self):
         return ft.Card(
             content=ft.Stack([self.main_image, self.container_mask]),
             expand=True
         )
+
