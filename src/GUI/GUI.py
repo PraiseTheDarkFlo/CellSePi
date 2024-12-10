@@ -1,8 +1,10 @@
+import asyncio
 import base64
 import multiprocessing
 import os
 import sys
 import threading
+from io import BytesIO
 
 from PIL import Image, ImageEnhance
 import flet as ft
@@ -30,7 +32,7 @@ class GUI:
         self.tif_txt = ft.Text("Tif")
         self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: multiprocessing.Process(target=open_qt_window,args=(self.csp,)).start())
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window())
         self.page.window.width = 1400
         self.page.window.height = 825
         self.page.window_left = 200
@@ -47,13 +49,13 @@ class GUI:
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, label="Helligkeit {value}",
-            on_change=lambda e: self.update_main_image()
+            on_change=lambda e: asyncio.run(self.update_main_image_async())
         )
 
         # Slider für Kontrast
         self.contrast_slider = ft.Slider(
             min=0, max=2.0, value=1.0, label="Kontrast {value}",
-            on_change=lambda e: self.update_main_image()
+            on_change=lambda e: asyncio.run(self.update_main_image_async())
         )
 
     def build(self): #build up the main page of the GUI
@@ -117,22 +119,20 @@ class GUI:
             self.page.update()
         self.switch_mask.on_change = update_view_mask
 
-    def update_main_image(self):
-        if self.csp.adjusted_image_path is None:
-            image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
-            directory = os.path.dirname(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
-            temp_path = os.sep.join([directory, f"adjusted_image.png"])
-            self.csp.adjusted_image_path = temp_path
-        self.adjust_image(round(self.brightness_slider.value,2),round(self.contrast_slider.value,2))
-
-        base64_image = self.get_base64_image(self.csp.adjusted_image_path)
-        self.canvas.main_image.content = ft.Image(src_base64=base64_image, fit=ft.ImageFit.SCALE_DOWN)
+    async def update_main_image_async(self):
+        base64_image = await self.adjust_image_async(
+            round(self.brightness_slider.value, 2),
+            round(self.contrast_slider.value, 2)
+        )
+        self.canvas.main_image.content.src_base64 = base64_image
         self.canvas.main_image.update()
 
+    async def adjust_image_async(self, brightness, contrast):
+        return await asyncio.to_thread(self.adjust_image_in_memory, brightness, contrast)
 
-    def adjust_image(self,brightness, contrast):
+    def adjust_image_in_memory(self, brightness, contrast):
         image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
-        image = Image.open(image_path)
+        image = self.load_image(image_path)
 
         enhancer = ImageEnhance.Brightness(image)
         image = enhancer.enhance(brightness)
@@ -140,10 +140,28 @@ class GUI:
         enhancer = ImageEnhance.Contrast(image)
         image = enhancer.enhance(contrast)
 
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    def load_image(self, image_path):
+        if self.csp.cached_image and self.csp.cached_image[0] == image_path:
+            return self.csp.cached_image[1]
+
+        image = Image.open(image_path)
+        self.csp.cached_image = (image_path, image)
+        return image
+
+    def save_current_main_image(self):
+        image_data = base64.b64decode(self.canvas.main_image.content.src_base64)
+        buffer = BytesIO(image_data)
+        if self.csp.adjusted_image_path is None:
+            self.csp.adjusted_image_path = os.path.join(self.csp.working_directory, "adjusted_image.png")
+        image = Image.open(buffer)
         image.save(self.csp.adjusted_image_path, format="PNG")
 
-    def get_base64_image(self, image_path):
-        with open(image_path, "rb") as image_file:
-            read = image_file.read()
-        # Generiere den Base64-String ohne den Präfix "data:image/png;base64,"
-        return base64.b64encode(read).decode('utf-8')
+    def start_drawing_window(self):
+        self.save_current_main_image()
+        multiprocessing.Process(target=open_qt_window, args=(self.csp,)).start()

@@ -21,7 +21,6 @@ class MyQtWindow(QMainWindow):
     def __init__(self, csp: CellSePi):
         super().__init__()
         self.csp = csp
-        print(csp.bit_depth)
         self.setWindowTitle("PyQt Window")
 
         self.canvas= DrawingCanvas(self.csp)

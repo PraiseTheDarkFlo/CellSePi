@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 import flet.canvas as fc
 from . import GUI
@@ -8,7 +10,7 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     print("selected img:",img_id)
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
-    gui.update_main_image()
+    asyncio.run(gui.update_main_image_async())
 
 
 #includes every thing about the canvas like drawing,the states, ...
