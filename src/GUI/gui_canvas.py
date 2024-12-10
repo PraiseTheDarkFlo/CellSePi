@@ -16,7 +16,7 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
     gui.brightness_slider.update()
-    asyncio.run(gui.update_main_image_async())
+    asyncio.run(gui.update_main_image_async(True))
 
 
 #includes every thing about the canvas like drawing,the states, ...

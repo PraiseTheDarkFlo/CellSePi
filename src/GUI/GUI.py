@@ -121,8 +121,8 @@ class GUI:
 
     import asyncio
 
-    async def update_main_image_async(self):
-        if  round(self.brightness_slider.value, 2) == 1 and round(self.contrast_slider.value, 2) == 1:
+    async def update_main_image_async(self,click= False):
+        if  click:
             self.cancel_all_tasks()
             self.canvas.main_image.content.src_base64 = None
             self.canvas.main_image.content.src = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
