@@ -118,6 +118,9 @@ class GUI:
     def update_style(self,e):
         tmp = self.adjust_image(self.brightness_slider.value,self.contrast_slider.value)
         self.canvas.main_image.content = ft.Image(src=tmp, fit=ft.ImageFit.SCALE_DOWN)
+        if self.csp.adjusted_image_path is not None:
+            os.remove(self.csp.adjusted_image_path)
+        self.csp.adjusted_image_path = tmp
         self.canvas.main_image.update()
 
 
@@ -132,10 +135,7 @@ class GUI:
         image = enhancer.enhance(contrast)
 
         directory = os.path.dirname(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
-        if self.csp.adjusted_image_path is not None:
-            os.remove(self.csp.adjusted_image_path)
         temp_path= os.sep.join([directory, f"adjusted_image{brightness,contrast}.png"])
-        self.csp.adjusted_image_path = temp_path
         image.save(temp_path)
         return temp_path
 
