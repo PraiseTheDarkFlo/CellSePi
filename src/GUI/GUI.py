@@ -118,11 +118,10 @@ class GUI:
     def update_style(self,e):
         tmp = self.adjust_image(self.brightness_slider.value,self.contrast_slider.value)
         self.canvas.main_image.content = ft.Image(src=tmp, fit=ft.ImageFit.SCALE_DOWN)
+        self.canvas.main_image.update()
         if self.csp.adjusted_image_path is not None:
             os.remove(self.csp.adjusted_image_path)
         self.csp.adjusted_image_path = tmp
-        self.canvas.main_image.update()
-
 
     def adjust_image(self,brightness, contrast):
         image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
