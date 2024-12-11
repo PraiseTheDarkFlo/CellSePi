@@ -67,10 +67,9 @@ class GUI:
                             #LEFT COLUMN that handles all elements on the left side(canvas,switch_mask,segmentation)
                             ft.Column(
                                 [
-                                    self.canvas.canvas_card
-                                    ,
-                                    ft.Row([self.switch_mask,self.drawing_button]),
-                                    ft.Row([self.gui_config,ft.Column([ft.Text("Brightness"),self.brightness_slider,ft.Text("Contrast"),self.contrast_slider])]),
+                                    self.canvas.canvas_card,
+                                    ft.Row([self.switch_mask, self.drawing_button]),
+                                    ft.Row([self.gui_config,ft.Card(content=ft.Container(content=ft.Column([ft.Row([ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness"),ft.Container(self.brightness_slider,padding=-15)]),ft.Row([ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast"),ft.Container(self.contrast_slider,padding=-15)])]),padding=10))]),
                                     self.segmentation_card
                                 ],
                                 expand=True,
