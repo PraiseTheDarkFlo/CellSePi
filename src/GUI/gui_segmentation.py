@@ -3,6 +3,7 @@ import re
 import flet as ft
 from . import GUI
 from ..fluorescence import Fluorescence
+from .gui_fluorescence import fluorescence_button
 from ..segmentation import segmentation
 from ..notifier import Notifier
 import src.GUI.gui_directory
@@ -46,9 +47,9 @@ def create_segmentation_card(gui: GUI):
         on_click = None,
     )
 
-    fluorescence = Fluorescence(gui.csp)
+    fluorescence = Fluorescence(gui.csp,gui)
 
-    fl_button = fluorescence.fluorescence_button
+    fl_button = fluorescence_button
 
     progress_bar = ft.ProgressBar(value=0, width=180)
     progress_bar_text = ft.Text("Waiting for Input")
