@@ -14,8 +14,8 @@ from PIL import Image
 class Mask:
     def __init__(self,CellSePi):
         self.csp= CellSePi
-        self.output_saved=False
-        self.mask_outputs= {} #[image_id,path zu .png]
+        # the path to the already generated masks are stored in here
+        self.mask_outputs = {}  # [image_id,path zu .png]
 
     def load_mask_into_canvas(self):
 
@@ -24,26 +24,26 @@ class Mask:
         if self.csp.image_id in self.csp.mask_paths:
 
             # if operating system is Windows set the pathLib to Windows path
-            if self.csp.image_id not in self.mask_outputs:
-                current_path = pathlib.PosixPath
-                if platform.system() == "Windows":
-                    pathlib.PosixPath=pathlib.WindowsPath
 
-                #load the npy file and convert it to directory
-                mask_data = np.load(self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()], allow_pickle=True).item()
+            current_path = pathlib.PosixPath
+            if platform.system() == "Windows":
+                pathlib.PosixPath=pathlib.WindowsPath
 
-                #extract the mask data and the outline of the cell
-                mask= mask_data["masks"]
-                outline = mask_data["outlines"]
-                #mask_converted =self.convert_npy_to_canvas(mask,outline)
-                path= self.convert_npy_to_canvas(mask,outline)
+            #load the npy file and convert it to directory
+            mask_data = np.load(self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()], allow_pickle=True).item()
 
-                #convert the Path back to normal
-                pathlib.PosixPath=current_path
-                #self.output_saved=True
-                return path
-            else:
-                print(f"mask of {self.csp.image_id} was fetched before")
+            #extract the mask data and the outline of the cell
+            mask= mask_data["masks"]
+            outline = mask_data["outlines"]
+            #mask_converted =self.convert_npy_to_canvas(mask,outline)
+            path= self.convert_npy_to_canvas(mask,outline)
+
+            #convert the Path back to normal
+            pathlib.PosixPath=current_path
+            #self.output_saved=True
+
+           # else:
+            #    print(f"mask of {self.csp.image_id} was fetched before")
                 #return self.mask_outputs["image_id"==self.csp.image_id]
 
         else:

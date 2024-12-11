@@ -19,9 +19,12 @@ def handle_image_switch_mask_on(gui:GUI):
     if gui.switch_mask.value:
         print("on")
         # if self.mask.output_saved:
-        path = gui.mask.load_mask_into_canvas()
-        print("in gui i selected:", gui.csp.image_id)
         image = gui.csp.image_id
+
+        #if the image was not generated before
+        if image not in gui.mask.mask_outputs:
+            gui.mask.load_mask_into_canvas()
+
         mask = gui.mask.mask_outputs[image]
         print(mask)
         gui.canvas.container_mask.image_src = mask

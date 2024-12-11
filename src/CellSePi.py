@@ -22,5 +22,6 @@ class CellSePi:
         self.image_paths = None #[image_id, different images sorted by channel]
         self.mask_paths = None
 
+
         self.working_directory = None
 
