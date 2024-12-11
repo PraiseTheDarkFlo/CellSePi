@@ -18,7 +18,7 @@ from .gui_config import GUIConfig
 from .gui_directory import format_directory_path, copy_directory_to_clipboard, create_directory_card
 from src.CellSePi import CellSePi
 from src.mask import Mask
-
+from .gui_mask import error_banner,handle_image_switch_mask_on
 
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
@@ -97,26 +97,13 @@ class GUI:
         )
         #method that controls what happened when switch is on/off
         def update_view_mask(e):
-            if self.switch_mask.value:
-                print("on")
-                #if self.mask.output_saved:
-                path =self.mask.load_mask_into_canvas()
-                print("in gui i selected:",self.csp.image_id)
-                image=self.csp.image_id
-                mask=self.mask.mask_outputs[image]
-                print(mask)
-                self.canvas.container_mask.image_src= mask
-                self.canvas.container_mask.visible=True
-                #TODO: hier wenn ein click event, dann soll sich die Maske ausschalten
-                #else:
-                    #add page error message
-                 #   print("There is no mask to display")
 
+            if self.csp.image_id is None:
+                print("No image selected")
+                error_banner(self)
             else:
-                print("off")
-                self.canvas.container_mask.visible=False
+                handle_image_switch_mask_on(self)
 
-            self.page.update()
         self.switch_mask.on_change = update_view_mask
 
     import asyncio
@@ -193,3 +180,4 @@ class GUI:
     def start_drawing_window(self):
         self.save_current_main_image()
         multiprocessing.Process(target=open_qt_window, args=(self.csp,)).start()
+

@@ -4,12 +4,14 @@ import flet as ft
 import flet.canvas as fc
 from . import GUI
 from ..mask import Mask
+from .gui_mask import handle_image_switch_mask_on
 
 #method that handles what happens when the image is clicked
 def on_image_click(event,img_id,channel_id,gui: GUI):
     print("selected img:",img_id)
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
+    handle_image_switch_mask_on(gui)
     gui.contrast_slider.disabled = False
     gui.brightness_slider.disabled = False
     gui.contrast_slider.value = 1.0
@@ -17,6 +19,8 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     gui.contrast_slider.update()
     gui.brightness_slider.update()
     asyncio.run(gui.update_main_image_async(True))
+
+
 
 
 #includes every thing about the canvas like drawing,the states, ...
