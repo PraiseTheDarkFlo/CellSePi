@@ -11,7 +11,8 @@ import flet as ft
 from PyQt5.QtWidgets import QApplication
 from scipy.constants import value
 
-from . import gui_options as op, gui_segmentation
+from . import gui_options as op
+from .gui_segmentation import create_segmentation_card
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
@@ -45,7 +46,7 @@ class GUI:
         self.canvas = Canvas()
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
-        self.segmentation_card = gui_segmentation.create_segmentation_card(self)
+        self.segmentation_card = create_segmentation_card(self)
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
@@ -67,10 +68,9 @@ class GUI:
                             #LEFT COLUMN that handles all elements on the left side(canvas,switch_mask,segmentation)
                             ft.Column(
                                 [
-                                    self.canvas.canvas_card
-                                    ,
-                                    ft.Row([self.switch_mask,self.drawing_button]),
-                                    ft.Row([self.gui_config,ft.Column([ft.Text("Brightness"),self.brightness_slider,ft.Text("Contrast"),self.contrast_slider])]),
+                                    self.canvas.canvas_card,
+                                    ft.Row([self.switch_mask, self.drawing_button]),
+                                    ft.Row([self.gui_config,ft.Card(content=ft.Container(content=ft.Column([ft.Row([ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness"),ft.Container(self.brightness_slider,padding=-15)]),ft.Row([ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast"),ft.Container(self.contrast_slider,padding=-15)])]),padding=10))]),
                                     self.segmentation_card
                                 ],
                                 expand=True,
