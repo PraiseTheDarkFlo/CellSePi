@@ -6,6 +6,7 @@ from PIL import Image
 
 from . import GUI
 from .gui_canvas import on_image_click
+from .gui_mask import handle_image_switch_mask_on
 from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory,transform_image_path
 
 
@@ -200,12 +201,20 @@ def create_directory_card(gui: GUI):
             gui.tif_txt.weight = "normal"
             files_row.visible = True
             directory_row.visible = False
+
         else:
             gui.lif_txt.weight = "normal"
             gui.tif_txt.weight = "bold"
             files_row.visible = False
             directory_row.visible = True
+
+        gui.switch_mask.value = False
+        gui.canvas.container_mask.visible = False
+        gui.csp.image_id = None
+        gui.canvas.main_image.content= ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+                                    fit=ft.ImageFit.SCALE_DOWN)
         gui.page.update()
+
 
     update_view(None)
     gui.is_lif.on_change = update_view

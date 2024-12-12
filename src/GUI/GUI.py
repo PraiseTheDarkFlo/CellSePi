@@ -42,8 +42,8 @@ class GUI:
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
         self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
-        self.directory_card = create_directory_card(self)
         self.canvas = Canvas()
+        self.directory_card = create_directory_card(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation_card = create_segmentation_card(self)
@@ -101,6 +101,7 @@ class GUI:
             if self.csp.image_id is None:
                 print("No image selected")
                 error_banner(self,"No image selected!")
+                self.switch_mask.value=False
             else:
                 handle_image_switch_mask_on(self)
 
