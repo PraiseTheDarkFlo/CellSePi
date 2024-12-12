@@ -208,6 +208,7 @@ def create_directory_card(gui: GUI):
             files_row.visible = False
             directory_row.visible = True
 
+        #the window of the image display is cleared of all content
         gui.switch_mask.value = False
         gui.canvas.container_mask.visible = False
         gui.csp.image_id = None

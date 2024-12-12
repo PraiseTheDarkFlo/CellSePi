@@ -8,24 +8,33 @@ import numpy as np
 import pathlib
 import platform
 from PIL import Image
+from collections import defaultdict
 
 
-#im Moment werden die immer überschrieben. Es wäre eigentlich besser wenn er sich die abspeichert, die er schon mal geladen hat
-#dann muss er nur noch darauf zugreifen
 class Mask:
+    """
+    in the class the created numpy files of the mask are converted
+    in a displayable format (png)
+
+    Attributes:
+        csp=current CellSePi object
+        mask_outputs= stores the already converted mask outputs, consists
+                      of image_id and the path
+    """
     def __init__(self,CellSePi):
         self.csp= CellSePi
         # the path to the already generated masks are stored in here
-        self.mask_outputs = {}  # [image_id,path zu .png]
+        self.mask_outputs = defaultdict(dict)# [image_id,path zu .png]
 
     def load_mask_into_canvas(self):
-
+        """
+        loads the numpy files of the mask to the id and converts it to png
+        """
         print ("Display Mask")
         #iterate over the processed data to load the mask images for the current image
         if self.csp.image_id in self.csp.mask_paths:
 
             # if operating system is Windows set the pathLib to Windows path
-
             current_path = pathlib.PosixPath
             if platform.system() == "Windows":
                 pathlib.PosixPath=pathlib.WindowsPath
@@ -36,24 +45,25 @@ class Mask:
             #extract the mask data and the outline of the cell
             mask= mask_data["masks"]
             outline = mask_data["outlines"]
-            #mask_converted =self.convert_npy_to_canvas(mask,outline)
-            path= self.convert_npy_to_canvas(mask,outline)
+            self.convert_npy_to_canvas(mask,outline)
 
             #convert the Path back to normal
             pathlib.PosixPath=current_path
-            #self.output_saved=True
 
-           # else:
-            #    print(f"mask of {self.csp.image_id} was fetched before")
-                #return self.mask_outputs["image_id"==self.csp.image_id]
 
         else:
             print(f"{self.csp.image_id} is not in mask paths")
-            #self.output_saved=False
 
 
     def convert_npy_to_canvas(self,mask, outline):
-        # Variant #1
+        """
+        handles the convertation of the given file data
+
+        Args:
+            mask= the mask data stored in the numpy directory
+            outline= the outline data stored in the numpy directory
+        """
+
         image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         image_mask[mask != 0] = (255, 0, 0, 128)
         image_mask[outline != 0] = (0, 255, 0, 255)
@@ -68,10 +78,9 @@ class Mask:
         im.save(file_path,"png")
         print (f"image is saved in {file_path}")
 
-        #saves the already stored data.
-       # path=f"..\mask_{self.csp.image_id}_seg.png"
-        self.mask_outputs[self.csp.image_id]=file_path
-        return file_path
+        #saves the created output image.
+        self.mask_outputs[self.csp.image_id][brightfield_channel]=file_path
+
 
 
 
