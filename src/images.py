@@ -99,6 +99,7 @@ class BatchImageSegmentation(Notifier):
                 os.rename(default_suffix_path, new_path)
 
             self.csp.mask_paths.update({str(iN): new_path})
+           # self.csp.mask_paths[image_id][self.segmentation_channel] = new_path
             print("mask path %d", iN)
             print(self.csp.mask_paths.get(str(iN)))
 
@@ -151,7 +152,7 @@ class BatchImageReadout(Notifier):
 
             if not image_id in mask_paths:
                 continue
-
+            print(mask_paths)
             mask_path = mask_paths[image_id][segmentation_channel]
             print("mask path in images", mask_path)
             mask_data = np.load(mask_path, allow_pickle=True).item()

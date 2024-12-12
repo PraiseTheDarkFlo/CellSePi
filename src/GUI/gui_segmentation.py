@@ -150,6 +150,7 @@ def create_segmentation_card(gui: GUI):
         start_button.disabled = False
         model_text.disabled = False
         model_chooser.disabled = False
+        print(gui.csp.mask_paths)
 
         gui.page.update()
 

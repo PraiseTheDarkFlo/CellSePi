@@ -62,8 +62,6 @@ def create_directory_card(gui: GUI):
 
     def select_directory(dir):
         is_lif = gui.is_lif.value
-        # print("Remove fixed dir")
-        # dirname = "/Users/erik/Documents/Promotion/Projekte/Anjas_Stuff/Cellpose Train/"
         print(dir)
         path = pathlib.Path(dir)
         # Lif Case
