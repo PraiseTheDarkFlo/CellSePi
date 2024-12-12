@@ -21,8 +21,7 @@ class segmentation(Notifier):
         diameter = self.config.get_diameter()
         suffix = self.config.get_mask_suffix()
         device = "cpu"
-        self.batch_image_segmentation = BatchImageSegmentation(self.csp.image_paths,
-                                                               segmentation_channel,
+        self.batch_image_segmentation = BatchImageSegmentation(segmentation_channel,
                                                                self,
                                                                self.csp,
                                                                diameter,

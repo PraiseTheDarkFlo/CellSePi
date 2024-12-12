@@ -12,7 +12,7 @@ from notifier import Notifier
 
 class BatchImageSegmentation(Notifier):
 
-    def __init__(self, image_paths,
+    def __init__(self,
                  segmentation_channel,
                  segmentation,
                  csp,
@@ -25,7 +25,6 @@ class BatchImageSegmentation(Notifier):
         if device is None:
             device = "cpu"
 
-        self.image_paths = image_paths
         self.segmentation_channel = segmentation_channel
         self.segmentation = segmentation
         self.csp = csp
@@ -57,7 +56,7 @@ class BatchImageSegmentation(Notifier):
         elif self.resume_now:
             pass
         self._call_start_listeners()
-        image_paths = self.image_paths
+        image_paths = self.csp.image_paths
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
 
