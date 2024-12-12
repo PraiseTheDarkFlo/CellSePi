@@ -15,19 +15,11 @@ class segmentation(Notifier):
     def __init__(self, gui):
         super().__init__()
         self.csp = gui.csp
-        self.config = gui.csp.config
         self.segmentation_running = False
-        segmentation_channel = self.config.get_bf_channel()
-        diameter = self.config.get_diameter()
-        suffix = self.config.get_mask_suffix()
         device = "cpu"
-        self.batch_image_segmentation = BatchImageSegmentation(segmentation_channel,
-                                                               self,
+        self.batch_image_segmentation = BatchImageSegmentation(self,
                                                                self.csp,
-                                                               diameter,
-                                                               device,
-                                                               self.csp.model_path,
-                                                               suffix)
+                                                               device)
 
     def to_be_cancelled(self):
         self.batch_image_segmentation.cancel_action()
@@ -39,13 +31,13 @@ class segmentation(Notifier):
     def to_be_resumed(self):
         self.batch_image_segmentation.resume_action()
 
-    def is_cancelled(self):
+    def is_cancelled(self, *args, **kwargs):
         pass
 
-    def is_paused(self):
+    def is_paused(self, *args, **kwargs):
         pass
 
-    def is_resumed(self):
+    def is_resumed(self, *args, **kwargs):
         pass # weiß nicht, ob die notwendig ist
 
     def run(self):
@@ -75,7 +67,7 @@ class segmentation(Notifier):
         self.batch_image_segmentation.add_start_listener(listener=start)
         self.batch_image_segmentation.add_update_listener(listener=update)
         self.batch_image_segmentation.add_cancel_listener(listener=self.is_cancelled)
-        self.batch_image_segmentation.add_stop_listener(listener=self.is_paused)
+        self.batch_image_segmentation.add_pause_listener(listener=self.is_paused)
         self.batch_image_segmentation.add_completion_listener(listener=finished)
 
         self.batch_image_segmentation.run()

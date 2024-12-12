@@ -13,25 +13,21 @@ from notifier import Notifier
 class BatchImageSegmentation(Notifier):
 
     def __init__(self,
-                 segmentation_channel,
                  segmentation,
                  csp,
-                 diameter=250,
-                 device=None,
-                 segmentation_model=None,
-                 suffix="_seg"):
+                 device=None):
         super().__init__()
 
         if device is None:
             device = "cpu"
 
-        self.segmentation_channel = segmentation_channel
+        self.segmentation_channel = csp.config.get_bf_channel()
         self.segmentation = segmentation
         self.csp = csp
-        self.diameter = diameter
+        self.diameter = csp.config.get_diameter()
         self.device = device
-        self.segmentation_model = segmentation_model
-        self.suffix = suffix  # New suffix attribute
+        self.segmentation_model = csp.model_path
+        self.suffix = csp.config.get_mask_suffix()  # New suffix attribute
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
@@ -102,14 +98,14 @@ class BatchImageSegmentation(Notifier):
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
 
-            self.csp.mask_paths.update({str(iN): new_path})
+            self.csp.mask_paths.update({image_id: new_path})
+            print("mask path %d", iN)
             print(self.csp.mask_paths.get(str(iN)))
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": iN, "path": image_path}}
             self._call_update_listeners(kwargs.get("progress"), kwargs.get("current_image"))
 
-        # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
         self._call_completion_listeners(self.csp.mask_paths)
 
 
@@ -157,6 +153,7 @@ class BatchImageReadout(Notifier):
                 continue
 
             mask_path = mask_paths[image_id][segmentation_channel]
+            print("mask path in images", mask_path)
             mask_data = np.load(mask_path, allow_pickle=True).item()
             mask = mask_data["masks"]
 

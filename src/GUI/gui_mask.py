@@ -30,7 +30,7 @@ def handle_image_switch_mask_on(gui:GUI):
             gui.canvas.container_mask.image_src = mask
             gui.canvas.container_mask.visible = True
         else:
-            error_banner(gui,f"There is no mask for {gui.csp.image_id}generated ")
+            error_banner(gui,f"There is no mask for {gui.csp.image_id} generated ")
             gui.switch_mask.value=False
     else:
         print("off")

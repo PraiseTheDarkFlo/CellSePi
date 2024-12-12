@@ -44,11 +44,20 @@ class Notifier:
     def _call_cancel_listeners(self, *args, **kwargs):
         self._call_listeners(self._completion_listeners, args, kwargs)
 
-    def add_stop_listener(self, listener):
+    def add_pause_listener(self, listener):
         self._completion_listeners.add(listener)
 
-    def remove_stop_listener(self, listener):
+    def remove_pause_listener(self, listener):
         self._completion_listeners.remove(listener)
 
-    def _call_stop_listeners(self, *args, **kwargs):
+    def _call_pause_listeners(self, *args, **kwargs):
+        self._call_listeners(self._completion_listeners, args, kwargs)
+
+    def add_resume_listener(self, listener):
+        self._completion_listeners.add(listener)
+
+    def remove_resume_listener(self, listener):
+        self._completion_listeners.remove(listener)
+
+    def _call_resume_listeners(self, *args, **kwargs):
         self._call_listeners(self._completion_listeners, args, kwargs)
