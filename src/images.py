@@ -14,6 +14,8 @@ class BatchImageSegmentation(Notifier):
 
     def __init__(self, image_paths,
                  segmentation_channel,
+                 segmentation,
+                 csp,
                  diameter=250,
                  device=None,
                  segmentation_model=None,
@@ -25,15 +27,36 @@ class BatchImageSegmentation(Notifier):
 
         self.image_paths = image_paths
         self.segmentation_channel = segmentation_channel
+        self.segmentation = segmentation
+        self.csp = csp
         self.diameter = diameter
         self.device = device
         self.segmentation_model = segmentation_model
         self.suffix = suffix  # New suffix attribute
+        self.cancel_now = False
+        self.pause_now = False
+        self.resume_now = False
 
+    def cancel_action(self):
+        self.cancel_now = True
+
+    def pause_action(self):
+        self.pause_now = True
+
+    def resume_action(self):
+        self.resume_now = True
+
+    """
+    Apply the segmentation model to every image
+    """
     def run(self):
-        # TODO zu jedem Zeitpunkt einen Listener, ob gestoppt werden soll
+        if self.cancel_now:
+            pass
+        elif self.pause_now:
+            pass
+        elif self.resume_now:
+            pass
         self._call_start_listeners()
-
         image_paths = self.image_paths
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
@@ -50,6 +73,16 @@ class BatchImageSegmentation(Notifier):
         kwargs = {}
         mask_paths = {}
         for iN, image_id in enumerate(image_paths):
+            if self.cancel_now:
+                self._call_cancel_listeners()
+                return
+            elif self.pause_now:
+                self._call_pause_listeners()
+                return
+            elif self.resume_now:
+                self._call_resume_listeners()
+                return
+
             image_path = image_paths[image_id][segmentation_channel]
             image = imread(image_path)
 
@@ -70,15 +103,15 @@ class BatchImageSegmentation(Notifier):
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
 
-            mask_paths.update({str(iN): new_path})
-            print(mask_paths.get(str(iN)))
+            self.csp.mask_paths.update({str(iN): new_path})
+            print(self.csp.mask_paths.get(str(iN)))
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": iN, "path": image_path}}
             self._call_update_listeners(kwargs.get("progress"), kwargs.get("current_image"))
 
         # TODO hier muss ein listener hin, der schaut ob gestoppt werden muss
-        self._call_completion_listeners(mask_paths)
+        self._call_completion_listeners(self.csp.mask_paths)
 
 
 class BatchImageReadout(Notifier):

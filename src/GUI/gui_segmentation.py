@@ -9,13 +9,59 @@ from ..notifier import Notifier
 import src.GUI.gui_directory
 
 
-#class gui_segmentation(GUI):
-
-#build the segmentation_card with all events methods
 def create_segmentation_card(gui: GUI):
+    """
+    This method creates a segmentation card for the GUI, which contains the progress bar and several buttons for
+     controlling the run of the segmentation.
 
-    #method that does something with the result of the selection of the FIle
+    Arguments:
+         gui (GUI): the complete graphical user interface framework
+
+    Returns:
+        segmentation_card (ft.Card): the card containing all the elements needed to run the segmentation
+    """
+    # creating all the necessary buttons and their initial properties
+    start_button = ft.ElevatedButton( # button to start the segmentation calculation
+        text="Start",
+        icon=ft.icons.PLAY_CIRCLE,
+        disabled=True,
+        on_click=None,
+    )
+    pause_button = ft.ElevatedButton( # button to pause the segmentation calculation while it is running
+        text="Pause",
+        icon=ft.icons.PAUSE_CIRCLE,
+        visible=False,
+        on_click=None,
+    )
+    cancel_button = ft.ElevatedButton( # button to completely cancel the currently running segmentation calculation
+        text="Cancel",
+        icon=ft.icons.CANCEL,
+        visible=False,
+        on_click=None,
+    )
+    resume_button = ft.ElevatedButton( # button to resume the segmentation calculation after it has been paused
+        text="Resume",
+        icon=ft.icons.PLAY_CIRCLE,
+        visible=False,
+        on_click=None,
+    )
+    # button to start the fluorescence readout
+    fluorescence = Fluorescence(gui.csp, gui)
+    fl_button = fluorescence_button
+
+    # progress bar, which is updated throughout the segmentation calculation and fluorescence readout
+    progress_bar = ft.ProgressBar(value=0, width=180)
+    progress_bar_text = ft.Text("Waiting for Input")
+    segmentation_instance = segmentation(gui)
+
+    # the following methods are called when clicking on the corresponding button
     def pick_model_result(e: ft.FilePickerResultEvent):
+        """
+        The result of the file selection is handled.
+
+        Arguments:
+            e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
+        """
         if e.files is None:
             print("no model selected")
         elif e.files[0].path is not None:
@@ -29,73 +75,92 @@ def create_segmentation_card(gui: GUI):
         else:
             print("no model selected")
 
-
-
     pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
     gui.page.overlay.extend([pick_model_dialog])
 
-    start_button = ft.ElevatedButton(
-                "Start",
-                icon =ft.icons.PLAY_CIRCLE,
-                disabled =True,
-                on_click = None,
-            )
-    stop_button = ft.ElevatedButton(
-        "Stop",
-        icon = ft.icons.STOP,
-        visible = False,
-        on_click = None,
-    )
-
-    fluorescence = Fluorescence(gui.csp,gui)
-
-    fl_button = fluorescence_button
-
-    progress_bar = ft.ProgressBar(value=0, width=180)
-    progress_bar_text = ft.Text("Waiting for Input")
-    segmentation_instance = segmentation(gui)
-
-    def start_segmentation(e):
+    def start_segmentation(e): # called when the start button is clicked
+        """
+        The start of the segmentation is initialized.
+        """
         print("start segmentation")
         start_button.visible = False
-        stop_button.visible = True
-        #progress_bar_text.value = "0%"
+        pause_button.visible = True
+        cancel_button.visible = True
         model_text.disabled = True
-        choose_model.disabled = True
+        model_chooser.disabled = True
         fl_button.visible = False
         gui.page.update()
         segmentation_instance.run()
 
-    def stop_segmentation(e):
+    def cancel_segmentation(e): # called when the cancel button is clicked
+        """
+        The running segmentation is cancelled and the masks calculated so far are deleted, i.e. return to the start state.
+        """
         print("stop segmentation")
         #TODO hier muss ein notifier hin, der segmentation notified, dass die berechnung gestoppt werden soll
         #TODO in der Wartezeit soll klar sein, dass gerade gecancelt wird (weil es dauern könnte bis aktuelles Bild fertig bearbeitet wird)
         start_button.visible = True
-        stop_button.visible = False
+        pause_button.visible = False
+        cancel_button.visible = False
         progress_bar_text.value = "Ready to Start"
         model_text.disabled = False
-        choose_model.disabled = False
+        model_chooser.disabled = False
         gui.page.update()
-        segmentation_instance.stop()
+        segmentation_instance.to_be_cancelled()
+
+    def pause_segmentation(e): # called when the pause button is clicked
+        """
+        The running segmentation is paused and can be resumed again.
+        """
+        print("pause segmentation")
+        segmentation_instance.to_be_paused()
+        pause_button.visible = False
+        resume_button.visible = True
+        progress_bar_text.value = "Paused: " + progress_bar_text.value
+        gui.page.update()
+
+    def resume_segmentation(e): # called when the resume button is clicked
+        """
+        The segmentation is resumed again from the previously paused state.
+        """
+        print("resume segmentation")
+        segmentation_instance.to_be_resumed()
+        resume_button.visible = False
+        pause_button.visible = True
+        progress_words = progress_bar_text.value.split()
+        progress_bar_text.value = progress_words[1] + progress_words[2] # remove "paused:" from string
+        gui.page.update()
 
     start_button.on_click = start_segmentation
-    stop_button.on_click = stop_segmentation
+    cancel_button.on_click = cancel_segmentation
+    pause_button.on_click = pause_segmentation
+    resume_button.on_click = resume_segmentation
 
-#brauchen hier listener um mit notifiern in segmentation.py zu interagieren
     def finished_segmentation():
+        """
+        This method updates the segmentation card when the segmentation is finished.
+        """
         print("finished segmentation")
         progress_bar_text.value = "Finished"
-        stop_button.visible = False
+        pause_button.visible = False
+        cancel_button.visible = False
         fl_button.visible = True
         fl_button.disabled = False
         start_button.visible = True
         start_button.disabled = False
         model_text.disabled = False
-        choose_model.disabled = False
+        model_chooser.disabled = False
 
         gui.page.update()
 
     def update_progress_bar(progress,current_image):
+        """
+        This method updates the progress bar at any point before, during and after the segmentation and fluorescence process.
+
+        Arguments:
+            progress (int): the current progress
+            current_image (int): the current image number
+        """
         print("update")
         progress_bar_text.value = progress
         extracted_num = re.search(r'\d+', progress)
@@ -136,8 +201,8 @@ def create_segmentation_card(gui: GUI):
 
     pick_model_row = ft.Row(
         [
-            ft.Container(content=ft.Row([progress_bar,progress_bar_text])),
-            ft.Container(content=ft.Row([start_button,stop_button,fl_button]))
+            ft.Container(content=ft.Row([progress_bar, progress_bar_text])),
+            ft.Container(content=ft.Row([start_button, pause_button, resume_button, cancel_button, fl_button]))
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
     )
 
@@ -156,7 +221,8 @@ def create_segmentation_card(gui: GUI):
 
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     model_directory = os.path.join(project_root, "models")
-    choose_model = ft.Container(
+
+    model_chooser = ft.Container(
                         content=ft.IconButton(
                             icon=ft.icons.UPLOAD_FILE,
                             tooltip="Choose Model",
@@ -168,7 +234,7 @@ def create_segmentation_card(gui: GUI):
         content=ft.Container(
             content=ft.Stack(
                 [   segmentation_container,
-                    choose_model
+                    model_chooser
                 ]
             ),
             padding=10

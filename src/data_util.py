@@ -5,6 +5,7 @@ import shutil
 import numpy as np
 from PIL import Image
 from readlif.reader import LifFile
+import flet as ft
 
 
 def listdir(directory):
@@ -149,7 +150,7 @@ def remove_gradient(img):
     return corrected_img
 
 
-def transform_image_path(image_path,output_path):
+def transform_image_path(image_path,output_path,gui):
     # check bit depth
     with Image.open(image_path) as img:
         mode = img.mode
@@ -159,7 +160,7 @@ def transform_image_path(image_path,output_path):
         elif mode in ["L", "RGB"]:
             bit_depth = 8
         else:
-            raise ValueError(f"Unsupported image mode {mode}")
+            gui.page.snack_bar = ft.SnackBar(ft.Text("Unsupported image bit depth. Only 8 or 16 bit allowed."))
         # convert to 8 bit if necessary
         if bit_depth == 16:
             array16 = np.array(img, dtype=np.uint16)

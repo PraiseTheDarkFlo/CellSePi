@@ -84,7 +84,7 @@ def create_directory_card(gui: GUI):
             for path in working_directory.iterdir():
                 if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
                     if path.is_file():
-                        transform_image_path(path, path)
+                        transform_image_path(path, path, gui)
                     if Image.open(path).mode in ["L", "RGB"]:
                         print("8 bit")
 
