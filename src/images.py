@@ -98,7 +98,7 @@ class BatchImageSegmentation(Notifier):
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
 
-            self.csp.mask_paths.update({image_id: new_path})
+            self.csp.mask_paths.update({str(iN): new_path})
             print("mask path %d", iN)
             print(self.csp.mask_paths.get(str(iN)))
 
