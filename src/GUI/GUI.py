@@ -100,7 +100,7 @@ class GUI:
 
             if self.csp.image_id is None:
                 print("No image selected")
-                error_banner(self)
+                error_banner(self,"No image selected!")
             else:
                 handle_image_switch_mask_on(self)
 

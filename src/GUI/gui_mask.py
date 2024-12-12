@@ -2,9 +2,9 @@ from src import mask
 from . import GUI
 import flet as ft
 
-def error_banner(gui:GUI):
+def error_banner(gui:GUI,message):
     gui.page.snack_bar = ft.SnackBar(
-        ft.Text("No image selected!"))
+        ft.Text(message))
     gui.page.snack_bar.open = True
     gui.page.update()
 
@@ -20,16 +20,17 @@ def handle_image_switch_mask_on(gui:GUI):
         print("on")
         # if self.mask.output_saved:
         image = gui.csp.image_id
+        if image in gui.csp.mask_paths:
+            #if the image was not generated before
+            if image not in gui.mask.mask_outputs:
+                gui.mask.load_mask_into_canvas()
 
-        #if the image was not generated before
-        if image not in gui.mask.mask_outputs:
-            gui.mask.load_mask_into_canvas()
-
-        mask = gui.mask.mask_outputs[image]
-        print(mask)
-        gui.canvas.container_mask.image_src = mask
-        gui.canvas.container_mask.visible = True
-
+            mask = gui.mask.mask_outputs[image]
+            print(mask)
+            gui.canvas.container_mask.image_src = mask
+            gui.canvas.container_mask.visible = True
+        else:
+            error_banner(gui,f"There is no mask for {gui.csp.image_id}generated ")
     else:
         print("off")
         gui.canvas.container_mask.visible = False

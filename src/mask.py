@@ -9,6 +9,7 @@ import pathlib
 import platform
 from PIL import Image
 
+
 #im Moment werden die immer überschrieben. Es wäre eigentlich besser wenn er sich die abspeichert, die er schon mal geladen hat
 #dann muss er nur noch darauf zugreifen
 class Mask:
