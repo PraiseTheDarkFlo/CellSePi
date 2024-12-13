@@ -26,7 +26,6 @@ class BatchImageSegmentation(Notifier):
         self.csp = csp
         self.diameter = csp.config.get_diameter()
         self.device = device
-        self.suffix = csp.config.get_mask_suffix()  # New suffix attribute
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
@@ -54,6 +53,7 @@ class BatchImageSegmentation(Notifier):
         image_paths = self.csp.image_paths
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
+        suffix = self.csp.config.get_mask_suffix()
 
         segmentation_model = self.csp.model_path
         device = self.device
@@ -86,7 +86,7 @@ class BatchImageSegmentation(Notifier):
             # Generate the output filename directly using the suffix attribute
             directory, filename = os.path.split(image_path)
             name, _ = os.path.splitext(filename)
-            new_filename = f"{name}{self.suffix}.npy"
+            new_filename = f"{name}{suffix}.npy"
             new_path = os.path.join(directory, new_filename)
 
             # Save the segmentation results directly with the default name first
