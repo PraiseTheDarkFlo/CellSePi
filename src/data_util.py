@@ -160,10 +160,11 @@ def transform_image_path(image_path,output_path,gui):
         elif mode in ["L", "RGB"]:
             bit_depth = 8
         else:
-            gui.page.snack_bar = ft.SnackBar(ft.Text("Unsupported image bit depth. Only 8 or 16 bit allowed."))
+            return False
         # convert to 8 bit if necessary
         if bit_depth == 16:
             array16 = np.array(img, dtype=np.uint16)
             array8 = (array16 / 256).astype(np.uint8)
             img8 = Image.fromarray(array8)
             img8.save(output_path, format="TIFF")
+        return True

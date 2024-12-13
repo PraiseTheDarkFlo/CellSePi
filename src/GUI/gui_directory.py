@@ -62,6 +62,7 @@ def create_directory_card(gui: GUI):
 
     def select_directory(dir):
         is_lif = gui.is_lif.value
+        is_supported = True
         print(dir)
         path = pathlib.Path(dir)
         # Lif Case
@@ -83,13 +84,13 @@ def create_directory_card(gui: GUI):
             for path in working_directory.iterdir():
                 if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
                     if path.is_file():
-                        transform_image_path(path, path, gui)
+                        is_supported = is_supported and transform_image_path(path, path, gui)
                     if Image.open(path).mode in ["L", "RGB"]:
                         print("8 bit")
 
 
         gui.csp.working_directory = working_directory
-        set_paths(working_directory)
+        set_paths(working_directory, )
 
 
     def set_paths(dirname):
@@ -210,6 +211,7 @@ def create_directory_card(gui: GUI):
             files_row.visible = False
             directory_row.visible = True
 
+        gui.page.update()
 
     update_view(None)
     gui.is_lif.on_change = update_view
