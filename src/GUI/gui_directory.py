@@ -119,7 +119,7 @@ def create_directory_card(gui: GUI):
             mask_paths = {}
         else:
             gui.count_results_txt.color = None
-            if gui.ready_to_start:
+            if gui.csp.model_path is not None:
                 gui.progress_bar_text.value = "Ready to Start"
                 gui.start_button.disabled = False
             gui.ready_to_start = True

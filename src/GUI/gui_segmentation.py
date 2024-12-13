@@ -92,7 +92,6 @@ def create_segmentation_card(gui: GUI):
                 print("start_button is disabled", start_button.disabled)
             model_text.title.value = e.files[0].name
             gui.csp.model_path = e.files[0].path
-            gui.ready_to_start = True
             gui.page.update()
         else:
             print("no model selected")
