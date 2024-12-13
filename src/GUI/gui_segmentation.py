@@ -24,6 +24,7 @@ def create_segmentation_card(gui: GUI):
     start_button = ft.ElevatedButton( # button to start the segmentation calculation
         text="Start",
         icon=ft.icons.PLAY_CIRCLE,
+        tooltip="Start the segmentation",
         disabled=True,
         on_click=None
     )
@@ -45,6 +46,10 @@ def create_segmentation_card(gui: GUI):
         icon=ft.icons.PLAY_CIRCLE,
         visible=False,
         on_click=None,
+    )
+    open_button = ft.IconButton(
+        icon=ft.icons.OPEN_IN_NEW_ROUNDED,
+        tooltip = "Open fluorescence file",
     )
     # button to start the fluorescence readout
     fluorescence = Fluorescence(gui.csp, gui)
@@ -204,7 +209,7 @@ def create_segmentation_card(gui: GUI):
     pick_model_row = ft.Row(
         [
             ft.Container(content=ft.Row([progress_bar, progress_bar_text])),
-            ft.Container(content=ft.Row([start_button, pause_button, resume_button, cancel_button, fl_button]))
+            ft.Container(content=ft.Row([start_button, pause_button, resume_button, cancel_button, fl_button, open_button]))
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
     )
 
