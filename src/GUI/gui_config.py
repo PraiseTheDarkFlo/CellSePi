@@ -235,9 +235,9 @@ class GUIConfig:
             e (Event): The event triggered by the action to add a profile.
         """
         if self.gui.is_lif.value:
-            default = create_default_config()["Profiles"]["Tif"]
-        else:
             default = create_default_config()["Profiles"]["Lif"]
+        else:
+            default = create_default_config()["Profiles"]["Tif"]
         counter = 0
         new_name = "new Profile"
 
@@ -309,19 +309,18 @@ class GUIConfig:
         Handles the event of updating the bright-field (BF) channel.
 
         This method validates the entered value for the BF channel. If the value is invalid,
-        an error message is displayed to the user. A valid BF channel is expected to be a
-        positive integer.
+        an error message is displayed to the user. A valid BF channel is expected to be not empty.
 
         Args:
             e (Event): The event triggered by the user interaction, containing the new BF channel value.
         """
         try:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(),
-                                             bf_channel=int(e.control.value))
+                                             bf_channel=e.control.value)
             self.txt_bf_ref.current.color = None
             self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Bright-field channel only allows counting numbers, greater than 0!"))
+            self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel must be not empty!"))
             self.page.snack_bar.open = True
             self.txt_bf_ref.current.color = ft.colors.RED
             self.page.update()

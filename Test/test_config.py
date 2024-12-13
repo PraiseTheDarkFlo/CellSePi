@@ -13,11 +13,11 @@ def config():
     cfg.restore_config()
 
 def test_add_and_delete_profile(config):
-    config.add_profile("test", 42, "n", "j", 2.0)
+    config.add_profile("test", "42", "n", "j", 2.0)
     default_config = create_default_config()
     assert config.config != default_config, "The config did not change"
     assert "test" in config.config["Profiles"], "The new profile was not added"
-    assert 42 == config.config["Profiles"]["test"]["bf_channel"], "The bf_channel is not right"
+    assert "42" == config.config["Profiles"]["test"]["bf_channel"], "The bf_channel is not right"
     assert "n" == config.config["Profiles"]["test"]["mask_suffix"], "The mask_suffix is not right"
     assert "j" == config.config["Profiles"]["test"]["channel_prefix"], "The channel_prefix is not right"
     assert 2.0 == config.config["Profiles"]["test"]["diameter"], "The diameter is not right"
@@ -34,8 +34,8 @@ def test_get_profile(config):
     assert config.get_profile("Lif") == create_default_config()["Profiles"]["Lif"], "Something get wrong by getting profile"
 
 def test_update_profile(config):
-    config.update_profile("Lif", 42)
-    assert config.get_profile("Lif")["bf_channel"] == 42, "Values not changed after update"
+    config.update_profile("Lif", "42")
+    assert config.get_profile("Lif")["bf_channel"] == "42", "Values not changed after update"
 
 def test_add_profile_name_fail(config):
     assert False == config.add_profile("Lif", 42, "n", "j", 2.0), "Adding should fail"
@@ -57,7 +57,7 @@ def test_delete_selected_profile_name(config):
     assert config.get_selected_profile_name() == "Lif", "Selected profile was not changed after deleted"
 
 def test_attribute_getter(config):
-    assert config.get_bf_channel() == int(create_default_config()["Profiles"]["Lif"]["bf_channel"]), "bf_channel is wrong"
+    assert config.get_bf_channel() == create_default_config()["Profiles"]["Lif"]["bf_channel"], "bf_channel is wrong"
     assert config.get_mask_suffix() == create_default_config()["Profiles"]["Lif"]["mask_suffix"], "mask_suffix is wrong"
     assert config.get_channel_prefix() == create_default_config()["Profiles"]["Lif"]["channel_prefix"],"channel_prefix is wrong"
     assert config.get_diameter() == float(create_default_config()["Profiles"]["Lif"]["diameter"]),"diameter is wrong"
@@ -68,13 +68,13 @@ def test_idx_name(config):
 
 def test_invalid_profile(config):
         with pytest.raises(ValueError):
-            config.add_profile("", 42, "", "", -10)
+            config.add_profile("", "42", "", "", -10)
         with pytest.raises(ValueError):
-            config.update_profile("Lif", 42, "", "", 2)
+            config.update_profile("Lif", "42", "", "", 2)
         with pytest.raises(ValueError):
-            config.update_profile("Lif", 42, "a", "", 2)
+            config.update_profile("Lif", "42", "a", "", 2)
         with pytest.raises(ValueError):
-           config.update_profile("Lif", 42, "d", "a", -50)
+           config.update_profile("Lif", "42", "d", "a", -50)
         with pytest.raises(ValueError):
             config.rename_profile("","")
         with pytest.raises(ValueError):

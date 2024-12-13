@@ -47,13 +47,13 @@ def create_default_config():
     return {
         "Profiles": {
             "Lif": {
-                "bf_channel": 2,
+                "bf_channel": "2",
                 "mask_suffix": "_seg",
                 "channel_prefix": "c",
                 "diameter": 125.0
                 },
             "Tif": {
-                "bf_channel": 1,
+                "bf_channel": "1",
                 "mask_suffix": "_seg",
                 "channel_prefix": "c",
                 "diameter": 250.0
@@ -130,7 +130,7 @@ class ConfigFile:
         else:
             return False
 
-    def update_profile(self, name: str, bf_channel: int = None, mask_suffix: str = None,
+    def update_profile(self, name: str, bf_channel: str = None, mask_suffix: str = None,
                        channel_prefix: str = None, diameter: float = None):
         """
         Updates the attributes of a profile.
@@ -151,7 +151,7 @@ class ConfigFile:
         """
         if name in self.config["Profiles"]:
             if bf_channel is not None:
-                if not mask_suffix:
+                if not bf_channel:
                     raise ValueError("bf_channel must not be empty.")
                 self.config["Profiles"][name]["bf_channel"] = bf_channel
             if mask_suffix is not None:
