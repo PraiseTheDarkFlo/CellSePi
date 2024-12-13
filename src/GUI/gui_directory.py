@@ -107,6 +107,7 @@ def create_directory_card(gui: GUI):
             os.rmdir(gui.csp.working_directory)
         elif not is_supported:
             gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
+            gui.page.snackbar.open = True
             gui.count_results_txt.color = ft.Colors.RED
             gui.page.update()
             image_paths = {}
