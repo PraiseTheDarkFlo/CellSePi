@@ -18,7 +18,6 @@ def organize_files(files, channel_prefix, mask_suffix=""):
     for file in files:
         if channel_prefix in file.name:
             image_id, channel_id = file.stem.replace(mask_suffix, "").split(channel_prefix)
-            channel_id = int(channel_id)
             if image_id not in id_to_file:
                 id_to_file[image_id] = {}
 
