@@ -26,7 +26,6 @@ class BatchImageSegmentation(Notifier):
         self.csp = csp
         self.diameter = csp.config.get_diameter()
         self.device = device
-        self.segmentation_model = csp.model_path
         self.suffix = csp.config.get_mask_suffix()  # New suffix attribute
         self.cancel_now = False
         self.pause_now = False
@@ -56,7 +55,7 @@ class BatchImageSegmentation(Notifier):
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
 
-        segmentation_model = self.segmentation_model
+        segmentation_model = self.csp.model_path
         device = self.device
         device = torch.device(device)
 

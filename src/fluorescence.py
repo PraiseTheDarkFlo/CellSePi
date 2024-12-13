@@ -36,6 +36,8 @@ class Fluorescence(Notifier):
                 self.csp.readout_path=readout_path
                 self.csp.readout_running=False
                 fluorescence_button.disabled =False #hier den fluorescence button auf normal setzen
+                if self.csp.model_path is not None:
+                    self.gui.start_button.disabled =False
                 print(f"values are stored in {readout_path}")
                 self._call_completion_listeners()
 

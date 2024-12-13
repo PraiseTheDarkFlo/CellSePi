@@ -25,7 +25,7 @@ def create_segmentation_card(gui: GUI):
         text="Start",
         icon=ft.icons.PLAY_CIRCLE,
         disabled=True,
-        on_click=None,
+        on_click=None
     )
     pause_button = ft.ElevatedButton( # button to pause the segmentation calculation while it is running
         text="Pause",
@@ -38,6 +38,7 @@ def create_segmentation_card(gui: GUI):
         icon=ft.icons.CANCEL,
         visible=False,
         on_click=None,
+        color=ft.Colors.RED
     )
     resume_button = ft.ElevatedButton( # button to resume the segmentation calculation after it has been paused
         text="Resume",
@@ -241,4 +242,4 @@ def create_segmentation_card(gui: GUI):
             padding=10
         ),
     )
-    return segmentation_card
+    return segmentation_card,start_button

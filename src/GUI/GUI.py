@@ -46,7 +46,9 @@ class GUI:
         self.directory_card = create_directory_card(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
-        self.segmentation_card = create_segmentation_card(self)
+        seg_card,start_button = create_segmentation_card(self)
+        self.segmentation_card = seg_card
+        self.start_button = start_button
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,

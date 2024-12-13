@@ -120,7 +120,11 @@ def create_directory_card(gui: GUI):
         gui.image_gallery.controls.clear()
         gui.canvas.main_image.content = ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN)
-        gui.canvas.main_image.update()
+        # the window of the image display is cleared of all content
+        gui.switch_mask.value = False
+        gui.canvas.container_mask.visible = False
+        gui.csp.image_id = None
+        gui.page.update()
 
         # Display groups with side-by-side images
         for image_id in gui.csp.image_paths:
@@ -205,14 +209,6 @@ def create_directory_card(gui: GUI):
             gui.tif_txt.weight = "bold"
             files_row.visible = False
             directory_row.visible = True
-
-        #the window of the image display is cleared of all content
-        gui.switch_mask.value = False
-        gui.canvas.container_mask.visible = False
-        gui.csp.image_id = None
-        gui.canvas.main_image.content= ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
-                                    fit=ft.ImageFit.SCALE_DOWN)
-        gui.page.update()
 
 
     update_view(None)
