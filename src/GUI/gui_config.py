@@ -13,7 +13,7 @@ class GUIConfig:
         name_items (List): A list of buttons and text fields for editing or selecting profiles.
         profile_chooser_overlay (CupertinoBottomSheet): The overlay shown when the profile name button is clicked.
         profile_ref (Ref): Reference to the currently selected profile name button.
-        txt_bf_ref (Ref): Reference to the bright field channel text field.
+        txt_bf_ref (Ref): Reference to the bright-field channel text field.
         txt_ms_ref (Ref): Reference to the mask suffix text field.
         txt_cp_ref (Ref): Reference to the channel prefix text field.
         txt_d_ref (Ref): Reference to the diameter text field.
@@ -306,7 +306,7 @@ class GUIConfig:
 
     def bf_updater(self, e):
         """
-        Handles the event of updating the bright field (BF) channel.
+        Handles the event of updating the bright-field (BF) channel.
 
         This method validates the entered value for the BF channel. If the value is invalid,
         an error message is displayed to the user. A valid BF channel is expected to be a
@@ -321,7 +321,7 @@ class GUIConfig:
             self.txt_bf_ref.current.color = None
             self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel only allows counting numbers, greater than 0!"))
+            self.page.snack_bar = ft.SnackBar(ft.Text("Bright-field channel only allows counting numbers, greater than 0!"))
             self.page.snack_bar.open = True
             self.txt_bf_ref.current.color = ft.colors.RED
             self.page.update()
@@ -396,7 +396,7 @@ class GUIConfig:
         This method generates a container that includes:
         -   A row with the current selected profile and a button to open the profile chooser overlay.
         -   Text fields for modifying various attributes of the selected profile:
-            -   Bright Field Channel
+            -   Bright-Field Channel
             -   Mask Suffix
             -   Channel Prefix
             -   Diameter
@@ -409,7 +409,7 @@ class GUIConfig:
         #--------------------------------------
         #creates the TextFields for the diffrent attributes of a profile
         tf_bf = ft.TextField(
-            label="Bright Field Channel:",
+            label="Bright-Field Channel:",
             border_color=ft.colors.BLUE_ACCENT,
             value=self.config_class.get_bf_channel(),
             ref=self.txt_bf_ref,

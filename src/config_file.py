@@ -98,7 +98,7 @@ class ConfigFile:
 
         Args:
             name (str): Name of the new profile.
-            bf_channel (str): Bright field channel for the profile.
+            bf_channel (int): Bright-field channel for the profile.
             mask_suffix (str): Mask suffix for the profile.
             channel_prefix (str): Channel prefix for the profile.
             diameter (float): Diameter value for the profile.
@@ -137,7 +137,7 @@ class ConfigFile:
 
         Args:
             name (str): Name of the profile to update.
-            bf_channel (str, optional): New bright field channel.
+            bf_channel (str, optional): New bright-field channel.
             mask_suffix (str, optional): New mask suffix.
             channel_prefix (str, optional): New channel prefix.
             diameter (float, optional): New diameter value.
@@ -324,10 +324,10 @@ class ConfigFile:
 
     def get_bf_channel(self):
         """
-        Gets the bright field channel for the profile.
+        Gets the bright-field channel for the profile.
 
         Returns:
-            bright field channel (str): The bright field channel for the profile.
+            bright-field channel (str): The bright-field channel for the profile.
         """
         profile = self.get_selected_profile()
         return profile["bf_channel"]

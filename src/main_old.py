@@ -72,7 +72,7 @@ class App(tk.Tk):
                                                  )
         self.checkbutton_is_lif.pack(anchor=tk.W)
 
-        self.text_input_bright_field_channel = custom_widgets_old.TextInput(self.left_panel, label="Bright Field Channel:")
+        self.text_input_bright_field_channel = custom_widgets_old.TextInput(self.left_panel, label="Bright-Field Channel:")
         self.text_input_bright_field_channel.pack(fill="x", padx=padx, pady=pady)
         self.text_input_bright_field_channel.entry.insert(0, 1)
 

@@ -35,6 +35,7 @@ class Fluorescence(Notifier):
                 self.csp.readout= readout
                 self.csp.readout_path=readout_path
                 self.csp.readout_running=False
+                self.gui.open_button.visible=True
                 fluorescence_button.disabled =False #hier den fluorescence button auf normal setzen
                 if self.csp.model_path is not None:
                     self.gui.start_button.disabled =False
@@ -79,7 +80,7 @@ class Fluorescence(Notifier):
         """
 
         if self.csp.readout_running:
-            error_banner(self.gui,"Redout already started")
+            error_banner(self.gui,"Readout already started")
             return False,
         if self.csp.readout_thread is not None and self.csp.readout_thread.is_alive():
             print("Already occupied")

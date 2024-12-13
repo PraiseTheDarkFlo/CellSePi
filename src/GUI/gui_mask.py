@@ -23,7 +23,7 @@ def handle_image_switch_mask_on(gui:GUI):
 
         #case: mask was created during segmentation
         if image in gui.csp.mask_paths and bfc in gui.csp.mask_paths[image]:
-            #if the image to the bright field channel was not generated before
+            #if the image to the bright-field channel was not generated before
             if image not in gui.mask.mask_outputs or bfc not in gui.mask.mask_outputs[image]:
                 gui.mask.load_mask_into_canvas()
 
@@ -33,7 +33,7 @@ def handle_image_switch_mask_on(gui:GUI):
             gui.canvas.container_mask.image_src = mask
             gui.canvas.container_mask.visible = True
         else:#hier prüfeb, ob Bildpfad im Canvas derselbe Pfad ist wie der ausgewählte
-            error_banner(gui,f"There is no mask for {gui.csp.image_id} with brightfield channel {bfc} generated ")
+            error_banner(gui,f"There is no mask for {gui.csp.image_id} with bright-field channel {bfc} generated ")
             gui.canvas.container_mask.visible = False
             gui.switch_mask.value=False
     else:
