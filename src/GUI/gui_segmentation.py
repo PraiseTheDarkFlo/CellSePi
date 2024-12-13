@@ -1,5 +1,8 @@
 import os
 import re
+import subprocess
+import sys
+
 import flet as ft
 from . import GUI
 from ..fluorescence import Fluorescence
@@ -47,9 +50,19 @@ def create_segmentation_card(gui: GUI):
         visible=False,
         on_click=None,
     )
+
+    def open_readout(e):
+        file_path = gui.csp.readout_path
+        if os.name == "nt":  # Check if Windows
+            os.startfile(file_path)
+        elif os.name == "posix":  # Check if Mac or Linux
+            subprocess.run(["open", file_path] if sys.platform == "darwin" else ["xdg-open", file_path])
+
     open_button = ft.IconButton(
         icon=ft.icons.OPEN_IN_NEW_ROUNDED,
         tooltip = "Open fluorescence file",
+        on_click=open_readout,
+        visible= False
     )
     # button to start the fluorescence readout
     fluorescence = Fluorescence(gui.csp, gui)
@@ -59,6 +72,7 @@ def create_segmentation_card(gui: GUI):
     progress_bar = ft.ProgressBar(value=0, width=180)
     progress_bar_text = ft.Text("Waiting for Input")
     segmentation_instance = segmentation(gui)
+
 
     # the following methods are called when clicking on the corresponding button
     def pick_model_result(e: ft.FilePickerResultEvent):
@@ -247,4 +261,4 @@ def create_segmentation_card(gui: GUI):
             padding=10
         ),
     )
-    return segmentation_card,start_button
+    return segmentation_card,start_button,open_button
