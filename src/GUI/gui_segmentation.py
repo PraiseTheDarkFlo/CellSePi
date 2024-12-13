@@ -111,6 +111,7 @@ def create_segmentation_card(gui: GUI):
         model_chooser.disabled = True
         fl_button.visible = False
         gui.open_button.visible = False
+        gui.directory.disable_path_choosing()
         gui.page.update()
         segmentation_instance.run()
 
@@ -127,6 +128,7 @@ def create_segmentation_card(gui: GUI):
         progress_bar_text.value = "Ready to Start"
         model_text.disabled = False
         model_chooser.disabled = False
+        gui.directory.enable_path_choosing()
         gui.page.update()
         segmentation_instance.to_be_cancelled()
 
@@ -172,6 +174,7 @@ def create_segmentation_card(gui: GUI):
         start_button.disabled = False
         model_text.disabled = False
         model_chooser.disabled = False
+        gui.directory.enable_path_choosing()
         print(gui.csp.mask_paths)
 
         gui.page.update()
@@ -203,6 +206,7 @@ def create_segmentation_card(gui: GUI):
         start_button.disabled = True
         gui.open_button.visible = False
         progress_bar_text.value = "Reading fluorescence"
+        gui.directory.disable_path_choosing()
         gui.page.update()
 
     def start_fl(e):
@@ -216,6 +220,7 @@ def create_segmentation_card(gui: GUI):
             progress_bar_text.value = "Ready to start"
         else:
             progress_bar_text.value = "Waiting for Input"
+        gui.directory.enable_path_choosing()
         gui.page.update()
 
 

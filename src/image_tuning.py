@@ -100,7 +100,7 @@ class ImageTuning:
         Returns:
             image (pillow): the loaded image.
         """
-        if self.cached_image and self.gui.cached_image[0] == image_path:
+        if self.cached_image and self.cached_image[0] == image_path:
             return self.cached_image[1]
 
         image = Image.open(image_path)

@@ -234,7 +234,7 @@ class GUIConfig:
         Args:
             e (Event): The event triggered by the action to add a profile.
         """
-        if self.gui.is_lif.value:
+        if self.gui.directory.is_lif.value:
             default = create_default_config()["Profiles"]["Lif"]
         else:
             default = create_default_config()["Profiles"]["Tif"]

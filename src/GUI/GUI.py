@@ -7,7 +7,7 @@ from .gui_segmentation import create_segmentation_card
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
-from .gui_directory import format_directory_path, copy_directory_to_clipboard, create_directory_card
+from .gui_directory import DirectoryCard
 from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
@@ -19,12 +19,7 @@ class GUI:
     def __init__(self,page: ft.Page):
         self.csp: CellSePi = CellSePi()
         self.page = page
-        self.directory_path = ft.Text(weight="bold",value='Directory Path')
-        self.image_gallery = ft.ListView()
-        self.count_results_txt = ft.Text(value="Results: 0")
-        self.lif_txt = ft.Text("Lif",weight="bold")
-        self.tif_txt = ft.Text("Tif")
-        self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
+        self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window())
         self.page.window.width = 1400
@@ -34,9 +29,7 @@ class GUI:
         self.page.window.min_width = self.page.window.width
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
-        self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
         self.canvas = Canvas()
-        self.directory_card = create_directory_card(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         seg_card,start_button,open_button,progress_bar,progress_bar_text = create_segmentation_card(self)
@@ -79,9 +72,9 @@ class GUI:
                             #RIGHT COLUMN that handles gallery and directory_card
                             ft.Column(
                                 [
-                                    self.directory_card,
+                                    self.directory.card,
                                     ft.Card(
-                                        content=ft.Container(self.image_gallery,padding=20),
+                                        content=ft.Container(self.directory.image_gallery,padding=20),
                                         expand=True
                                     ),
                                 ],
