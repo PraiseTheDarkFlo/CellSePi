@@ -110,6 +110,7 @@ def create_segmentation_card(gui: GUI):
         model_text.disabled = True
         model_chooser.disabled = True
         fl_button.visible = False
+        gui.open_button.visible = False
         gui.page.update()
         segmentation_instance.run()
 
@@ -200,6 +201,7 @@ def create_segmentation_card(gui: GUI):
         fluorescence.readout_fluorescence()
         fl_button.disabled = True
         start_button.disabled = True
+        gui.open_button.visible = False
         progress_bar_text.value = "Reading fluorescence"
         gui.page.update()
 
@@ -210,7 +212,10 @@ def create_segmentation_card(gui: GUI):
 
     def complete_fl():
         progress_bar.value = 0
-        progress_bar_text.value = "Ready to start"
+        if gui.csp.model_path is not None:
+            progress_bar_text.value = "Ready to start"
+        else:
+            progress_bar_text.value = "Waiting for Input"
         gui.page.update()
 
 
