@@ -18,7 +18,7 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
     gui.brightness_slider.update()
-    asyncio.run(gui.update_main_image_async(True))
+    asyncio.run(gui.image_tuning.update_main_image_async(True))
 
 
 
@@ -26,7 +26,6 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
 #includes every thing about the canvas like drawing,the states, ...
 class Canvas:
     def __init__(self):
-        self.running_tasks = set()
         self.container_mask=ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
 
         self.main_image = ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",

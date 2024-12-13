@@ -1,16 +1,7 @@
 import asyncio
-import base64
 import multiprocessing
-import os
-import sys
-import threading
-from io import BytesIO
 
-from PIL import Image, ImageEnhance
 import flet as ft
-from PyQt5.QtWidgets import QApplication
-from scipy.constants import value
-
 from . import gui_options as op
 from .gui_segmentation import create_segmentation_card
 from .drawing.gui_drawing import open_qt_window
@@ -20,6 +11,8 @@ from .gui_directory import format_directory_path, copy_directory_to_clipboard, c
 from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
+from ..image_tuning import ImageTuning
+
 
 #class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
 class GUI:
@@ -54,15 +47,16 @@ class GUI:
         self.progress_bar = progress_bar
         self.progress_bar_text = progress_bar_text
         self.mask=Mask(self.csp)
+        self.image_tuning = ImageTuning(self)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
-            on_change=lambda e: asyncio.run(self.update_main_image_async())
+            on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
         )
 
         # Slider für Kontrast
         self.contrast_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
-            on_change=lambda e: asyncio.run(self.update_main_image_async())
+            on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
         )
 
     def build(self): #build up the main page of the GUI
@@ -113,78 +107,8 @@ class GUI:
 
         self.switch_mask.on_change = update_view_mask
 
-    import asyncio
-
-    async def update_main_image_async(self,click= False):
-        if  click:
-            self.cancel_all_tasks()
-            self.canvas.main_image.content.src_base64 = None
-            self.canvas.main_image.content.src = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
-            self.canvas.main_image.update()
-        else:
-            task = asyncio.create_task(self.update_image())
-            self.canvas.running_tasks.add(task)
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
-            finally:
-                self.canvas.running_tasks.discard(task)
-
-    def cancel_all_tasks(self):
-        for task in self.canvas.running_tasks:
-            print("canceled")
-            task.cancel()
-        self.canvas.running_tasks.clear()
-
-    async def update_image(self):
-        base64_image = await self.adjust_image_async(
-            round(self.brightness_slider.value, 2),
-            round(self.contrast_slider.value, 2)
-        )
-        self.canvas.main_image.content.src_base64 = base64_image
-        self.canvas.main_image.update()
-
-    async def adjust_image_async(self, brightness, contrast):
-        return await asyncio.to_thread(self.adjust_image_in_memory, brightness, contrast)
-
-    def adjust_image_in_memory(self, brightness, contrast):
-        image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
-        image = self.load_image(image_path)
-
-        enhancer = ImageEnhance.Brightness(image)
-        image = enhancer.enhance(brightness)
-
-        enhancer = ImageEnhance.Contrast(image)
-        image = enhancer.enhance(contrast)
-
-        buffer = BytesIO()
-        image.save(buffer, format="PNG")
-        buffer.seek(0)
-
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-    def load_image(self, image_path):
-        if self.csp.cached_image and self.csp.cached_image[0] == image_path:
-            return self.csp.cached_image[1]
-
-        image = Image.open(image_path)
-        self.csp.cached_image = (image_path, image)
-        return image
-
-    def save_current_main_image(self):
-        if self.csp.adjusted_image_path is None:
-            self.csp.adjusted_image_path = os.path.join(self.csp.working_directory, "adjusted_image.png")
-        if round(self.brightness_slider.value, 2) == 1 and round(self.contrast_slider.value, 2) == 1:
-            image = self.load_image(self.csp.image_paths[self.csp.image_id][self.csp.channel_id])
-            image.save(self.csp.adjusted_image_path, format="PNG")
-        else:
-            image_data = base64.b64decode(self.canvas.main_image.content.src_base64)
-            buffer = BytesIO(image_data)
-            image = Image.open(buffer)
-            image.save(self.csp.adjusted_image_path, format="PNG")
 
     def start_drawing_window(self):
-        self.save_current_main_image()
+        self.image_tuning.save_current_main_image()
         multiprocessing.Process(target=open_qt_window, args=(self.csp,)).start()
 
