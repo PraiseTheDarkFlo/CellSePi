@@ -15,7 +15,7 @@ def handle_image_switch_mask_on(gui:GUI):
         gui (GUI):the current GUI object
 
     """
-#TODO: verhindern, dass wenn der falsche brightfield channel ausgewählt wurde,dass dann die Mask geladen wird
+#TODO: verhindern, dass die Maske noch sichtbar ist, wenn das Bild gewechselt wird, aber die Maske nicht geladen wird
     if gui.switch_mask.value:
         print("on")
         image = gui.csp.image_id
@@ -34,6 +34,7 @@ def handle_image_switch_mask_on(gui:GUI):
             gui.canvas.container_mask.visible = True
         else:#hier prüfeb, ob Bildpfad im Canvas derselbe Pfad ist wie der ausgewählte
             error_banner(gui,f"There is no mask for {gui.csp.image_id} with brightfield channel {bfc} generated ")
+            gui.canvas.container_mask.visible = False
             gui.switch_mask.value=False
     else:
         print("off")
