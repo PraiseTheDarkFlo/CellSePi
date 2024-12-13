@@ -26,6 +26,7 @@ class GUIConfig:
             gui (GUI): The GUI instance containing ConfigFile and Page references.
         """
         self.config_class: ConfigFile = gui.csp.config
+        self.gui = gui
         self.page = gui.page
         self.name_items = self.create_name_items_profiles()
         self.profile_chooser_overlay = self.create_profile_overlay()
@@ -233,7 +234,10 @@ class GUIConfig:
         Args:
             e (Event): The event triggered by the action to add a profile.
         """
-        default = create_default_config()["Profiles"]["Tif"]
+        if self.gui.is_lif.value:
+            default = create_default_config()["Profiles"]["Tif"]
+        else:
+            default = create_default_config()["Profiles"]["Lif"]
         counter = 0
         new_name = "new Profile"
 
