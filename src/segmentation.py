@@ -52,11 +52,6 @@ class segmentation(Notifier):
             return
 
         def finished(mask_paths):
-            self.csp.mask_paths = mask_paths
-            image_paths, mask_paths = load_directory(self.csp.working_directory, bright_field_channel=self.csp.config.get_bf_channel(), channel_prefix=self.csp.config.get_channel_prefix(), mask_suffix=self.csp.config.get_mask_suffix())
-            self.csp.image_paths = image_paths
-            self.csp.mask_paths = mask_paths
-            print("hopefully sorted",self.csp.mask_paths)
             self._call_completion_listeners()
 
         def update(update,current_image):

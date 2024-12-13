@@ -97,10 +97,10 @@ class BatchImageSegmentation(Notifier):
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
 
-            self.csp.mask_paths.update({str(iN): new_path})
-           # self.csp.mask_paths[image_id][self.segmentation_channel] = new_path
-            print("mask path %d", iN)
-            print(self.csp.mask_paths.get(str(iN)))
+            if image_id not in self.csp.mask_paths:
+                self.csp.mask_paths[image_id] = {}
+
+            self.csp.mask_paths[image_id][segmentation_channel] = new_path
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": iN, "path": image_path}}
