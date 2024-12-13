@@ -21,10 +21,8 @@ class BatchImageSegmentation(Notifier):
         if device is None:
             device = "cpu"
 
-        self.segmentation_channel = csp.config.get_bf_channel()
         self.segmentation = segmentation
         self.csp = csp
-        self.diameter = csp.config.get_diameter()
         self.device = device
         self.cancel_now = False
         self.pause_now = False
@@ -51,8 +49,10 @@ class BatchImageSegmentation(Notifier):
             pass
         self._call_start_listeners()
         image_paths = self.csp.image_paths
-        segmentation_channel = self.segmentation_channel
-        diameter = self.diameter
+        segmentation_channel = self.csp.config.get_bf_channel()
+        print(segmentation_channel)
+        print(image_paths)
+        diameter = self.csp.config.get_diameter()
         suffix = self.csp.config.get_mask_suffix()
 
         segmentation_model = self.csp.model_path

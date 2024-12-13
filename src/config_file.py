@@ -98,14 +98,14 @@ class ConfigFile:
 
         Args:
             name (str): Name of the new profile.
-            bf_channel (int): Bright field channel for the profile.
+            bf_channel (str): Bright field channel for the profile.
             mask_suffix (str): Mask suffix for the profile.
             channel_prefix (str): Channel prefix for the profile.
             diameter (float): Diameter value for the profile.
 
         Invalid:
-            - Strings ("mask_suffix" and "channel_prefix") must not be empty ("").
-            - Numeric values ("bf_channel" and "diameter") must be greater than 0.
+            - Strings ("mask_suffix", "channel_prefix" and "bf_channel") must not be empty ("").
+            - Numeric values ("diameter") must be greater than 0.
 
         Raises:
             ValueError: If any provided parameter is invalid.
@@ -114,10 +114,10 @@ class ConfigFile:
             False: If the profile name is already taken.
             True: If the profile is successfully added.
         """
-        if not all([name, mask_suffix, channel_prefix]):
-            raise ValueError("Name, mask_suffix, and channel_prefix must not be empty.")
-        if diameter <= 0 and bf_channel <= 0:
-            raise ValueError("diameter and bf_channel must be greater than 0.")
+        if not all([name, mask_suffix, channel_prefix, bf_channel]):
+            raise ValueError("Name, mask_suffix, bf_channel, and channel_prefix must not be empty.")
+        if diameter <= 0 :
+            raise ValueError("diameter must be greater than 0.")
         if not name in self.config['Profiles']:
             self.config["Profiles"][name] = {
                 "bf_channel": bf_channel,
@@ -137,7 +137,7 @@ class ConfigFile:
 
         Args:
             name (str): Name of the profile to update.
-            bf_channel (int, optional): New bright field channel.
+            bf_channel (str, optional): New bright field channel.
             mask_suffix (str, optional): New mask suffix.
             channel_prefix (str, optional): New channel prefix.
             diameter (float, optional): New diameter value.
@@ -151,8 +151,8 @@ class ConfigFile:
         """
         if name in self.config["Profiles"]:
             if bf_channel is not None:
-                if bf_channel <= 0:
-                    raise ValueError("bf_channel must be greater than 0.")
+                if not mask_suffix:
+                    raise ValueError("bf_channel must not be empty.")
                 self.config["Profiles"][name]["bf_channel"] = bf_channel
             if mask_suffix is not None:
                 if not mask_suffix:
@@ -327,10 +327,10 @@ class ConfigFile:
         Gets the bright field channel for the profile.
 
         Returns:
-            bright field channel (int): The bright field channel for the profile.
+            bright field channel (str): The bright field channel for the profile.
         """
         profile = self.get_selected_profile()
-        return int(profile["bf_channel"])
+        return profile["bf_channel"]
 
     def get_mask_suffix(self):
         """

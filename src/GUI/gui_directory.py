@@ -132,6 +132,7 @@ def create_directory_card(gui: GUI):
         gui.switch_mask.value = False
         gui.canvas.container_mask.visible = False
         gui.csp.image_id = None
+        gui.open_button.visible = False
         gui.page.update()
 
         # Display groups with side-by-side images
