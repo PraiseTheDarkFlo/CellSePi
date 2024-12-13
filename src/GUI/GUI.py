@@ -46,10 +46,13 @@ class GUI:
         self.directory_card = create_directory_card(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
-        seg_card,start_button,open_button = create_segmentation_card(self)
+        seg_card,start_button,open_button,progress_bar,progress_bar_text = create_segmentation_card(self)
+        self.ready_to_start = False
         self.segmentation_card = seg_card
         self.open_button = open_button
         self.start_button = start_button
+        self.progress_bar = progress_bar
+        self.progress_bar_text = progress_bar_text
         self.mask=Mask(self.csp)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,

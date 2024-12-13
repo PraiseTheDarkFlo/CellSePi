@@ -86,12 +86,14 @@ def create_segmentation_card(gui: GUI):
             print("no model selected")
         elif e.files[0].path is not None:
             print("picked file")
-            gui.csp.model_path = e.files[0].path
-            progress_bar_text.value = "Ready to Start"
-            start_button.disabled = False
+            if gui.ready_to_start:
+                progress_bar_text.value = "Ready to Start"
+                start_button.disabled = False
+                print("start_button is disabled", start_button.disabled)
             model_text.title.value = e.files[0].name
+            gui.csp.model_path = e.files[0].path
+            gui.ready_to_start = True
             gui.page.update()
-            print("start_button is disabled", start_button.disabled)
         else:
             print("no model selected")
 
@@ -261,4 +263,4 @@ def create_segmentation_card(gui: GUI):
             padding=10
         ),
     )
-    return segmentation_card,start_button,open_button
+    return segmentation_card,start_button,open_button,progress_bar,progress_bar_text

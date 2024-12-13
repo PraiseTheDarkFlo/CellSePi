@@ -99,13 +99,18 @@ def create_directory_card(gui: GUI):
         ms = gui.csp.config.get_mask_suffix()
 
         image_paths, mask_paths = load_directory(dirname, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
+        gui.start_button.disabled=True
+        gui.progress_bar_text.value = "Waiting for Input"
         if len(image_paths) == 0:
+            gui.ready_to_start = False
             gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current Channel Prefix!"))
             gui.page.snack_bar.open = True
             gui.page.update()
             gui.count_results_txt.color = ft.Colors.RED
-            os.rmdir(gui.csp.working_directory)
+            if not gui.is_lif.value:
+                os.rmdir(gui.csp.working_directory)
         elif not is_supported:
+            gui.ready_to_start = False
             gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
             gui.page.snack_bar.open = True
             gui.count_results_txt.color = ft.Colors.RED
@@ -114,6 +119,10 @@ def create_directory_card(gui: GUI):
             mask_paths = {}
         else:
             gui.count_results_txt.color = None
+            if gui.ready_to_start:
+                gui.progress_bar_text.value = "Ready to Start"
+                gui.start_button.disabled = False
+            gui.ready_to_start = True
 
         gui.csp.image_paths = image_paths
         gui.csp.mask_paths = mask_paths
