@@ -90,10 +90,10 @@ def create_directory_card(gui: GUI):
 
 
         gui.csp.working_directory = working_directory
-        set_paths(working_directory, )
+        set_paths(working_directory, is_supported)
 
 
-    def set_paths(dirname):
+    def set_paths(dirname, is_supported):
         bfc = gui.csp.config.get_bf_channel()
         cp = gui.csp.config.get_channel_prefix()
         ms = gui.csp.config.get_mask_suffix()
@@ -105,6 +105,8 @@ def create_directory_card(gui: GUI):
             gui.page.update()
             gui.count_results_txt.color = ft.Colors.RED
             os.rmdir(gui.csp.working_directory)
+        elif not is_supported:
+            gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
         else:
             gui.count_results_txt.color = None
 
