@@ -1,12 +1,14 @@
 import os
 import pathlib
+import platform
 
 import flet as ft
 from PIL import Image
 
 from . import GUI
 from .gui_canvas import on_image_click
-from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory,transform_image_path
+from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
+    convert_tiffs_to_png_parallel
 
 
 def format_directory_path(dir_path, max_length=30):
@@ -60,6 +62,7 @@ class DirectoryCard:
         self.update_view(None)
         self.is_lif.on_change = self.update_view
         self.card = self.create_directory_card()
+        self.output_dir = False
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -89,6 +92,10 @@ class DirectoryCard:
                 self.image_gallery.update()
 
             self.formatted_path.value = format_directory_path(self.directory_path)
+            if self.output_dir:
+                self.formatted_path.color = ft.Colors.RED
+            else:
+                self.formatted_path.color = None
             self.formatted_path.update()
             self.gui.contrast_slider.disabled = True
             self.gui.brightness_slider.disabled = True
@@ -117,6 +124,16 @@ class DirectoryCard:
 
         # Tiff Case
         else:
+            if path.name == "output":
+                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
+                self.gui.page.snack_bar.open = True
+                self.output_dir = True
+                self.gui.page.update()
+                self.gui.csp.image_paths = {}
+                self.gui.csp.linux_images = {}
+                self.gui.csp.mask_paths = {}
+                return
+            self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
             working_directory = path / "output/"
             os.makedirs(working_directory, exist_ok=True)
@@ -192,44 +209,87 @@ class DirectoryCard:
         self.gui.open_button.visible = False
         self.gui.page.update()
 
-        # Display groups with side-by-side images
-        for image_id in self.gui.csp.image_paths:
-            cur_image_paths = self.gui.csp.image_paths[image_id]
-            group_row = ft.Row(
-                [
+        if platform.system() == "Linux":
+            self.gui.csp.linux_images = convert_tiffs_to_png_parallel(self.gui.csp.image_paths)
+            self.gui.csp.linux = True
+            # Display groups with side-by-side images for linux
+            for image_id in self.gui.csp.linux_images:
+                cur_image_paths = self.gui.csp.linux_images[image_id]
+                group_row = ft.Row(
+                    [
+                        ft.Column(
+                            [
+                                ft.GestureDetector(
+                                    content=ft.Image(
+                                        src_base64=cur_image_paths[channel_id],
+                                        height=150,
+                                        width=150,
+                                        fit=ft.ImageFit.CONTAIN
+                                    ),
+                                    on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(e, img_id, c_id,
+                                                                                                      self.gui)
+                                ),
+                                ft.Text(channel_id, size=10, text_align="center"),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=5
+                        )
+                        for channel_id in cur_image_paths
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    spacing=10,
+                    scroll=ft.ScrollMode.AUTO,
+                )
+                self.image_gallery.controls.append(
                     ft.Column(
                         [
-                            ft.GestureDetector(
-                                content=ft.Image(
-                                    src=cur_image_paths[channel_id],
-                                    height=150,
-                                    width=150,
-                                    fit=ft.ImageFit.CONTAIN
-                                ),
-                                on_tap=lambda e,img_id = image_id,c_id = channel_id: on_image_click(e,img_id,c_id, self.gui)
-                            ),
-                            ft.Text(channel_id, size=10, text_align="center"),
+                            ft.Text(f"{image_id}", weight="bold", text_align=ft.TextAlign.CENTER),
+                            group_row
                         ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=5
+                        spacing=10,
+                        alignment=ft.MainAxisAlignment.CENTER
                     )
-                    for channel_id in cur_image_paths
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                spacing=10,
-                scroll=ft.ScrollMode.AUTO,
-            )
-            self.image_gallery.controls.append(
-                ft.Column(
-                    [
-                        ft.Text(f"{image_id}", weight="bold",text_align=ft.TextAlign.CENTER),
-                        group_row
-                    ],
-                    spacing=10,
-                    alignment = ft.MainAxisAlignment.CENTER
                 )
-            )
+        else:
+            # Display groups with side-by-side images
+            for image_id in self.gui.csp.image_paths:
+                cur_image_paths = self.gui.csp.image_paths[image_id]
+                group_row = ft.Row(
+                    [
+                        ft.Column(
+                            [
+                                ft.GestureDetector(
+                                    content=ft.Image(
+                                        src=cur_image_paths[channel_id],
+                                        height=150,
+                                        width=150,
+                                        fit=ft.ImageFit.CONTAIN
+                                    ),
+                                    on_tap=lambda e,img_id = image_id,c_id = channel_id: on_image_click(e,img_id,c_id, self.gui)
+                                ),
+                                ft.Text(channel_id, size=10, text_align="center"),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=5
+                        )
+                        for channel_id in cur_image_paths
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    spacing=10,
+                    scroll=ft.ScrollMode.AUTO,
+                )
+                self.image_gallery.controls.append(
+                    ft.Column(
+                        [
+                            ft.Text(f"{image_id}", weight="bold",text_align=ft.TextAlign.CENTER),
+                            group_row
+                        ],
+                        spacing=10,
+                        alignment = ft.MainAxisAlignment.CENTER
+                    )
+                )
 
         self.image_gallery.update()
         self.update_results_text()

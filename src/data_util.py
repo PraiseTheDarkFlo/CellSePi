@@ -1,6 +1,9 @@
+import base64
 import os
 import pathlib
 import shutil
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from io import BytesIO
 
 import numpy as np
 from PIL import Image
@@ -167,3 +170,73 @@ def transform_image_path(image_path,output_path,gui):
             img8 = Image.fromarray(array8)
             img8.save(output_path, format="TIFF")
         return True
+
+def process_channel(channel_id, channel_path):
+    image = Image.open(channel_path)
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return channel_id, base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+def convert_single_image(image_id, cur_image_paths):
+    png_images = {image_id: {}}
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(process_channel, channel_id, cur_image_paths[channel_id]): channel_id
+            for channel_id in cur_image_paths
+        }
+        for future in futures:
+            channel_id, encoded_image = future.result()
+            png_images[image_id][channel_id] = encoded_image
+
+    return png_images
+
+def convert_tiffs_to_png_parallel(image_paths):
+    """
+    Converts a dict of tiff images to png images using multiprocessing.
+
+    Args:
+        image_paths (dict): the dict of image paths of tiff images
+    """
+    if image_paths is not None:
+        png_images = {}
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(convert_single_image, image_id, image_paths[image_id]): image_id
+                for image_id in image_paths
+            }
+            for future in futures:
+                result = future.result()
+                png_images.update(result)
+
+        return png_images
+    else:
+        return None
+
+def convert_tiffs_to_png(image_paths):
+    """
+    Converts a dict of tiff images to png images.
+
+    Args:
+        image_paths (dict): the dict of image paths of tiff images
+    """
+    if image_paths is not None:
+        png_images = {}
+        for image_id in image_paths:
+            cur_image_paths = image_paths[image_id]
+            if image_id not in png_images:
+                png_images[image_id] = {}
+            for channel_id in cur_image_paths:
+                image = image = Image.open(cur_image_paths[channel_id])
+
+                buffer = BytesIO()
+                image.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                png_images[image_id][channel_id] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+        return png_images
+    else:
+        return None

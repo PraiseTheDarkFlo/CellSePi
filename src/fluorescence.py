@@ -35,7 +35,8 @@ class Fluorescence(Notifier):
                 self.csp.readout= readout
                 self.csp.readout_path=readout_path
                 self.csp.readout_running=False
-                self.gui.open_button.visible=True
+                if readout_path is not None:
+                    self.gui.open_button.visible=True
                 fluorescence_button.disabled =False #hier den fluorescence button auf normal setzen
                 if self.csp.model_path is not None:
                     self.gui.start_button.disabled =False

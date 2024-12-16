@@ -13,12 +13,13 @@ class ImageTuning:
     Attributes:
         gui (GUI): The GUI object that contains all objects for the gui.
         running_tasks: contains all task that are currently running.
+        cached_image: contains the image that is current be cached.
     """
     def __init__(self,gui: GUI):
         self.gui = gui
         self.running_tasks = set()
         self.cached_image = None
-    async def update_main_image_async(self, click=False):
+    async def update_main_image_async(self, click=False,linux = False):
         """
         Updates the main image brightness and contrast with the current selected values with the sliders.
 
@@ -26,8 +27,13 @@ class ImageTuning:
 
         Args:
             click (bool): if a new main image is clicked or not.
+            linux (bool): if the program is running on Linux.
         """
-        if click:
+        if linux and click:
+            self.cancel_all_tasks()
+            self.gui.canvas.main_image.content.src_base64 = self.gui.csp.linux_images[self.gui.csp.image_id][self.gui.csp.channel_id]
+            self.gui.canvas.main_image.update()
+        elif click:
             self.cancel_all_tasks()
             self.gui.canvas.main_image.content.src_base64 = None
             self.gui.canvas.main_image.content.src = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]

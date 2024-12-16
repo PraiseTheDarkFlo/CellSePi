@@ -18,7 +18,10 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
     gui.brightness_slider.update()
-    asyncio.run(gui.image_tuning.update_main_image_async(True))
+    if gui.csp.linux:
+        asyncio.run(gui.image_tuning.update_main_image_async(True,True))
+    else:
+        asyncio.run(gui.image_tuning.update_main_image_async(True))
 
 
 

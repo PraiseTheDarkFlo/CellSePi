@@ -11,6 +11,7 @@ class CellSePi:
         self.readout_running = False
         self.readout_thread = None
         self.readout_path = None
+        self.linux = False
 
         self.image_id = None
         self.channel_id = None
@@ -19,6 +20,7 @@ class CellSePi:
 
         self.adjusted_image_path = None
         self.image_paths = None #[image_id, different images sorted by channel]
+        self.linux_images = None #[image_id][channel_id] = base64 png image
         self.mask_paths = None
         self.working_directory = None
 
