@@ -114,6 +114,7 @@ class DirectoryCard:
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
+            self.output_dir = False
             working_directory = path.parent / "output/"
             os.makedirs(working_directory, exist_ok=True)
             if path.suffix.lower() == ".lif":
