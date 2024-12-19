@@ -1,4 +1,5 @@
 import os
+#TODO REVIEW by Flo: delete unused imports
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
@@ -17,13 +18,18 @@ class BatchImageSegmentation(Notifier):
                  csp,
                  device=None):
         super().__init__()
-
+        # TODO REVIEW by Flo: was ist mit device ist auch GPU möglich dann
+        #  in seg auch irgendwie aktivieren lassen? einfach komisch
+        #  das davor in seg auf cpu fest gesetzt wird und hier nochmal
+        #  falls nicht none auch wieder gesetzt hätte es wenn nicht überprüft
+        #  wahrscheinlich einfach nicht device mit gegeben so dass das hier auslöst:
         if device is None:
             device = "cpu"
 
         self.segmentation = segmentation
         self.csp = csp
         self.device = device
+        # TODO REVIEW by Flo: ich würde entweder alle Statis drausen bei Segmentation machen oder alles hier bzw. oder sogar in csp?
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
@@ -57,13 +63,14 @@ class BatchImageSegmentation(Notifier):
 
         segmentation_model = self.csp.model_path
         device = self.device
-        device = torch.device(device)
+        device = torch.device(device) #TODO REVIEW by Flo: was macht das warum wird das gemacht? vielleicht kommentar?
 
         n_images = len(image_paths)
 
-        io.logger_setup()
+        io.logger_setup() #TODO REVIEW by Flo: was macht der io_logger?
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
+        # TODO REVIEW by Flo: nicht mehr benutzt? dann löschen maybe?
         kwargs = {}
         mask_paths = {}
         for iN, image_id in enumerate(image_paths):
@@ -93,6 +100,9 @@ class BatchImageSegmentation(Notifier):
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
             # Rename the file to the desired name
+            # TODO REVIEW by Flo: umbennen hat halt nachteil fällt mir gerade ein,
+            #  dass wenn wir segs schon haben diese überschrieben werden ob wohl er anderen namen extra angelegt hat
+            #  maybe vorher schauen ob schon _seg da sind und diese so sichern das diese nicht überschrieben werden?
             default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
@@ -101,6 +111,9 @@ class BatchImageSegmentation(Notifier):
                 self.csp.mask_paths[image_id] = {}
 
             self.csp.mask_paths[image_id][segmentation_channel] = new_path
+
+            #TODO REVIEW by Flo: warum nicht kwargs nicht direkt übergebbar bzw. ist irgendwie komisch erst extra
+            # es als 2 sachen zu erstellen um es dann zu getten? maybe getrennt erstellen?
 
             kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": iN, "path": image_path}}

@@ -1,3 +1,4 @@
+#TODO REVIEW by Flo: delete unused imports?
 from click.core import batch
 from torch.fx.experimental.migrate_gradual_types.constraint_generator import batchnorm_inference_rule
 
@@ -10,13 +11,14 @@ from notifier import Notifier
 from src.data_util import load_directory
 from src.images import BatchImageSegmentation
 
-
+#TODO REVIEW by Flo: wir sollten namen convenstion für classen einführen und für datei namen, da wir hier klasse klein schreiben und wo anders groß etc.
 class segmentation(Notifier):
 
     def __init__(self, gui):
         super().__init__()
 
         self.csp = gui.csp
+        #TODO REVIEW by Flo: entweder segmentation_running aus csp entfernen oder hier eferenz auf diese
         self.segmentation_running = False
         device = "cpu"
         self.batch_image_segmentation = BatchImageSegmentation(self,

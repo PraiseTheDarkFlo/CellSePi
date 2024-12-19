@@ -8,6 +8,7 @@ from . import GUI
 from ..fluorescence import Fluorescence
 from .gui_fluorescence import fluorescence_button
 from ..segmentation import segmentation
+#TODO REVIEW by Flo: unbenutzte imports
 from ..notifier import Notifier
 import src.GUI.gui_directory
 
@@ -75,6 +76,7 @@ def create_segmentation_card(gui: GUI):
 
 
     # the following methods are called when clicking on the corresponding button
+    #TODO REVIEW by Flo: Fehler wenn das File nicht ein Model ist, irgendwie verhindern
     def pick_model_result(e: ft.FilePickerResultEvent):
         """
         The result of the file selection is handled.
