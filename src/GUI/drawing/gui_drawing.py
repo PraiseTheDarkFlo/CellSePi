@@ -4,7 +4,7 @@ from cgitb import enable
 
 import numpy as np
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
     QGraphicsView, QMainWindow, QGraphicsLineItem
 import sys
@@ -189,7 +189,8 @@ class DrawingCanvas(QGraphicsView):
             current_point = self.mapToScene(event.pos())
             line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
                                           current_point.x(), current_point.y())
-            pen = QPen(Qt.green, 2, Qt.SolidLine)
+            r,g,b = self.outline_color
+            pen = QPen(QColor(r,g,b), 2, Qt.SolidLine)
             line_item.setPen(pen)
             self.scene.addItem(line_item)
             self.last_point = current_point
