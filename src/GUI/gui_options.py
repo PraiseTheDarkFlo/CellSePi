@@ -1,28 +1,82 @@
 import flet as ft
 
-def switch(page: ft.Page):
-    def toggle_theme(e):
-        if theme_switch.value:
-            page.theme_mode = ft.ThemeMode.DARK
-        else:
-            page.theme_mode = ft.ThemeMode.LIGHT
-        page.update()
+from src.CellSePi import CellSePi
+from src.GUI.gui_colors import ColorSelection
 
-    theme_switch = ft.Switch(label="Darkmode", value=True)
-    theme_switch.on_change = toggle_theme
 
-    appbar_items = [
-        ft.PopupMenuItem(text="Darkmode",
-                         content= theme_switch)
-    ]
-    menu_button = ft.PopupMenuButton(
-        items=appbar_items,
-        content=ft.Icon(ft.icons.MENU),
-        tooltip="Menu",
-
-    )
-    return ft.Container(
-            content=menu_button,
-            padding=10,
-            alignment=ft.alignment.top_right
+class Options(ft.Container):
+    """
+    Class which handles the options in the right up corner in the GUI.
+    """
+    def __init__(self, page: ft.Page, csp: CellSePi):
+        super().__init__()
+        self.page = page
+        self.dark_light_text = ft.Text("Light Theme")
+        self.dark_light_icon = ft.IconButton(
+            icon=ft.Icons.BRIGHTNESS_2_OUTLINED,
+            icon_color=None,
+            on_click=self.theme_changed,
         )
+        self.color_selection = ColorSelection(csp=csp)
+        self.menu_button = ft.PopupMenuButton(
+            items=self.create_appbar_items(),
+            content=ft.Icon(ft.icons.MENU),
+            tooltip="Options",
+            on_open=self.check_current_theme,
+        )
+        self.content = self.menu_button
+        self.padding = 10
+        self.alignment = ft.alignment.top_right
+
+    async def theme_changed(self, e):
+        """
+        Changes the theme of the page to the opposite of the current selected theme.
+        """
+        if self.page.theme_mode == ft.ThemeMode.LIGHT:
+            self.page.theme_mode = ft.ThemeMode.DARK
+            self.dark_light_text.value = "Dark Theme"
+            self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_HIGH
+        else:
+            self.page.theme_mode = ft.ThemeMode.LIGHT
+            self.dark_light_text.value = "Light Theme"
+            self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_2_OUTLINED
+        await self.page.update_async()
+
+    def check_current_theme(self,e):
+        """
+        Checks what the current theme is.
+        """
+        if self.page.theme_mode == ft.ThemeMode.SYSTEM:
+            if self.page.platform_brightness == ft.Brightness.LIGHT:
+                self.dark_light_text.value = "Light Theme"
+                self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_2_OUTLINED
+            else:
+                self.dark_light_text.value = "Dark Theme"
+                self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_HIGH
+        else:
+            if self.page.theme_mode == ft.ThemeMode.LIGHT:
+                self.dark_light_text.value = "Light Theme"
+                self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_2_OUTLINED
+            else:
+                self.dark_light_text.value = "Dark Theme"
+                self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_HIGH
+        self.page.update()
+
+    def create_appbar_items(self):
+        """
+        Creates the appbar items that will be displayed in the GUI when the option button is clicked.
+        """
+        return [
+            ft.PopupMenuItem(
+                content=ft.Row([self.dark_light_icon, self.dark_light_text]),
+                on_click=self.theme_changed,
+            ),
+            #ft.PopupMenuItem(
+            #    content=ft.Row([self.color_selection.color_icon_mask, ft.Text("Mask Color")]),
+            #    on_click=self.color_selection.open_color_picker_mask,
+            #),
+            #ft.PopupMenuItem(
+            #    content=ft.Row([self.color_selection.color_icon_outline, ft.Text("Outline Color")]),
+            #    on_click=self.color_selection.open_color_picker_outline,
+            #)
+        ]

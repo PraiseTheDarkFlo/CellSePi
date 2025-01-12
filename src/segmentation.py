@@ -18,7 +18,7 @@ class segmentation(Notifier):
         super().__init__()
 
         self.csp = gui.csp
-        #TODO REVIEW by Flo: entweder segmentation_running aus csp entfernen oder hier eferenz auf diese
+        #TODO REVIEW by Flo: entweder segmentation_running aus csp entfernen oder hier referenz auf diese
         self.segmentation_running = False
         device = "cpu"
         self.batch_image_segmentation = BatchImageSegmentation(self,

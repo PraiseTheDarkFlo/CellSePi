@@ -24,11 +24,16 @@ class MyQtWindow(QMainWindow):
         canvas: DrawingCanvas object for displaying and interacting with the mask.
         tools_widget: Container for tools on the right side.
     """
-    def __init__(self, csp: CellSePi):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
         super().__init__()
-        self.csp = csp
+        self.mask_color = mask_color
+        self.outline_color = outline_color
+        self.bf_channel = bf_channel
+        self.mask_paths = mask_paths
+        self.image_id = image_id
+        self.adjusted_image_path = adjusted_image_path
         self.setWindowTitle("Drawing & Mask Editing")
-        self.canvas = DrawingCanvas(self.csp)
+        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
 
         # Main layout with canvas and tools
         central_widget = QWidget()
@@ -107,9 +112,9 @@ class MyQtWindow(QMainWindow):
 
 
 # Start the window of the drawing tools
-def open_qt_window(csp: CellSePi):
+def open_qt_window(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
     app = QApplication(sys.argv)
-    window = MyQtWindow(csp)
+    window = MyQtWindow(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
     window.show()
     app.exec()
 
@@ -129,9 +134,14 @@ class DrawingCanvas(QGraphicsView):
         cell_history: List to keep track of deleted cells
     """
 
-    def __init__(self, csp: CellSePi):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
         super().__init__()
-        self.csp = csp
+        self.mask_color = mask_color
+        self.outline_color = outline_color
+        self.bf_channel = bf_channel
+        self.mask_paths = mask_paths
+        self.image_id = image_id
+        self.adjusted_image_path = adjusted_image_path
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         self.draw_mode = False
@@ -203,7 +213,7 @@ class DrawingCanvas(QGraphicsView):
         """
         Delete the specified cell by updating the mask data.
         """
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -231,7 +241,7 @@ class DrawingCanvas(QGraphicsView):
             print("No cells to restore.")
             return
 
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -251,7 +261,7 @@ class DrawingCanvas(QGraphicsView):
         """
         Load the mask and display it on the scene.
         """
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -259,8 +269,10 @@ class DrawingCanvas(QGraphicsView):
 
         # Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
-        image_mask[mask != 0] = (255, 0, 0, 128)
-        image_mask[outline != 0] = (0, 255, 0, 255)
+        r, g, b = self.mask_color
+        image_mask[mask != 0] = (r, g, b, 128)
+        r, g, b = self.outline_color
+        image_mask[outline != 0] = (r, g, b, 255)
         self.image_array = mask
 
         # Update mask item in the scene
@@ -279,10 +291,8 @@ class DrawingCanvas(QGraphicsView):
         """
         Load the main background image into the scene.
         """
-        if self.csp.adjusted_image_path:
-            pixmap = QPixmap(self.csp.adjusted_image_path)
-        else:
-            pixmap = QPixmap(self.csp.image_paths[self.csp.image_id])
+        pixmap = QPixmap(self.adjusted_image_path)
+
 
         if self.background_item:
             self.scene.removeItem(self.background_item)

@@ -1,0 +1,88 @@
+import flet as ft
+from flet_contrib.color_picker import ColorPicker
+
+from src.CellSePi import CellSePi
+from enum import Enum
+
+def hex_to_rgb(hex_color):
+    """
+    Converts a hex color string to rgb color
+
+    Args:
+        hex_color (str)
+
+    Returns:
+        rgb_color (tuple)
+    """
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+def rgb_to_hex(rgb_color):
+    """
+    Converts a rgb color to hex color
+    Args:
+        rgb_color (tuple)
+    Returns:
+        hex_color (str)
+    """
+    return "#{:02x}{:02x}{:02x}".format(*rgb_color)
+
+class ColorTypes(Enum):
+    Mask = 1
+    Outline = 2
+
+class ColorSelection:
+    def __init__(self,csp: CellSePi):
+        self.config = csp.config
+        color_mask = rgb_to_hex(self.config.get_mask_color())
+        color_outline = rgb_to_hex(self.config.get_outline_color())
+        self.color_picker = ColorPicker(color=color_mask, width=430)
+        self.color_picker.hex.border_color=ft.colors.BLUE_ACCENT
+        self.color_picker.r.border_color=ft.colors.BLUE_ACCENT
+        self.color_picker.g.border_color=ft.colors.BLUE_ACCENT
+        self.color_picker.b.border_color=ft.colors.BLUE_ACCENT
+        self.color_icon_mask = ft.IconButton(icon=ft.icons.BRIGHTNESS_1_ROUNDED,icon_color=color_mask, on_click=self.open_color_picker_mask)
+        self.color_icon_outline = ft.IconButton(icon=ft.icons.BRIGHTNESS_1_ROUNDED, icon_color=color_outline, on_click=self.open_color_picker_outline)
+        self.color_type = None
+        self.dialog = ft.CupertinoBottomSheet(
+            content=ft.Column([ft.Card(content=ft.Stack([ft.Container(ft.ListTile(height=370,width=430),padding=10),ft.Container(ft.Column(
+                [self.color_picker,
+                ft.Container(ft.Row([ft.TextButton("Save", on_click=self.change_color)
+                 ],alignment=ft.MainAxisAlignment.END),padding=10)
+                ]
+            ),height=430,width=450,padding=10)]))],horizontal_alignment=ft.CrossAxisAlignment.CENTER,alignment=ft.MainAxisAlignment.CENTER),
+            on_dismiss=self.close_dialog,
+        )
+    async def open_color_picker_mask(self,e):
+        e.control.page.open(self.dialog)
+        self.color_picker.color = rgb_to_hex(self.config.get_mask_color())
+        self.color_type = ColorTypes.Mask
+        self.dialog.open = True
+        await e.control.page.update_async()
+
+
+    async def open_color_picker_outline(self, e):
+        e.control.page.open(self.dialog)
+        self.color_picker.color = rgb_to_hex(self.config.get_outline_color())
+        self.color_type = ColorTypes.Outline
+        self.dialog.open = True
+        await e.control.page.update_async()
+
+    async def change_color(self, e):
+        print(f"Changing color to {self.color_type}")
+
+        if self.color_type == ColorTypes.Mask:
+            self.color_icon_mask.icon_color = self.color_picker.color
+            self.config.set_mask_color(hex_to_rgb(self.color_picker.color))
+        else:
+            self.color_icon_outline.icon_color = self.color_picker.color
+            self.config.set_outline_color(hex_to_rgb(self.color_picker.color))
+        e.control.page.close(self.dialog)
+        await e.control.page.update_async()
+
+    async def close_dialog(self, e):
+        print("Closing dialog...")
+        e.control.page.close(self.dialog)
+        await self.dialog.update_async()
+
+

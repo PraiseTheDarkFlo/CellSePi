@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 from src import config_file
@@ -51,16 +53,25 @@ def test_selected_profile_name(config):
     config.select_profile("Tif")
     assert config.get_selected_profile_name() == "Tif", "Selected profile was not changed"
     assert config.get_selected_profile() == create_default_config()["Profiles"]["Tif"], "Selected profile is wrong"
+
 def test_delete_selected_profile_name(config):
     config.select_profile("Tif")
     config.delete_profile("Tif")
     assert config.get_selected_profile_name() == "Lif", "Selected profile was not changed after deleted"
+
+def test_set_colors(config):
+    config.set_mask_color((12,42,69))
+    assert config.get_mask_color() == (12,42,69), "The mask_color is not right"
+    config.set_outline_color((21,24,96))
+    assert config.get_outline_color() == (21,24,96), "The outline_color is not right"
 
 def test_attribute_getter(config):
     assert config.get_bf_channel() == create_default_config()["Profiles"]["Lif"]["bf_channel"], "bf_channel is wrong"
     assert config.get_mask_suffix() == create_default_config()["Profiles"]["Lif"]["mask_suffix"], "mask_suffix is wrong"
     assert config.get_channel_prefix() == create_default_config()["Profiles"]["Lif"]["channel_prefix"],"channel_prefix is wrong"
     assert config.get_diameter() == float(create_default_config()["Profiles"]["Lif"]["diameter"]),"diameter is wrong"
+    assert config.get_mask_color() ==  ast.literal_eval(create_default_config()["Colors"]["mask"]),"mask_color is wrong"
+    assert config.get_outline_color() ==  ast.literal_eval(create_default_config()["Colors"]["outline"]),"outline_color is wrong"
 
 def test_idx_name(config):
     assert config.name_to_index("Lif") == 0, "Idx is wrong for Lif"
@@ -77,6 +88,8 @@ def test_invalid_profile(config):
            config.update_profile("Lif", "42", "d", "a", -50)
         with pytest.raises(ValueError):
             config.rename_profile("","")
+        with pytest.raises(ValueError):
+            config.set_mask_color((22,12))
         with pytest.raises(ValueError):
             config.select_profile("")
         with pytest.raises(DeletionForbidden):

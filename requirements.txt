@@ -9,3 +9,4 @@ matplotlib
 readlif
 pytest
 pyqt5
+flet_contrib

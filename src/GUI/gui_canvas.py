@@ -1,13 +1,13 @@
 import asyncio
 
 import flet as ft
-import flet.canvas as fc
 from . import GUI
-from ..mask import Mask
 from .gui_mask import handle_image_switch_mask_on
 
-#method that handles what happens when the image is clicked
-def on_image_click(event,img_id,channel_id,gui: GUI):
+def on_image_click(img_id,channel_id,gui: GUI):
+    """
+    Method that handles what happens when the image is clicked or the main image need an update.
+    """
     print("selected img:",img_id)
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
@@ -18,6 +18,12 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
     gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
     gui.brightness_slider.update()
+    bfc = gui.csp.config.get_bf_channel()
+    if img_id in gui.csp.mask_paths and bfc in gui.csp.mask_paths[img_id]:
+        gui.drawing_button.disabled = False
+    else:
+        gui.drawing_button.disabled = True
+    gui.drawing_button.update()
     if gui.csp.linux:
         asyncio.run(gui.image_tuning.update_main_image_async(True,True))
     else:
@@ -26,8 +32,11 @@ def on_image_click(event,img_id,channel_id,gui: GUI):
 
 
 
-#includes every thing about the canvas like drawing,the states, ...
+
 class Canvas:
+    """
+    Creates the main_card with the main_image and mask.
+    """
     def __init__(self):
         self.container_mask=ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",fit=ft.ImageFit.SCALE_DOWN,),visible=False,alignment=ft.alignment.center)
 

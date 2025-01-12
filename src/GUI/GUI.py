@@ -2,7 +2,7 @@ import asyncio
 import multiprocessing
 
 import flet as ft
-from . import gui_options as op
+from .gui_options import Options
 from .gui_segmentation import create_segmentation_card
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
@@ -14,14 +14,17 @@ from .gui_mask import error_banner,handle_image_switch_mask_on
 from ..image_tuning import ImageTuning
 
 
-#class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
+
 class GUI:
+    """
+    Class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
+    """
     def __init__(self,page: ft.Page):
         self.csp: CellSePi = CellSePi()
         self.page = page
         self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window())
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window(),disabled=True)
         self.page.window.width = 1400
         self.page.window.height = 825
         self.page.window_left = 200
@@ -30,6 +33,7 @@ class GUI:
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
         self.canvas = Canvas()
+        self.op = Options(page=self.page,csp=self.csp)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         seg_card,start_button,open_button,progress_bar,progress_bar_text = create_segmentation_card(self)
@@ -45,14 +49,15 @@ class GUI:
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
         )
-
-        # Slider für Kontrast
         self.contrast_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
         )
 
-    def build(self): #build up the main page of the GUI
+    def build(self):
+        """
+        Build up the main page of the GUI
+        """
         self.page.add(
             ft.Column(
                 [
@@ -72,14 +77,14 @@ class GUI:
                             #RIGHT COLUMN that handles gallery and directory_card
                             ft.Column(
                                 [
-                                    self.directory.card,
+                                    self.directory,
                                     ft.Card(
                                         content=ft.Container(self.directory.image_gallery,padding=20),
                                         expand=True
                                     ),
                                 ],
                                 expand=True,
-                            ), op.switch(self.page)
+                            ), self.op,
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,
@@ -88,9 +93,11 @@ class GUI:
                 expand=True
             )
         )
-        #method that controls what happened when switch is on/off
-        def update_view_mask(e):
 
+        def update_view_mask(e):
+            """
+            Method that controls what happened when switch is on/off
+            """
             if self.csp.image_id is None:
                 print("No image selected")
                 error_banner(self,"No image selected!")
@@ -103,5 +110,5 @@ class GUI:
 
     def start_drawing_window(self):
         self.image_tuning.save_current_main_image()
-        multiprocessing.Process(target=open_qt_window, args=(self.csp,)).start()
+        multiprocessing.Process(target=open_qt_window, args=(self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path)).start()
 

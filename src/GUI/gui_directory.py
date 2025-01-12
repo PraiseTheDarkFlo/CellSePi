@@ -7,6 +7,7 @@ from PIL import Image
 
 from . import GUI
 from .gui_canvas import on_image_click
+from .gui_fluorescence import fluorescence_button
 from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
@@ -40,18 +41,27 @@ def copy_directory_to_clipboard(e,gui: GUI):
     gui.page.snack_bar.open = True
     gui.page.update()
 
-class DirectoryCard:
+class DirectoryCard(ft.Card):
     """
     Handles the directory card with all event handlers.
     """
     def __init__(self, gui: GUI):
+        super().__init__()
         self.gui = gui
         self.count_results_txt = ft.Text(value="Results: 0")
         self.directory_path = ft.Text(weight="bold",value='Directory Path')
         self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
-        self.lif_txt = ft.Text("Lif",weight="bold")
-        self.tif_txt = ft.Text("Tif")
-        self.is_lif = ft.CupertinoSwitch(value=True, active_color=ft.Colors.BLUE_ACCENT,track_color=ft.Colors.BLUE_ACCENT)
+        self.is_lif = True
+        self.lif_slider = ft.CupertinoSlidingSegmentedButton(
+            selected_index=1,
+            thumb_color=ft.Colors.BLUE_400,
+            on_change=self.update_view,
+            padding=ft.padding.symmetric(0, 0),
+            controls=[
+                ft.Text("Tif"),
+                ft.Text("Lif")
+            ],
+        )
         self.image_gallery = ft.ListView()
         self.path_list_tile = self.create_path_list_tile()
         self.get_directory_dialog = None
@@ -59,10 +69,22 @@ class DirectoryCard:
         self.create_handlers()
         self.directory_row = self.create_dir_row()
         self.files_row = self.create_files_row()
-        self.update_view(None)
-        self.is_lif.on_change = self.update_view
-        self.card = self.create_directory_card()
+        self.lif_slider_blocker = ft.Container(
+            width=80,
+            height=30,
+            bgcolor=ft.Colors.TRANSPARENT,
+            on_click= None,
+            visible= False,
+        )
+        self.lif_row = ft.Row([ft.Stack([self.lif_slider,self.lif_slider_blocker]),
+                                               self.directory_row,
+                                               self.files_row
+                                                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                              )
+        self.content = self.create_directory_container()
         self.output_dir = False
+        self.files_row.visible = True
+        self.directory_row.visible = False
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -79,7 +101,7 @@ class DirectoryCard:
         Checks if the picked directory or file exists and if it worked updates every thing with the new values.
         """
         if not(e.files is None and e.path is None):
-            if self.is_lif.value:
+            if self.is_lif:
                 path = e.files[0].path
             else:
                 path = e.path
@@ -109,7 +131,7 @@ class DirectoryCard:
         Args:
             directory_path (str): the selected directory_path
         """
-        is_lif = self.is_lif.value
+        is_lif = self.is_lif
         is_supported = True
         path = pathlib.Path(directory_path)
         # Lif Case
@@ -172,7 +194,7 @@ class DirectoryCard:
             self.gui.page.snack_bar.open = True
             self.gui.page.update()
             self.count_results_txt.color = ft.Colors.RED
-            if not self.is_lif.value:
+            if not self.is_lif:
                 os.rmdir(self.gui.csp.working_directory)
         elif not is_supported:
             self.gui.ready_to_start = False
@@ -208,7 +230,9 @@ class DirectoryCard:
         self.gui.canvas.container_mask.visible = False
         self.gui.csp.image_id = None
         self.gui.open_button.visible = False
+        self.gui.drawing_button.disabled = True
         self.gui.page.update()
+        self.check_masks()
 
         if platform.system() == "Linux":
             self.gui.csp.linux_images = convert_tiffs_to_png_parallel(self.gui.csp.image_paths)
@@ -227,7 +251,7 @@ class DirectoryCard:
                                         width=150,
                                         fit=ft.ImageFit.CONTAIN
                                     ),
-                                    on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(e, img_id, c_id,
+                                    on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
                                                                                                       self.gui)
                                 ),
                                 ft.Text(channel_id, size=10, text_align="center"),
@@ -267,7 +291,7 @@ class DirectoryCard:
                                         width=150,
                                         fit=ft.ImageFit.CONTAIN
                                     ),
-                                    on_tap=lambda e,img_id = image_id,c_id = channel_id: on_image_click(e,img_id,c_id, self.gui)
+                                    on_tap=lambda e,img_id = image_id,c_id = channel_id: on_image_click(img_id,c_id, self.gui)
                                 ),
                                 ft.Text(channel_id, size=10, text_align="center"),
                             ],
@@ -336,34 +360,28 @@ class DirectoryCard:
         """
         Changes the visibility of the directory/file picking.
         """
-        if self.is_lif.value:
-            self.lif_txt.weight = "bold"
-            self.tif_txt.weight = "normal"
+        if int(e.data) == 1:
+            self.is_lif = True
             self.files_row.visible = True
             self.directory_row.visible = False
         else:
-            self.lif_txt.weight = "normal"
-            self.tif_txt.weight = "bold"
+            self.is_lif = False
             self.files_row.visible = False
             self.directory_row.visible = True
 
         self.gui.page.update()
 
 
-    #creates the directory_card and returns it
-    def create_directory_card(self):
-        return ft.Card(
-            content=ft.Container(
+
+    def create_directory_container(self):
+        return ft.Container(
                 content=ft.Stack(
                     [
                         ft.Container(
                             content=ft.Column(
                                 [
-                                    self.path_list_tile
-                                    , ft.Row([ft.Container(content=ft.Row([self.tif_txt,self.is_lif,self.lif_txt],spacing=0)),
-                                               self.directory_row,
-                                               self.files_row, ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                                              )
+                                    self.path_list_tile,
+                                    self.lif_row
                                 ]
                             )
                         ),
@@ -382,18 +400,15 @@ class DirectoryCard:
                 ),
                 padding=10,
             )
-        )
 
     def disable_path_choosing(self):
         """
         Disables everything related with path choosing.
         """
         self.path_list_tile.disabled = True
-        self.tif_txt.disabled = True
-        self.is_lif.disabled = True
-        self.lif_txt.disabled = True
-        self.directory_row.disabled = True
-        self.files_row.disabled = True
+        self.lif_row.disabled = True
+        self.toggle_slider_state(self.lif_slider,disabled=True)
+
         self.gui.page.update()
 
     def enable_path_choosing(self):
@@ -401,11 +416,40 @@ class DirectoryCard:
         Activates everything related with path choosing.
         """
         self.path_list_tile.disabled = False
-        self.path_list_tile.disabled = False
-        self.tif_txt.disabled = False
-        self.is_lif.disabled = False
-        self.lif_txt.disabled = False
-        self.directory_row.disabled = False
-        self.files_row.disabled = False
+        self.lif_row.disabled = False
+        self.toggle_slider_state(self.lif_slider,disabled=False)
         self.gui.page.update()
 
+    def toggle_slider_state(self,slider, disabled):
+        """
+        Toggles slider state if it is active or not.
+
+        Args:
+            slider: Slider object.
+            disabled: Boolean if the slider should be disabled.
+        """
+        if disabled:
+            slider.on_change = None
+            slider.thumb_color = ft.Colors.GREY_400
+            self.lif_slider_blocker.visible = True
+            for control in slider.controls:
+                control.color = ft.Colors.GREY_700
+        else:
+            slider.on_change = self.update_view
+            slider.thumb_color = ft.Colors.BLUE_400
+            self.lif_slider_blocker.visible = False
+            for control in slider.controls:
+                control.color = None
+
+    def check_masks(self):
+        """
+        Checks if all masks are there, if not the readout button is invisible.
+        """
+        bfc = self.gui.csp.config.get_bf_channel()
+        all_mask_present = all(image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id] for image_id in self.gui.csp.image_paths)
+        if all_mask_present:
+            fluorescence_button.visible = True
+        else:
+            fluorescence_button.visible = False
+        fluorescence_button.update()
+        print(f"all_masks: {all_mask_present}")
