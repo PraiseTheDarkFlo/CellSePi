@@ -1,10 +1,16 @@
 import pathlib
 import platform
+from cgitb import enable
+
 import numpy as np
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, QGraphicsView, QMainWindow
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
+    QGraphicsView, QMainWindow, QGraphicsLineItem
 import sys
+
+from matplotlib.pyplot import draw_if_interactive
+
 from ...CellSePi import CellSePi
 import copy
 
@@ -22,7 +28,6 @@ class MyQtWindow(QMainWindow):
         super().__init__()
         self.csp = csp
         self.setWindowTitle("Drawing & Mask Editing")
-
         self.canvas = DrawingCanvas(self.csp)
 
         # Main layout with canvas and tools
@@ -45,6 +50,12 @@ class MyQtWindow(QMainWindow):
         tools_layout.addWidget(title)
 
         # Add buttons to the tools box
+        self.draw_toggle_button = QPushButton("Drawing : OFF")
+        self.draw_toggle_button.setCheckable(True)
+        self.draw_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.draw_toggle_button.clicked.connect(self.toggle_draw_mode)
+        tools_layout.addWidget(self.draw_toggle_button)
+
         self.delete_toggle_button = QPushButton("Delete Mode: OFF")
         self.delete_toggle_button.setCheckable(True)
         self.delete_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
@@ -67,6 +78,17 @@ class MyQtWindow(QMainWindow):
         self.canvas.load_mask_to_scene()
         self.canvas.load_image_to_scene()
 
+    def toggle_draw_mode(self):
+        """
+        Drawing Button functionality
+        """
+        if self.draw_toggle_button.isChecked():
+            self.draw_toggle_button.setText("Drawing : ON")
+            self.canvas.enable_draw_mode(True)
+        else:
+            self.draw_toggle_button.setText("Drawing : OFF")
+            self.canvas.enable_draw_mode(False)
+
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
@@ -80,6 +102,8 @@ class MyQtWindow(QMainWindow):
 
     def resizeEvent(self, event):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
+
+
 
 
 # Start the window of the drawing tools
@@ -110,12 +134,19 @@ class DrawingCanvas(QGraphicsView):
         self.csp = csp
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-
+        self.draw_mode = False
+        self.last_point = QPoint()
+        self.drawing = False
         self.delete_mode = False
         self.image_array = None
         self.mask_item = None
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
+
+    def enable_draw_mode(self, enabled):
+
+        self.draw_mode = enabled
+        print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
     def enable_delete_mode(self, enable):
         """
@@ -124,11 +155,17 @@ class DrawingCanvas(QGraphicsView):
         self.delete_mode = enable
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
+
     def mousePressEvent(self, event):
         """
-        Handle mouse click events for deleting cells.
+        Handle mouse click events for drawing or deleting cells.
         """
-        if self.delete_mode:
+        if self.draw_mode:
+            if event.button() == Qt.LeftButton:
+                self.drawing = True
+                self.last_point = self.mapToScene(event.pos())
+
+        elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
             cell_id = self.get_cell_id_from_position(scene_pos)
@@ -136,6 +173,22 @@ class DrawingCanvas(QGraphicsView):
                 self.delete_cell(cell_id)
         else:
             super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.draw_mode and self.drawing:
+            current_point = self.mapToScene(event.pos())
+            line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                          current_point.x(), current_point.y())
+            pen = QPen(Qt.green, 2, Qt.SolidLine)
+            line_item.setPen(pen)
+            self.scene.addItem(line_item)
+            self.last_point = current_point
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if self.draw_mode and self.drawing:
+            self.drawing = False
+            self.update()
 
     def get_cell_id_from_position(self, position):
         """
