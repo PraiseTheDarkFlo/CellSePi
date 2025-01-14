@@ -15,7 +15,6 @@ def handle_image_switch_mask_on(gui:GUI):
         gui (GUI):the current GUI object
 
     """
-#TODO: verhindern, dass die Maske noch sichtbar ist, wenn das Bild gewechselt wird, aber die Maske nicht geladen wird
     if gui.switch_mask.value:
         print("on")
         image = gui.csp.image_id

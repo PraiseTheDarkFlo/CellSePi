@@ -90,8 +90,6 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None):
 
 
 def extract_from_lif_file(lif_path, target_dir):
-    # lif_path = "/Users/erik/Documents/Promotion/Projekte/Anjas_Stuff/_data/Segmentation Training Data/28-06-2024/HEK293_mTagBFP_mNeonGreen_CellMaskDR_01.lif"
-    # target_dir = lif_path.parent / "output/"
 
     lif_path = pathlib.Path(lif_path)
     if lif_path.suffix == ".lif":
@@ -170,6 +168,7 @@ def transform_image_path(image_path,output_path,gui):
             img8 = Image.fromarray(array8)
             img8.save(output_path, format="TIFF")
         return True
+
 
 def process_channel(channel_id, channel_path):
     image = Image.open(channel_path)

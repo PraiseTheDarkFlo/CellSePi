@@ -1,7 +1,9 @@
 import os
 import pathlib
 import platform
-
+from concurrent.futures import ThreadPoolExecutor
+from json.encoder import INFINITY
+from time import time
 import flet as ft
 from PIL import Image
 
@@ -85,7 +87,8 @@ class DirectoryCard:
                 path = e.path
             if path:
                 self.directory_path.value = path
-                self.select_directory(path)
+                self.select_directory_parallel(path)
+                #self.benchmark_seq_and_par(path)
                 self.load_images()
             else:
                 self.image_gallery.controls.clear()
@@ -109,6 +112,7 @@ class DirectoryCard:
         Args:
             directory_path (str): the selected directory_path
         """
+
         is_lif = self.is_lif.value
         is_supported = True
         path = pathlib.Path(directory_path)
@@ -140,16 +144,64 @@ class DirectoryCard:
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
             for path in working_directory.iterdir():
-                if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
-                    if path.is_file():
-                        is_supported = is_supported and transform_image_path(path, path, self.gui)
-                    if Image.open(path).mode in ["L", "RGB"]:
-                        print("8 bit")
+                converted = self.convert_tiffs_to_8_bit(path)
+                is_supported = is_supported and converted
 
 
         self.gui.csp.working_directory = working_directory
         self.set_paths(is_supported)
 
+    def select_directory_parallel(self, directory_path):
+
+        is_lif = self.is_lif.value
+        is_supported = True
+        path = pathlib.Path(directory_path)
+        # Lif Case
+        if is_lif:
+            self.output_dir = False
+            working_directory = path.parent / "output/"
+            os.makedirs(working_directory, exist_ok=True)
+            if path.suffix.lower() == ".lif":
+                # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
+                extract_from_lif_file(lif_path=path, target_dir=working_directory)
+            pass
+
+
+        # Tiff Case
+        else:
+            if path.name == "output":
+                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
+                self.gui.page.snack_bar.open = True
+                self.output_dir = True
+                self.gui.page.update()
+                self.gui.csp.image_paths = {}
+                self.gui.csp.linux_images = {}
+                self.gui.csp.mask_paths = {}
+                return
+            self.output_dir = False
+            # Copy .tif, .tiff and .npy files into subdirectory
+            working_directory = path / "output/"
+            os.makedirs(working_directory, exist_ok=True)
+            copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
+
+            #convert the 16bit bit depth in 8 bit (parallel)
+            with ThreadPoolExecutor() as executor:
+                result = list(executor.map(self.convert_tiffs_to_8_bit,working_directory.iterdir()))
+                if False in result:
+                    is_supported=False
+
+        self.gui.csp.working_directory = working_directory
+        self.set_paths(is_supported)
+
+    def convert_tiffs_to_8_bit(self, path):
+        converted=True
+        if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
+            if path.is_file():
+                converted=transform_image_path(path, path, self.gui)
+
+            if Image.open(path).mode in ["L", "RGB"]:
+                print("8 bit")
+        return converted
 
     def set_paths(self, is_supported):
         """
@@ -409,3 +461,64 @@ class DirectoryCard:
         self.files_row.disabled = False
         self.gui.page.update()
 
+
+    #test bench for the parallelization of select directory
+    def benchmark_seq_and_par(self, path):
+        """
+        The method is only included for testing purposes.
+        Comparison between the sequential and parallel selection of dictionary with tiff files.
+        Is executed if a dictionary is selected in the CellSePi window.
+        Args:
+            path-the selected path in the GUI
+
+        """
+
+        #sequential iterations
+        start_sequential = time()
+        min_time_sequential = INFINITY
+        max_time_sequential = 0
+        for i in range(10):
+            iteration_start_time_sequential = time()
+            self.select_directory(path)
+            iteration_end_time_sequential = time()
+
+            if iteration_end_time_sequential - iteration_start_time_sequential < min_time_sequential:
+                min_time_sequential = iteration_end_time_sequential - iteration_start_time_sequential
+
+            if iteration_end_time_sequential - iteration_start_time_sequential > max_time_sequential:
+                max_time_sequential = iteration_end_time_sequential - iteration_start_time_sequential
+
+        end_sequential = time()
+        total_time_sequential = end_sequential - start_sequential
+        avg_time_sequential = total_time_sequential / 100
+
+        #parallel iterations
+        start_parallel = time()
+        min_time_parallel=INFINITY
+        max_time_parallel = 0
+        for i in range(10):
+            iteration_start_time_parallel = time()
+            self.select_directory_parallel(path)
+            iteration_end_time_parallel = time()
+
+            if iteration_end_time_parallel-iteration_start_time_parallel < min_time_parallel:
+                min_time_parallel = iteration_end_time_parallel-iteration_start_time_parallel
+
+            if iteration_end_time_parallel - iteration_start_time_parallel > max_time_parallel:
+                max_time_parallel = iteration_end_time_parallel - iteration_start_time_parallel
+
+        end_parallel = time()
+        total_time_parallel = end_parallel - start_parallel
+        avg_time_sequential = total_time_sequential / 100
+
+        print("Comparison total time:\n ")
+        print(f"The sequential function needs {total_time_sequential:.6f} seconds\n")
+        print(f"The parallel function needs {total_time_parallel:.6f} seconds\n")
+
+        print("Comparison minimal time:\n")
+        print(f"The minimal time the parallel function needs {min_time_parallel:.6f} seconds\n")
+        print(f"The minimal time the sequential function needs {min_time_sequential:.6f} seconds\n")
+
+        print("Comparison maximal time:\n")
+        print(f"The maximal time the parallel function needs {max_time_parallel:.6f} seconds\n")
+        print(f"The maximal time the sequential function needs {max_time_sequential:.6f} seconds\n")

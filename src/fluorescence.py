@@ -1,7 +1,7 @@
-import images as image
+from . import images
 import threading
 import flet as ft
-from notifier import Notifier
+from src.notifier import Notifier
 from .GUI.gui_fluorescence import error_banner,fluorescence_button
 
 class Fluorescence(Notifier):
@@ -53,7 +53,7 @@ class Fluorescence(Notifier):
 
             #creates the readout image and fills the mask_path
             print(self.csp.mask_paths)
-            batch_image_readout = image.BatchImageReadout(image_paths=self.csp.image_paths,
+            batch_image_readout = images.BatchImageReadout(image_paths=self.csp.image_paths,
                                                           mask_paths=self.csp.mask_paths,
                                                           segmentation_channel=brightfield_channel,
                                                           channel_prefix=prefix,

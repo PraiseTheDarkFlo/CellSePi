@@ -74,7 +74,7 @@ class Mask:
         brightfield_channel=self.csp.config.get_bf_channel()
         suffix=self.csp.config.get_channel_prefix()
         directory = os.path.dirname(self.csp.mask_paths[self.csp.image_id][brightfield_channel])
-        file_path= os.sep.join([directory, f"mask_{self.csp.image_id}{suffix}{brightfield_channel}_seg.png"])
+        file_path= os.sep.join([directory, f"mask_{self.csp.image_id}{suffix}{brightfield_channel}{self.csp.config.get_mask_suffix()}.png"])
         im.save(file_path,"png")
         print (f"image is saved in {file_path}")
 

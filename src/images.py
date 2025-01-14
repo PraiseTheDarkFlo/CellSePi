@@ -6,10 +6,13 @@ import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-from data_util import load_image_to_numpy
+from src import data_util
+
+from src.data_util import load_image_to_numpy
 import pandas as pd
 
-from notifier import Notifier
+from src import notifier
+from src.notifier import Notifier
 
 class BatchImageSegmentation(Notifier):
 
