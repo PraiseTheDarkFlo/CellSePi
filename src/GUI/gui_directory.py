@@ -176,7 +176,7 @@ class DirectoryCard(ft.Card):
 
     def select_directory_parallel(self, directory_path):
 
-        is_lif = self.is_lif.value
+        is_lif = self.is_lif
         is_supported = True
         path = pathlib.Path(directory_path)
         # Lif Case
