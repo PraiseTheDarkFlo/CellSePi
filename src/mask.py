@@ -65,8 +65,10 @@ class Mask:
         """
 
         image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
-        image_mask[mask != 0] = (255, 0, 0, 128)
-        image_mask[outline != 0] = (0, 255, 0, 255)
+        r,g,b = self.csp.config.get_mask_color()
+        image_mask[mask != 0] = (r, g, b, 128)
+        r, g, b = self.csp.config.get_outline_color()
+        image_mask[outline != 0] = (r, g, b, 255)
         im= Image.fromarray(image_mask).convert("RGBA")
         im.resize(size=(700,500))
 

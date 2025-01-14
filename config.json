@@ -15,5 +15,9 @@
     },
     "Selected Profile": {
         "name": "Lif"
+    },
+    "Colors": {
+        "mask": "(255, 0, 0)",
+        "outline": "(0, 255, 0)"
     }
 }

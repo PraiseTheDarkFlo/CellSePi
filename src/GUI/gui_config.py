@@ -1,5 +1,6 @@
 import flet as ft
 from . import GUI
+from .gui_canvas import on_image_click
 from ..config_file import ConfigFile, create_default_config
 
 
@@ -234,7 +235,7 @@ class GUIConfig:
         Args:
             e (Event): The event triggered by the action to add a profile.
         """
-        if self.gui.directory.is_lif.value:
+        if self.gui.directory.is_lif:
             default = create_default_config()["Profiles"]["Lif"]
         else:
             default = create_default_config()["Profiles"]["Tif"]
@@ -319,6 +320,9 @@ class GUIConfig:
                                              bf_channel=e.control.value)
             self.txt_bf_ref.current.color = None
             self.page.update()
+            on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui)
+            if not self.gui.csp.readout_running and not self.gui.csp.segmentation_running:
+                self.gui.directory.check_masks()
         except ValueError:
             self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel must be not empty!"))
             self.page.snack_bar.open = True

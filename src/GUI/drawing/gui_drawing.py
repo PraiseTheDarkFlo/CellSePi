@@ -1,10 +1,16 @@
 import pathlib
 import platform
+from cgitb import enable
+
 import numpy as np
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, QGraphicsView, QMainWindow
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
+    QGraphicsView, QMainWindow, QGraphicsLineItem
 import sys
+
+from matplotlib.pyplot import draw_if_interactive
+
 from ...CellSePi import CellSePi
 import copy
 
@@ -18,12 +24,16 @@ class MyQtWindow(QMainWindow):
         canvas: DrawingCanvas object for displaying and interacting with the mask.
         tools_widget: Container for tools on the right side.
     """
-    def __init__(self, csp: CellSePi):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
         super().__init__()
-        self.csp = csp
+        self.mask_color = mask_color
+        self.outline_color = outline_color
+        self.bf_channel = bf_channel
+        self.mask_paths = mask_paths
+        self.image_id = image_id
+        self.adjusted_image_path = adjusted_image_path
         self.setWindowTitle("Drawing & Mask Editing")
-
-        self.canvas = DrawingCanvas(self.csp)
+        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
 
         # Main layout with canvas and tools
         central_widget = QWidget()
@@ -45,6 +55,12 @@ class MyQtWindow(QMainWindow):
         tools_layout.addWidget(title)
 
         # Add buttons to the tools box
+        self.draw_toggle_button = QPushButton("Drawing : OFF")
+        self.draw_toggle_button.setCheckable(True)
+        self.draw_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.draw_toggle_button.clicked.connect(self.toggle_draw_mode)
+        tools_layout.addWidget(self.draw_toggle_button)
+
         self.delete_toggle_button = QPushButton("Delete Mode: OFF")
         self.delete_toggle_button.setCheckable(True)
         self.delete_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
@@ -67,6 +83,17 @@ class MyQtWindow(QMainWindow):
         self.canvas.load_mask_to_scene()
         self.canvas.load_image_to_scene()
 
+    def toggle_draw_mode(self):
+        """
+        Drawing Button functionality
+        """
+        if self.draw_toggle_button.isChecked():
+            self.draw_toggle_button.setText("Drawing : ON")
+            self.canvas.enable_draw_mode(True)
+        else:
+            self.draw_toggle_button.setText("Drawing : OFF")
+            self.canvas.enable_draw_mode(False)
+
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
@@ -82,10 +109,12 @@ class MyQtWindow(QMainWindow):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
 
 
+
+
 # Start the window of the drawing tools
-def open_qt_window(csp: CellSePi):
+def open_qt_window(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
     app = QApplication(sys.argv)
-    window = MyQtWindow(csp)
+    window = MyQtWindow(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
     window.show()
     app.exec()
 
@@ -105,17 +134,29 @@ class DrawingCanvas(QGraphicsView):
         cell_history: List to keep track of deleted cells
     """
 
-    def __init__(self, csp: CellSePi):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
         super().__init__()
-        self.csp = csp
+        self.mask_color = mask_color
+        self.outline_color = outline_color
+        self.bf_channel = bf_channel
+        self.mask_paths = mask_paths
+        self.image_id = image_id
+        self.adjusted_image_path = adjusted_image_path
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-
+        self.draw_mode = False
+        self.last_point = QPoint()
+        self.drawing = False
         self.delete_mode = False
         self.image_array = None
         self.mask_item = None
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
+
+    def enable_draw_mode(self, enabled):
+
+        self.draw_mode = enabled
+        print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
     def enable_delete_mode(self, enable):
         """
@@ -124,11 +165,17 @@ class DrawingCanvas(QGraphicsView):
         self.delete_mode = enable
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
+
     def mousePressEvent(self, event):
         """
-        Handle mouse click events for deleting cells.
+        Handle mouse click events for drawing or deleting cells.
         """
-        if self.delete_mode:
+        if self.draw_mode:
+            if event.button() == Qt.LeftButton:
+                self.drawing = True
+                self.last_point = self.mapToScene(event.pos())
+
+        elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
             cell_id = self.get_cell_id_from_position(scene_pos)
@@ -136,6 +183,23 @@ class DrawingCanvas(QGraphicsView):
                 self.delete_cell(cell_id)
         else:
             super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.draw_mode and self.drawing:
+            current_point = self.mapToScene(event.pos())
+            line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                          current_point.x(), current_point.y())
+            r,g,b = self.outline_color
+            pen = QPen(QColor(r,g,b), 2, Qt.SolidLine)
+            line_item.setPen(pen)
+            self.scene.addItem(line_item)
+            self.last_point = current_point
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if self.draw_mode and self.drawing:
+            self.drawing = False
+            self.update()
 
     def get_cell_id_from_position(self, position):
         """
@@ -150,7 +214,7 @@ class DrawingCanvas(QGraphicsView):
         """
         Delete the specified cell by updating the mask data.
         """
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -178,7 +242,7 @@ class DrawingCanvas(QGraphicsView):
             print("No cells to restore.")
             return
 
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -198,7 +262,7 @@ class DrawingCanvas(QGraphicsView):
         """
         Load the mask and display it on the scene.
         """
-        mask_path = self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
         mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = mask_data["masks"]
@@ -206,8 +270,10 @@ class DrawingCanvas(QGraphicsView):
 
         # Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
-        image_mask[mask != 0] = (255, 0, 0, 128)
-        image_mask[outline != 0] = (0, 255, 0, 255)
+        r, g, b = self.mask_color
+        image_mask[mask != 0] = (r, g, b, 128)
+        r, g, b = self.outline_color
+        image_mask[outline != 0] = (r, g, b, 255)
         self.image_array = mask
 
         # Update mask item in the scene
@@ -226,10 +292,8 @@ class DrawingCanvas(QGraphicsView):
         """
         Load the main background image into the scene.
         """
-        if self.csp.adjusted_image_path:
-            pixmap = QPixmap(self.csp.adjusted_image_path)
-        else:
-            pixmap = QPixmap(self.csp.image_paths[self.csp.image_id])
+        pixmap = QPixmap(self.adjusted_image_path)
+
 
         if self.background_item:
             self.scene.removeItem(self.background_item)

@@ -1,8 +1,9 @@
+import ast
 import json
 import os
 import shutil
 import time
-
+from threading import Lock
 
 class DeletionForbidden(Exception):
     """
@@ -58,10 +59,14 @@ def create_default_config():
                 "channel_prefix": "c",
                 "diameter": 250.0
                 }
-            },
-            "Selected Profile": {
-                "name": "Lif"
-            }
+        },
+        "Selected Profile": {
+            "name": "Lif"
+        },
+        "Colors":{
+            "mask": "(255, 0, 0)",
+            "outline": "(0, 255, 0)",
+        }
     }
 
 class ConfigFile:
@@ -76,11 +81,13 @@ class ConfigFile:
         project_root (str): The root directory of the project.
         file_directory (str): The full path to the configuration file.
         config (dict): The loaded configuration data.
+        config_lock (Lock): a lock to make writing the config file save.
     """
     def __init__(self,filename="config.json"):
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.file_directory = os.path.join(self.project_root, filename)
         self.config = load_config(self.file_directory)
+        self.config_lock = Lock()
 
     def save_config(self):
         """
@@ -89,8 +96,14 @@ class ConfigFile:
         This method writes the current state of the "config" attribute
         to the "config.json" file.
         """
-        with open(self.file_directory, 'w') as file:
-            json.dump(self.config, file, indent=4)
+        with self.config_lock:
+            try:
+                with open(self.file_directory, 'w') as file:
+                    json.dump(self.config, file, indent=4)
+                print("Config has been saved.")
+            except Exception as e:
+                print(f"Error while saving config: {e}")
+
 
     def add_profile(self, name:str, bf_channel: int, mask_suffix:str, channel_prefix:str, diameter: float):
         """
@@ -362,6 +375,51 @@ class ConfigFile:
         profile = self.get_selected_profile()
         return float(profile["diameter"])
 
+    def get_mask_color(self):
+        """
+        Gets the selected mask color.
+
+        Returns:
+            mask_color (tuple): The selected mask color in RGB format.
+        """
+        return ast.literal_eval(self.config["Colors"]["mask"])
+    def get_outline_color(self):
+        """
+        Gets the selected outline color.
+
+        Returns:
+            outline_color (tuple): The selected mask color in RGB format.
+        """
+        return ast.literal_eval(self.config["Colors"]["outline"])
+    def set_mask_color(self, color):
+        """
+        Sets the selected mask color in the config file.
+
+        Args:
+            color (tuple): The selected mask color in RGB format.
+
+        Raises:
+            ValueError: If the parameter color is invalid.
+        """
+        if isinstance(color, tuple) and len(color) == 3:
+            self.config["Colors"]["mask"] = f"{color}"
+            self.save_config()
+        else:
+            raise ValueError("Color must be an RGB tuple, e.g., (255, 0, 0)")
+    def set_outline_color(self, color):
+        """
+        Sets the selected outline color in the config file.
+
+        Args:
+            color (tuple): The selected outline color in RGB format.
+        Raises:
+            ValueError: If the parameter color is invalid.
+        """
+        if isinstance(color, tuple) and len(color) == 3:
+            self.config["Colors"]["outline"] = f"{color}"
+            self.save_config()
+        else:
+            raise ValueError("Color must be an RGB tuple, e.g., (0, 255, 0)")
     #-----------------------------------------------------
     #only for test_config
     def clear_config(self):
