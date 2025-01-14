@@ -149,7 +149,11 @@ def remove_gradient(img):
     corrected_img = img + correction
     return corrected_img
 
-
+#TODO Review by Jenna: Kommentar für die Methode fehlt
+# Warum gebt ihr das GUI objekt mit ? Wenn nicht gebraucht, dann löschen
+# Warum weist ihr die bit depth zu ? So wie ich das verstehe benötigt ihr die  nur
+# für die Abfrage, dann könnte man doch den Code von der zweiten Abfrage einfach
+# oben zuschreiben und man spart sich eine Abfrage sowie unnötige Zuweisungen
 def transform_image_path(image_path,output_path,gui):
     # check bit depth
     with Image.open(image_path) as img:

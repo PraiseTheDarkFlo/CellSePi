@@ -135,8 +135,6 @@ class DirectoryCard(ft.Card):
             directory_path (str): the selected directory_path
         """
         is_lif = self.is_lif
-
-        is_lif = self.is_lif.value
         is_supported = True
         path = pathlib.Path(directory_path)
         # Lif Case
@@ -166,6 +164,8 @@ class DirectoryCard(ft.Card):
             working_directory = path / "output/"
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
+
+            #converting the 16 bit images in 8 bit
             for path in working_directory.iterdir():
                 converted = self.convert_tiffs_to_8_bit(path)
                 is_supported = is_supported and converted
@@ -175,7 +175,12 @@ class DirectoryCard(ft.Card):
         self.set_paths(is_supported)
 
     def select_directory_parallel(self, directory_path):
+        """
+            Gets the working directory and copies the images in their.
 
+            Args:
+                directory_path (str): the selected directory_path
+                """
         is_lif = self.is_lif
         is_supported = True
         path = pathlib.Path(directory_path)
@@ -217,6 +222,11 @@ class DirectoryCard(ft.Card):
         self.set_paths(is_supported)
 
     def convert_tiffs_to_8_bit(self, path):
+        """
+        handles when the conversion should happen
+        Args:
+            path (str): the selected directory_path
+        """
         converted=True
         if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
             if path.is_file():
@@ -271,6 +281,8 @@ class DirectoryCard(ft.Card):
 
         print(f"This directory contains {len(mask_paths)} unique mask ids.")
 
+    #TODO review by Jenna: Ich würde hier anstatt den kompletten Code zu duplizieren die benötigten Änderungen ausführen in der if
+    # und mir dann die gebrauchten images zwischenspeichern, sonst ist hier sehr viel Code doppelt, was auf den ersten Blick nicht nötig erscheint.
     def load_images(self):
         """
         Load images to gallery in order and with names.
