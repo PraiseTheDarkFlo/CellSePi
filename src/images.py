@@ -1,5 +1,6 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
+import threading
 
 import torch
 import numpy as np
@@ -34,6 +35,8 @@ class BatchImageSegmentation(Notifier):
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
+        self.progress_lock = threading.Lock()
+        self.progress=0
 
     def cancel_action(self):
         self.cancel_now = True
@@ -129,6 +132,7 @@ class BatchImageSegmentation(Notifier):
         elif self.resume_now:
             pass
         self._call_start_listeners()
+
         image_paths = self.csp.image_paths
         segmentation_channel = self.csp.config.get_bf_channel()
         print(segmentation_channel)
@@ -168,7 +172,6 @@ class BatchImageSegmentation(Notifier):
              suffix (str): the suffix of the segmentation
              model (CellPoseModel) : instance of a CellPoseModel
         """
-
         n_images = len(image_paths)
         if self.cancel_now:
             self._call_cancel_listeners()
@@ -208,10 +211,13 @@ class BatchImageSegmentation(Notifier):
 
         self.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-        progress = str(round((iN + 1) / n_images * 100)) + "%"
-        current_image = {"image_id": iN, "path": image_path}
-        self._call_update_listeners(progress, current_image)
-        self._call_update_listeners(progress, current_image)
+        with self.progress_lock:
+            self.progress+=1
+            percent=round(self.progress/ n_images * 100)
+            progress = str(percent) + "%"
+            current_image = {"image_id": iN, "path": image_path}
+            print("Im updating the image\n")
+            self._call_update_listeners(progress, current_image)
 
 
 class BatchImageReadout(Notifier):
