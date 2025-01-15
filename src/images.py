@@ -9,7 +9,6 @@ from cellpose.io import imread
 from src.data_util import load_image_to_numpy
 import pandas as pd
 from time import time
-from joblib import Parallel,delayed
 from src import notifier
 from src.notifier import Notifier
 
@@ -120,7 +119,9 @@ class BatchImageSegmentation(Notifier):
         self._call_completion_listeners(self.csp.mask_paths)
 
     def run_parallel(self):
-
+        """
+        runs the segmentation process and saves the mask as npy file
+        """
         if self.cancel_now:
             pass
         elif self.pause_now:
@@ -156,6 +157,18 @@ class BatchImageSegmentation(Notifier):
         self._call_completion_listeners(self.csp.mask_paths)
 
     def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
+        """
+        segments the given image
+        Args:
+             iN (int): the index of the image
+             image_id (str): the id of the image
+             image_paths (list): the paths of the images
+             segmentation_channel (int): the channel of the segmentation
+             diameter (int): the diameter of the segmentation
+             suffix (str): the suffix of the segmentation
+             model (CellPoseModel) : instance of a CellPoseModel
+        """
+
         n_images = len(image_paths)
         if self.cancel_now:
             self._call_cancel_listeners()
