@@ -62,7 +62,7 @@ class Segmentation(Notifier):
         self.batch_image_segmentation.add_pause_listener(listener=self.is_paused)
         self.batch_image_segmentation.add_completion_listener(listener=finished)
 
-        self.batch_image_segmentation.run()
+        self.batch_image_segmentation.run_parallel()
         self._call_completion_listeners()
         self.csp.segmentation_running = False
 

@@ -1,4 +1,6 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
+
 import torch
 import numpy as np
 from cellpose import models, io
@@ -6,7 +8,8 @@ from cellpose.io import imread
 
 from src.data_util import load_image_to_numpy
 import pandas as pd
-
+from time import time
+from joblib import Parallel,delayed
 from src import notifier
 from src.notifier import Notifier
 
@@ -68,6 +71,7 @@ class BatchImageSegmentation(Notifier):
         io.logger_setup() # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
+        start_time_sequential= time()
         for iN, image_id in enumerate(image_paths):
             if self.cancel_now:
                 self._call_cancel_listeners()
@@ -111,7 +115,90 @@ class BatchImageSegmentation(Notifier):
             current_image = {"image_id": iN, "path": image_path}
             self._call_update_listeners(progress, current_image)
 
+        end_time_sequential = time()
+        print(f"The segmentation lasted {end_time_sequential-start_time_sequential}\n")
         self._call_completion_listeners(self.csp.mask_paths)
+
+    def run_parallel(self):
+
+        if self.cancel_now:
+            pass
+        elif self.pause_now:
+            pass
+        elif self.resume_now:
+            pass
+        self._call_start_listeners()
+        image_paths = self.csp.image_paths
+        segmentation_channel = self.csp.config.get_bf_channel()
+        print(segmentation_channel)
+        print(image_paths)
+        diameter = self.csp.config.get_diameter()
+        suffix = self.csp.config.get_mask_suffix()
+
+        segmentation_model = self.csp.model_path
+        device = self.device
+        device = torch.device(device)  # converts string to device object
+
+
+        io.logger_setup()  # configures logging system for Cellpose
+        model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
+
+        start_time_parallel= time()
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = []
+            for iN, image_id in enumerate(image_paths):
+                futures.append(executor.submit(self.image_segmentation,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model))
+
+
+        end_time_parallel= time()
+        print(f"The segmentation took {end_time_parallel-start_time_parallel}\n")
+        self._call_completion_listeners(self.csp.mask_paths)
+
+    def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
+        n_images = len(image_paths)
+        if self.cancel_now:
+            self._call_cancel_listeners()
+            return
+        elif self.pause_now:
+            self._call_pause_listeners()
+            return
+        elif self.resume_now:
+            self._call_resume_listeners()
+            return
+
+        image_path = image_paths[image_id][segmentation_channel]
+        image = imread(image_path)
+
+        res = model.eval(image, diameter=diameter, channels=[0, 0])
+        mask, flow, style = res[:3]
+
+        # Generate the output filename directly using the suffix attribute
+        directory, filename = os.path.split(image_path)
+        name, _ = os.path.splitext(filename)
+        new_filename = f"{name}{suffix}.npy"
+        new_path = os.path.join(directory, new_filename)
+
+        # Save the segmentation results directly with the default name first
+        io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+
+        # Rename the file to the desired name
+        # TODO REVIEW by Flo: umbennen hat halt nachteil fällt mir gerade ein,
+        #  dass wenn wir segs schon haben diese überschrieben werden ob wohl er anderen namen extra angelegt hat
+        #  maybe vorher schauen ob schon _seg da sind und diese so sichern das diese nicht überschrieben werden?
+        default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
+        if os.path.exists(default_suffix_path):
+            os.rename(default_suffix_path, new_path)
+
+        if image_id not in self.csp.mask_paths:
+            self.csp.mask_paths[image_id] = {}
+
+        self.csp.mask_paths[image_id][segmentation_channel] = new_path
+
+        progress = str(round((iN + 1) / n_images * 100)) + "%"
+        current_image = {"image_id": iN, "path": image_path}
+        self._call_update_listeners(progress, current_image)
+        self._call_update_listeners(progress, current_image)
 
 
 class BatchImageReadout(Notifier):
