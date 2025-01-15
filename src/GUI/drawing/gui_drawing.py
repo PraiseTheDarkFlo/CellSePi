@@ -1,3 +1,4 @@
+#TODO REVIEW unused imports
 import pathlib
 import platform
 from cgitb import enable
@@ -53,6 +54,8 @@ class MyQtWindow(QMainWindow):
         title = QLabel("Tools")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
         tools_layout.addWidget(title)
+
+        #TODO REVIEW bei mir wird die Schrift der Buttons als weiß auf weißem Hintergrund angezeigt -> nicht so gut lesbar, sowohl im dark und light mode
 
         # Add buttons to the tools box
         self.draw_toggle_button = QPushButton("Drawing : OFF")

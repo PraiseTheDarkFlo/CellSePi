@@ -1,12 +1,8 @@
 import os
-#TODO REVIEW by Flo: delete unused imports
-import matplotlib.pyplot as plt
 import torch
 import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
-
-from src import data_util
 
 from src.data_util import load_image_to_numpy
 import pandas as pd
@@ -65,17 +61,13 @@ class BatchImageSegmentation(Notifier):
         suffix = self.csp.config.get_mask_suffix()
 
         segmentation_model = self.csp.model_path
-        device = self.device
-        device = torch.device(device) #TODO REVIEW by Flo: was macht das warum wird das gemacht? vielleicht kommentar?
+        device = torch.device(self.device) # converts string to device object
 
         n_images = len(image_paths)
 
-        io.logger_setup() #TODO REVIEW by Flo: was macht der io_logger?
+        io.logger_setup() # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
-        # TODO REVIEW by Flo: nicht mehr benutzt? dann löschen maybe?
-        kwargs = {}
-        mask_paths = {}
         for iN, image_id in enumerate(image_paths):
             if self.cancel_now:
                 self._call_cancel_listeners()
@@ -115,12 +107,9 @@ class BatchImageSegmentation(Notifier):
 
             self.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-            #TODO REVIEW by Flo: warum nicht kwargs nicht direkt übergebbar bzw. ist irgendwie komisch erst extra
-            # es als 2 sachen zu erstellen um es dann zu getten? maybe getrennt erstellen?
-
-            kwargs = {"progress": str(round((iN + 1) / n_images * 100)) + "%",
-                      "current_image": {"image_id": iN, "path": image_path}}
-            self._call_update_listeners(kwargs.get("progress"), kwargs.get("current_image"))
+            progress = str(round((iN + 1) / n_images * 100)) + "%"
+            current_image = {"image_id": iN, "path": image_path}
+            self._call_update_listeners(progress, current_image)
 
         self._call_completion_listeners(self.csp.mask_paths)
 

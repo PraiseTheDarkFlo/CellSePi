@@ -1,25 +1,14 @@
-#TODO REVIEW by Flo: delete unused imports?
-#from click.core import batch
-#from torch.fx.experimental.migrate_gradual_types.constraint_generator import batchnorm_inference_rule
-
-#import images as image
-#import threading
-#from src.CellSePi import CellSePi
-#import flet as ft
-#import os.path
-from src.notifier import Notifier
-#from src.data_util import load_directory
 from src.images import BatchImageSegmentation
+from src.notifier import Notifier
 
-#TODO REVIEW by Flo: wir sollten namen convenstion für classen einführen und für datei namen, da wir hier klasse klein schreiben und wo anders groß etc.
-class segmentation(Notifier):
+
+class Segmentation(Notifier):
 
     def __init__(self, gui):
         super().__init__()
 
         self.csp = gui.csp
-        #TODO REVIEW by Flo: entweder segmentation_running aus csp entfernen oder hier referenz auf diese
-        self.segmentation_running = False
+        self.csp.segmentation_running = False
         device = "cpu"
         self.batch_image_segmentation = BatchImageSegmentation(self,
                                                                self.csp,
@@ -27,7 +16,7 @@ class segmentation(Notifier):
 
     def to_be_cancelled(self):
         self.batch_image_segmentation.cancel_action()
-        self.segmentation_running = False
+        self.csp.segmentation_running = False
 
     def to_be_paused(self):
         self.batch_image_segmentation.pause_action()
@@ -48,7 +37,7 @@ class segmentation(Notifier):
         print("run segmentation")
         self._call_update_listeners("Preparing segmentation", None)
 
-        if self.segmentation_running:
+        if self.csp.segmentation_running:
             print("Segmentation already running")
             self._call_completion_listeners()
             return
@@ -65,7 +54,7 @@ class segmentation(Notifier):
 
 
 
-        self.segmentation_running = True
+        self.csp.segmentation_running = True
 
         self.batch_image_segmentation.add_start_listener(listener=start)
         self.batch_image_segmentation.add_update_listener(listener=update)
@@ -75,11 +64,11 @@ class segmentation(Notifier):
 
         self.batch_image_segmentation.run()
         self._call_completion_listeners()
-        self.segmentation_running = False
+        self.csp.segmentation_running = False
 
 
     def stop(self):
-        self.segmentation_running = False
+        self.csp.segmentation_running = False
 
 
 

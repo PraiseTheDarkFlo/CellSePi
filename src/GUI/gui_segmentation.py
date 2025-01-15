@@ -7,10 +7,7 @@ import flet as ft
 from . import GUI
 from ..fluorescence import Fluorescence
 from .gui_fluorescence import fluorescence_button
-from ..segmentation import segmentation
-#TODO REVIEW by Flo: unbenutzte imports
-from ..notifier import Notifier
-import src.GUI.gui_directory
+from ..segmentation import Segmentation
 
 
 def create_segmentation_card(gui: GUI):
@@ -72,7 +69,7 @@ def create_segmentation_card(gui: GUI):
     # progress bar, which is updated throughout the segmentation calculation and fluorescence readout
     progress_bar = ft.ProgressBar(value=0, width=180)
     progress_bar_text = ft.Text("Waiting for Input")
-    segmentation_instance = segmentation(gui)
+    segmentation_instance = Segmentation(gui)
 
 
     # the following methods are called when clicking on the corresponding button
@@ -105,7 +102,13 @@ def create_segmentation_card(gui: GUI):
         """
         The start of the segmentation is initialized.
         """
-        print("start segmentation")
+        #try:
+         # this will throw an error if something other than a model was chosen
+        #except Exception as e:
+            #TODO stop segmentation when exception is thrown
+            #gui.page.snack_bar = ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model."))
+        #else:
+        print("segmentation started")
         start_button.visible = False
         pause_button.visible = True
         cancel_button.visible = True
