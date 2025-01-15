@@ -43,6 +43,32 @@ def copy_directory_to_clipboard(e,gui: GUI):
     gui.page.snack_bar.open = True
     gui.page.update()
 
+
+def get_Image(linux: bool, src):
+    """
+    Adjust the method of reading the image, depending on whether the system is Linux or not (src_Base64 or src).
+    Args:
+        linux (bool): Whether the system is Linux or not.
+        src (str): The path of the image to load.
+    Returns:
+          ft.Image: the image at the src path.
+    """
+    if linux:
+        return ft.Image(
+            src_base64=src,
+            height=150,
+            width=150,
+            fit=ft.ImageFit.CONTAIN
+        )
+    else:
+        return ft.Image(
+            src=src,
+            height=150,
+            width=150,
+            fit=ft.ImageFit.CONTAIN
+        )
+
+
 class DirectoryCard(ft.Card):
     """
     Handles the directory card with all event handlers.
@@ -299,91 +325,50 @@ class DirectoryCard(ft.Card):
         self.gui.page.update()
         self.check_masks()
 
+        src = self.gui.csp.image_paths
         if platform.system() == "Linux":
             self.gui.csp.linux_images = convert_tiffs_to_png_parallel(self.gui.csp.image_paths)
             self.gui.csp.linux = True
-            # Display groups with side-by-side images for linux
-            for image_id in self.gui.csp.linux_images:
-                cur_image_paths = self.gui.csp.linux_images[image_id]
-                group_row = ft.Row(
-                    [
-                        ft.Column(
-                            [
-                                ft.GestureDetector(
-                                    content=ft.Image(
-                                        src_base64=cur_image_paths[channel_id],
-                                        height=150,
-                                        width=150,
-                                        fit=ft.ImageFit.CONTAIN
-                                    ),
-                                    on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
-                                                                                                      self.gui)
-                                ),
-                                ft.Text(channel_id, size=10, text_align="center"),
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=5
-                        )
-                        for channel_id in cur_image_paths
-                    ],
-                    alignment=ft.MainAxisAlignment.START,
-                    spacing=10,
-                    scroll=ft.ScrollMode.AUTO,
-                )
-                self.image_gallery.controls.append(
+            src = self.gui.csp.linux_images
+
+        # Display groups with side-by-side images for linux
+        for image_id in src:
+            cur_image_paths = src[image_id]
+            group_row = ft.Row(
+                [
                     ft.Column(
-                        [
-                            ft.Text(f"{image_id}", weight="bold", text_align=ft.TextAlign.CENTER),
-                            group_row
-                        ],
-                        spacing=10,
-                        alignment=ft.MainAxisAlignment.CENTER
-                    )
-                )
-        else:
-            # Display groups with side-by-side images
-            for image_id in self.gui.csp.image_paths:
-                cur_image_paths = self.gui.csp.image_paths[image_id]
-                group_row = ft.Row(
                     [
-                        ft.Column(
-                            [
-                                ft.GestureDetector(
-                                    content=ft.Image(
-                                        src=cur_image_paths[channel_id],
-                                        height=150,
-                                        width=150,
-                                        fit=ft.ImageFit.CONTAIN
-                                    ),
-                                    on_tap=lambda e,img_id = image_id,c_id = channel_id: on_image_click(img_id,c_id, self.gui)
-                                ),
-                                ft.Text(channel_id, size=10, text_align="center"),
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=5
-                        )
-                        for channel_id in cur_image_paths
-                    ],
-                    alignment=ft.MainAxisAlignment.START,
-                    spacing=10,
-                    scroll=ft.ScrollMode.AUTO,
-                )
-                self.image_gallery.controls.append(
-                    ft.Column(
-                        [
-                            ft.Text(f"{image_id}", weight="bold",text_align=ft.TextAlign.CENTER),
-                            group_row
+                            ft.GestureDetector(
+                                content=get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),
+                                on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
+                                                                                                  self.gui)
+                            ),
+                            ft.Text(channel_id, size=10, text_align="center"),
                         ],
-                        spacing=10,
-                        alignment = ft.MainAxisAlignment.CENTER
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=5
                     )
+                    for channel_id in cur_image_paths
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                spacing=10,
+                scroll=ft.ScrollMode.AUTO,
+            )
+            self.image_gallery.controls.append(
+                ft.Column(
+                    [
+                        ft.Text(f"{image_id}", weight="bold", text_align=ft.TextAlign.CENTER),
+                        group_row
+                    ],
+                    spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER
                 )
+            )
+
 
         self.image_gallery.update()
         self.update_results_text()
-
 
     def create_dir_row(self):
         """
