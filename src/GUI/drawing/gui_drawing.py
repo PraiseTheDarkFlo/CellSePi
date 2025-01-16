@@ -60,18 +60,18 @@ class MyQtWindow(QMainWindow):
         # Add buttons to the tools box
         self.draw_toggle_button = QPushButton("Drawing : OFF")
         self.draw_toggle_button.setCheckable(True)
-        self.draw_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.draw_toggle_button.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.draw_toggle_button.clicked.connect(self.toggle_draw_mode)
         tools_layout.addWidget(self.draw_toggle_button)
 
         self.delete_toggle_button = QPushButton("Delete Mode: OFF")
         self.delete_toggle_button.setCheckable(True)
-        self.delete_toggle_button.setStyleSheet("font-size: 16px; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.delete_toggle_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.delete_toggle_button.clicked.connect(self.toggle_delete_mode)
         tools_layout.addWidget(self.delete_toggle_button)
 
         self.restore_button = QPushButton("Restore Deleted Cell")
-        self.restore_button.setStyleSheet("font-size: 16px; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.restore_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.restore_button.clicked.connect(self.canvas.restore_cell)
         tools_layout.addWidget(self.restore_button)
 
