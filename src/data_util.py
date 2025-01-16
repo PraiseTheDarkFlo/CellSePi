@@ -183,6 +183,8 @@ def process_channel(channel_id, channel_path):
 
     return channel_id, base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+#TODO review by Jenna: Ich finde den Titel der Methode ein wenig in die Irre führend,weil ja eigentlich
+# alle Images einer Serie converted werden
 def convert_single_image(image_id, cur_image_paths):
     png_images = {image_id: {}}
     with ThreadPoolExecutor() as executor:

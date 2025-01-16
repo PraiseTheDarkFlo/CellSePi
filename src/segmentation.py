@@ -8,6 +8,7 @@ class Segmentation(Notifier):
         super().__init__()
 
         self.csp = gui.csp
+        self.lif_value= gui.directory.is_lif
         self.csp.segmentation_running = False
         device = "cpu"
         self.batch_image_segmentation = BatchImageSegmentation(self,
@@ -62,7 +63,8 @@ class Segmentation(Notifier):
         self.batch_image_segmentation.add_pause_listener(listener=self.is_paused)
         self.batch_image_segmentation.add_completion_listener(listener=finished)
 
-        self.batch_image_segmentation.run_parallel()
+
+        self.batch_image_segmentation.run_parallel() if not self.lif_value else self.batch_image_segmentation.run()
         self._call_completion_listeners()
         self.csp.segmentation_running = False
 

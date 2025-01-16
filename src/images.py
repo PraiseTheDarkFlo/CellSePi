@@ -51,6 +51,7 @@ class BatchImageSegmentation(Notifier):
     Apply the segmentation model to every image
     """
     def run(self):
+        print("i am in normal method ")
         if self.cancel_now:
             pass
         elif self.pause_now:
@@ -211,6 +212,7 @@ class BatchImageSegmentation(Notifier):
 
         self.csp.mask_paths[image_id][segmentation_channel] = new_path
 
+        #locks the updates of the progress bar to secure correct updating in gui
         with self.progress_lock:
             self.progress+=1
             percent=round(self.progress/ n_images * 100)

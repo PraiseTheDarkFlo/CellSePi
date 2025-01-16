@@ -48,11 +48,16 @@ class ImageTuning:
             finally:
                 self.running_tasks.discard(task)
 
+    #TODO reviewed by Jenna: es gibt in python, wenn du nur eine Sache in der Schleife machen möchtest, die Möglichkeit
+    # diese einzeilig zu schreiben.
+    # [task.cancel() for task in self.running_tasks]
+    # Ist das vielleicht eleganter/ schöner vom Code ?
     def cancel_all_tasks(self):
         for task in self.running_tasks:
             print("canceled")
             task.cancel()
         self.running_tasks.clear()
+
 
     async def update_image(self):
         """
