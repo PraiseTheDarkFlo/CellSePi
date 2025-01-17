@@ -256,7 +256,7 @@ class DirectoryCard(ft.Card):
         converted=True
         if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
             if path.is_file():
-                converted=transform_image_path(path, path, self.gui)
+                converted=transform_image_path(path, path)
 
             if Image.open(path).mode in ["L", "RGB"]:
                 print("8 bit")

@@ -149,12 +149,22 @@ def remove_gradient(img):
     corrected_img = img + correction
     return corrected_img
 
-#TODO Review by Jenna: Kommentar für die Methode fehlt
-# Warum gebt ihr das GUI objekt mit ? Wenn nicht gebraucht, dann löschen
+#TODO Review by Jenna:
 # Warum weist ihr die bit depth zu ? So wie ich das verstehe benötigt ihr die  nur
 # für die Abfrage, dann könnte man doch den Code von der zweiten Abfrage einfach
 # oben zuschreiben und man spart sich eine Abfrage sowie unnötige Zuweisungen
-def transform_image_path(image_path,output_path,gui):
+def transform_image_path(image_path, output_path):
+    """
+    This method converts images with bit depth of 16 bit to 8 bit
+
+    Attributes:
+        image_path (pathlib.Path): Path to the image
+        output_path (pathlib.Path): Path where to save the converted image
+
+    Returns:
+        True if the image was converted successfully
+        False if the image was not converted because it had an incompatible format
+    """
     # check bit depth
     with Image.open(image_path) as img:
         mode = img.mode
