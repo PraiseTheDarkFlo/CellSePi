@@ -183,9 +183,7 @@ def process_channel(channel_id, channel_path):
 
     return channel_id, base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-#TODO review by Jenna: Ich finde den Titel der Methode ein wenig in die Irre führend,weil ja eigentlich
-# alle Images einer Serie converted werden
-def convert_single_image(image_id, cur_image_paths):
+def convert_series_parallel(image_id, cur_image_paths):
     png_images = {image_id: {}}
     with ThreadPoolExecutor() as executor:
         futures = {
@@ -209,7 +207,7 @@ def convert_tiffs_to_png_parallel(image_paths):
         png_images = {}
         with ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(convert_single_image, image_id, image_paths[image_id]): image_id
+                executor.submit(convert_series_parallel, image_id, image_paths[image_id]): image_id
                 for image_id in image_paths
             }
             for future in futures:
