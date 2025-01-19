@@ -3,7 +3,7 @@ import multiprocessing
 
 import flet as ft
 from .gui_options import Options
-from .gui_segmentation import create_segmentation_card
+from .gui_segmentation import GUISegmentation
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
@@ -36,7 +36,8 @@ class GUI:
         self.op = Options(page=self.page,csp=self.csp)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
-        seg_card,start_button,open_button,progress_bar,progress_bar_text = create_segmentation_card(self)
+        self.segmentation = GUISegmentation(self)
+        seg_card,start_button,open_button,progress_bar,progress_bar_text = self.segmentation.create_segmentation_card()
         self.ready_to_start = False
         self.segmentation_card = seg_card
         self.open_button = open_button

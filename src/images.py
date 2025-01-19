@@ -1,6 +1,6 @@
 import os
-from concurrent.futures import ThreadPoolExecutor
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import torch
 import numpy as np
@@ -10,14 +10,14 @@ from cellpose.io import imread
 from src.data_util import load_image_to_numpy
 import pandas as pd
 from time import time
-from src import notifier
 from src.notifier import Notifier
+from multiprocessing import Process
 
 class BatchImageSegmentation(Notifier):
 
     def __init__(self,
                  segmentation,
-                 csp,
+                 gui,
                  device=None):
         super().__init__()
         # TODO REVIEW by Flo: was ist mit device ist auch GPU möglich dann
@@ -29,17 +29,19 @@ class BatchImageSegmentation(Notifier):
             device = "cpu"
 
         self.segmentation = segmentation
-        self.csp = csp
+        self.gui = gui
         self.device = device
         # TODO REVIEW by Flo: ich würde entweder alle Statis drausen bei Segmentation machen oder alles hier bzw. oder sogar in csp?
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
-        self.progress_lock = threading.Lock()
-        self.progress=0
+        self.executor = None
+
 
     def cancel_action(self):
         self.cancel_now = True
+        if self.executor is not None:
+            self.executor.shutdown(wait=True)
 
     def pause_action(self):
         self.pause_now = True
@@ -51,22 +53,22 @@ class BatchImageSegmentation(Notifier):
     Apply the segmentation model to every image
     """
     def run(self):
-        print("i am in normal method ")
         if self.cancel_now:
-            pass
+            self.cancel_now = False
+            return
         elif self.pause_now:
-            pass
+            self.pause_now = False
+            return
         elif self.resume_now:
-            pass
+            self.resume_now = False
+            return
         self._call_start_listeners()
-        image_paths = self.csp.image_paths
-        segmentation_channel = self.csp.config.get_bf_channel()
-        print(segmentation_channel)
-        print(image_paths)
-        diameter = self.csp.config.get_diameter()
-        suffix = self.csp.config.get_mask_suffix()
+        image_paths = self.gui.csp.image_paths
+        segmentation_channel = self.gui.csp.config.get_bf_channel()
+        diameter = self.gui.csp.config.get_diameter()
+        suffix = self.gui.csp.config.get_mask_suffix()
 
-        segmentation_model = self.csp.model_path
+        segmentation_model = self.gui.csp.model_path
         device = torch.device(self.device) # converts string to device object
 
         n_images = len(image_paths)
@@ -77,13 +79,13 @@ class BatchImageSegmentation(Notifier):
         start_time_sequential= time()
         for iN, image_id in enumerate(image_paths):
             if self.cancel_now:
-                self._call_cancel_listeners()
+                self.cancel_now = False
                 return
             elif self.pause_now:
-                self._call_pause_listeners()
+                self.pause_now = False
                 return
             elif self.resume_now:
-                self._call_resume_listeners()
+                self.resume_now = False
                 return
 
             image_path = image_paths[image_id][segmentation_channel]
@@ -109,10 +111,10 @@ class BatchImageSegmentation(Notifier):
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
 
-            if image_id not in self.csp.mask_paths:
-                self.csp.mask_paths[image_id] = {}
+            if image_id not in self.gui.csp.mask_paths:
+                self.gui.csp.mask_paths[image_id] = {}
 
-            self.csp.mask_paths[image_id][segmentation_channel] = new_path
+            self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
             progress = str(round((iN + 1) / n_images * 100)) + "%"
             current_image = {"image_id": iN, "path": image_path}
@@ -120,28 +122,25 @@ class BatchImageSegmentation(Notifier):
 
         end_time_sequential = time()
         print(f"The segmentation lasted {end_time_sequential-start_time_sequential}\n")
-        self._call_completion_listeners(self.csp.mask_paths)
+        self._call_completion_listeners()
 
     def run_parallel(self):
-        """
-        runs the segmentation process and saves the mask as npy file
-        """
         if self.cancel_now:
-            pass
+            self.cancel_now = False
+            return
         elif self.pause_now:
-            pass
+            self.pause_now = False
+            return
         elif self.resume_now:
-            pass
+            self.resume_now = False
+            return
         self._call_start_listeners()
+        image_paths = self.gui.csp.image_paths
+        segmentation_channel = self.gui.csp.config.get_bf_channel()
+        diameter = self.gui.csp.config.get_diameter()
+        suffix = self.gui.csp.config.get_mask_suffix()
 
-        image_paths = self.csp.image_paths
-        segmentation_channel = self.csp.config.get_bf_channel()
-        print(segmentation_channel)
-        print(image_paths)
-        diameter = self.csp.config.get_diameter()
-        suffix = self.csp.config.get_mask_suffix()
-
-        segmentation_model = self.csp.model_path
+        segmentation_model = self.gui.csp.model_path
         device = self.device
         device = torch.device(device)  # converts string to device object
 
@@ -151,37 +150,28 @@ class BatchImageSegmentation(Notifier):
 
         start_time_parallel= time()
 
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            futures = []
-            for iN, image_id in enumerate(image_paths):
-                futures.append(executor.submit(self.image_segmentation,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model))
-
+        self.executor = ThreadPoolExecutor(max_workers=8)
+        futures = []
+        for iN, image_id in enumerate(image_paths):
+            futures.append(self.executor.submit(
+                self.image_segmentation,
+                iN, image_id, image_paths, segmentation_channel, diameter, suffix, model
+            ))
 
         end_time_parallel= time()
         print(f"The segmentation took {end_time_parallel-start_time_parallel}\n")
-        self._call_completion_listeners(self.csp.mask_paths)
+        if self.cancel_now:
+            self.cancel_now = False
+            return
+        self._call_completion_listeners()
 
     def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
-        """
-        segments the given image
-        Args:
-             iN (int): the index of the image
-             image_id (str): the id of the image
-             image_paths (list): the paths of the images
-             segmentation_channel (int): the channel of the segmentation
-             diameter (int): the diameter of the segmentation
-             suffix (str): the suffix of the segmentation
-             model (CellPoseModel) : instance of a CellPoseModel
-        """
         n_images = len(image_paths)
         if self.cancel_now:
-            self._call_cancel_listeners()
             return
         elif self.pause_now:
-            self._call_pause_listeners()
             return
         elif self.resume_now:
-            self._call_resume_listeners()
             return
 
         image_path = image_paths[image_id][segmentation_channel]
@@ -207,19 +197,15 @@ class BatchImageSegmentation(Notifier):
         if os.path.exists(default_suffix_path):
             os.rename(default_suffix_path, new_path)
 
-        if image_id not in self.csp.mask_paths:
-            self.csp.mask_paths[image_id] = {}
+        if image_id not in self.gui.csp.mask_paths:
+            self.gui.csp.mask_paths[image_id] = {}
 
-        self.csp.mask_paths[image_id][segmentation_channel] = new_path
+        self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-        #locks the updates of the progress bar to secure correct updating in gui
-        with self.progress_lock:
-            self.progress+=1
-            percent=round(self.progress/ n_images * 100)
-            progress = str(percent) + "%"
-            current_image = {"image_id": iN, "path": image_path}
-            print("Im updating the image\n")
-            self._call_update_listeners(progress, current_image)
+        progress = str(round((iN + 1) / n_images * 100)) + "%"
+        current_image = {"image_id": iN, "path": image_path}
+        self._call_update_listeners(progress, current_image)
+        self._call_update_listeners(progress, current_image)
 
 
 class BatchImageReadout(Notifier):
