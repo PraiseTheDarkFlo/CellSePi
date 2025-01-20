@@ -7,13 +7,15 @@ import numpy as np
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
-    QGraphicsView, QMainWindow, QGraphicsLineItem
+    QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
 import sys
 
 from matplotlib.pyplot import draw_if_interactive
 
 from ...CellSePi import CellSePi
 import copy
+
+from ...drawing.drawing_util import mask_shifting
 
 
 class MyQtWindow(QMainWindow):
@@ -34,7 +36,8 @@ class MyQtWindow(QMainWindow):
         self.image_id = image_id
         self.adjusted_image_path = adjusted_image_path
         self.setWindowTitle("Drawing & Mask Editing")
-        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
+        self.check_shifting = QCheckBox("Cell ID shifting")
+        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,self.check_shifting)
 
         # Main layout with canvas and tools
         central_widget = QWidget()
@@ -70,10 +73,13 @@ class MyQtWindow(QMainWindow):
         self.delete_toggle_button.clicked.connect(self.toggle_delete_mode)
         tools_layout.addWidget(self.delete_toggle_button)
 
+        tools_layout.addWidget(self.check_shifting,alignment=Qt.AlignCenter)
+
         self.restore_button = QPushButton("Restore Deleted Cell")
         self.restore_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.restore_button.clicked.connect(self.canvas.restore_cell)
         tools_layout.addWidget(self.restore_button)
+
 
         self.tools_widget.setLayout(tools_layout)
         self.tools_widget.setStyleSheet("background-color: #FAFAFA; border-left: 2px solid #E0E0E0;")  # Subtle border and clean background
@@ -135,9 +141,10 @@ class DrawingCanvas(QGraphicsView):
         background_item: Graphics item for the background image
         delete_mode: Boolean to track if delete mode is enabled
         cell_history: List to keep track of deleted cells
+        check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
 
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -155,6 +162,7 @@ class DrawingCanvas(QGraphicsView):
         self.mask_item = None
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
+        self.check_box = check_box
 
     def enable_draw_mode(self, enabled):
 
@@ -224,14 +232,17 @@ class DrawingCanvas(QGraphicsView):
         outline = mask_data["outlines"]
 
         # Save current state of the cell for restoration
-        cell_mask = (mask == cell_id).copy()
-        cell_outline = (outline == cell_id).copy()
-        self.cell_history.append((cell_id, cell_mask, cell_outline))
+        mask_old = mask.copy()
+        outline_old = outline.copy()
+        self.cell_history.append((mask_old, outline_old, cell_id))
 
         # Update the mask and outline
+        cell_mask = (mask == cell_id).copy()
+        cell_outline = (outline == cell_id).copy()
         mask[cell_mask] = 0
         outline[cell_outline] = 0
-
+        if self.check_box.isChecked():
+            mask_shifting(mask_data, cell_id)
         # Save the updated mask
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
@@ -246,15 +257,13 @@ class DrawingCanvas(QGraphicsView):
             return
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
-        mask_data = np.load(mask_path, allow_pickle=True).item()
 
-        mask = mask_data["masks"]
-        outline = mask_data["outlines"]
 
         # Restore the most recent cell
-        cell_id, cell_mask, cell_outline = self.cell_history.pop()
-        mask[cell_mask] = cell_id
-        outline[cell_outline] = cell_id
+        mask_old, outline_old, cell_id = self.cell_history.pop()
+
+        mask = mask_old.copy()
+        outline = outline_old.copy()
 
         # Save the updated mask
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
@@ -270,7 +279,6 @@ class DrawingCanvas(QGraphicsView):
 
         mask = mask_data["masks"]
         outline = mask_data["outlines"]
-
         # Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r, g, b = self.mask_color
