@@ -14,8 +14,6 @@ from .gui_mask import error_banner,handle_image_switch_mask_on
 from ..image_tuning import ImageTuning
 from screeninfo import get_monitors
 
-from screeninfo import get_monitors
-
 def debug_screen_info():
     monitors = get_monitors()
     for monitor in monitors:
