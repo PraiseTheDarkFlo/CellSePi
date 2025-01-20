@@ -12,7 +12,7 @@ from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
 from ..image_tuning import ImageTuning
-
+from screeninfo import get_monitors
 
 
 class GUI:
@@ -27,8 +27,7 @@ class GUI:
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window(),disabled=True)
         self.page.window.width = 1400
         self.page.window.height = 825
-        self.page.window_left = 200
-        self.page.window_top = 50
+        self.center_window()
         self.page.window.min_width = self.page.window.width
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
@@ -113,3 +112,16 @@ class GUI:
         self.image_tuning.save_current_main_image()
         multiprocessing.Process(target=open_qt_window, args=(self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path)).start()
 
+    def center_window(self):
+        monitor = get_monitors()[0]
+        screen_width = monitor.width
+        screen_height = monitor.height
+
+        window_width = self.page.window.width
+        window_height = self.page.window.height
+
+        left = (screen_width - window_width) // 2
+        top = (screen_height - window_height) // 2
+
+        self.page.window_left = left
+        self.page.window_top = top
