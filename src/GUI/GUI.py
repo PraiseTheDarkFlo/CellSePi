@@ -14,6 +14,12 @@ from .gui_mask import error_banner,handle_image_switch_mask_on
 from ..image_tuning import ImageTuning
 from screeninfo import get_monitors
 
+from screeninfo import get_monitors
+
+def debug_screen_info():
+    monitors = get_monitors()
+    for monitor in monitors:
+        print(f"Monitor: {monitor.name}, Width: {monitor.width}, Height: {monitor.height}")
 
 class GUI:
     """
@@ -113,15 +119,14 @@ class GUI:
         multiprocessing.Process(target=open_qt_window, args=(self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path)).start()
 
     def center_window(self):
+        """
+        Centers the GUI window.
+        """
+        debug_screen_info()
         monitor = get_monitors()[0]
-        screen_width = monitor.width
-        screen_height = monitor.height
 
-        window_width = self.page.window.width
-        window_height = self.page.window.height
-
-        left = (screen_width - window_width) // 2
-        top = (screen_height - window_height) // 2
+        left = (monitor.width - self.page.window.width) // 2
+        top = (monitor.height - self.page.window.height) // 2
 
         self.page.window_left = left
         self.page.window_top = top
