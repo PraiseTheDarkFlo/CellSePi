@@ -46,8 +46,8 @@ class Segmentation(Notifier):
         def finished():
             self._call_completion_listeners()
 
-        def update(update,current_image):
-            self._call_update_listeners(update, current_image)
+        def update(progress,current_image):
+            self._call_update_listeners(progress, current_image)
 
         def start():
             self._call_update_listeners("0 %", None)

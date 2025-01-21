@@ -210,7 +210,7 @@ class GUISegmentation():
 
             Arguments:
                 progress (int): the current progress
-                current_image (int): the current image number
+                current_image (dict): the current image number
             """
             if self.segmentation_pausing:
                 progress_bar_text.value = "Pausing: " + str(progress)
@@ -221,6 +221,14 @@ class GUISegmentation():
             extracted_num = re.search(r'\d+', progress)
             if extracted_num is not None:
                 progress_bar.value = int(extracted_num.group())/100
+
+            bfc = self.gui.csp.config.get_bf_channel()
+            if current_image is not None:
+                if current_image["image_id"] == self.gui.csp.image_id:
+                    if current_image["image_id"] in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[current_image["image_id"]]:
+                        self.gui.drawing_button.disabled = False
+                    else:
+                        self.gui.drawing_button.disabled = True
             self.gui.page.update()
 
     #TODO wenn vorher schon masken vorhanden sind, dann sollen diese als backup gespeichert werden bevor die segmentierung startet und wenn der abbrechen button gedrückt wird sollen die alten wiederhergestellt werden

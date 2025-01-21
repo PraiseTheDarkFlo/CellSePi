@@ -117,7 +117,7 @@ class BatchImageSegmentation(Notifier):
             self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
             progress = str(round((iN + 1) / n_images * 100)) + "%"
-            current_image = {"image_id": iN, "path": image_path}
+            current_image = {"image_id": image_id, "path": image_path}
             self._call_update_listeners(progress, current_image)
 
         end_time_sequential = time()
