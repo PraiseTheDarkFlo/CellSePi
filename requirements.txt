@@ -1,5 +1,4 @@
 numpy
-numexpr
 pillow
 pandas
 openpyxl
@@ -11,3 +10,4 @@ readlif
 pytest
 pyqt5
 flet_contrib
+opencv-python

@@ -3,9 +3,10 @@ import base64
 import os
 from io import BytesIO
 
-import numpy as np
-import numexpr as ne
+import cv2
 from PIL import Image, ImageEnhance
+from matplotlib import pyplot as plt
+
 from src.GUI import GUI
 import flet as ft
 
@@ -169,19 +170,39 @@ class AutoImageTuning:
 
     def auto_adjust(self):
         image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
-        image = Image.open(image_path).convert("RGB")
 
-        np_image = np.array(image)
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        min_val = np_image.min()
-        max_val = np_image.max()
+        #self.show_histograms(image, title="Histogramme des Originalbilds")
 
-        scaled_image = ne.evaluate("(np_image - min_val) * (255.0 / (max_val - min_val))").astype(np.uint8)
+        normalized_image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
-        adjusted_image = Image.fromarray(scaled_image)
+        #self.show_histograms(normalized_image, title="Histogramme des normalisierten Bilds")
+
+        pil_image = Image.fromarray(normalized_image)
 
         buffer = BytesIO()
-        adjusted_image.save(buffer, format="PNG")
+        pil_image.save(buffer, format="PNG")
         buffer.seek(0)
-
         return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    def show_histograms(self, image, title="Histogramm"):
+        """
+        Shows the histograms.
+        """
+        colors = ['r', 'g', 'b']
+        channels = ['Red', 'Green', 'Blue']
+
+        plt.figure(figsize=(12, 6))
+        for i, color in enumerate(colors):
+            histogram = cv2.calcHist([image], [i], None, [256], [0, 256])
+            plt.plot(histogram, color=color, label=f'{channels[i]} Channel')
+            plt.xlim([0, 256])
+
+        plt.title(title)
+        plt.xlabel("intensity")
+        plt.ylabel("Pixel count")
+        plt.legend()
+        plt.grid()
+        plt.show()
