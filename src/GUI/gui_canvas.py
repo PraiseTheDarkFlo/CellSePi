@@ -23,10 +23,10 @@ def on_image_click(img_id,channel_id,gui: GUI,from_auto = False):
     else:
         gui.drawing_button.disabled = True
     gui.drawing_button.update()
-
     if not gui.auto_image_tuning.active:
         gui.contrast_slider.disabled = False
         gui.brightness_slider.disabled = False
+        gui.page.update()
         if gui.csp.linux:
             if from_auto:
                 asyncio.run(gui.image_tuning.update_main_image_async(False,True))
