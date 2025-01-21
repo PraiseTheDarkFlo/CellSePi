@@ -4,7 +4,7 @@ import flet as ft
 from . import GUI
 from .gui_mask import handle_image_switch_mask_on
 
-def on_image_click(img_id,channel_id,gui: GUI):
+def on_image_click(img_id,channel_id,gui: GUI,from_auto = False):
     """
     Method that handles what happens when the image is clicked or the main image need an update.
     """
@@ -12,10 +12,9 @@ def on_image_click(img_id,channel_id,gui: GUI):
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
     handle_image_switch_mask_on(gui)
-    gui.contrast_slider.disabled = False
-    gui.brightness_slider.disabled = False
-    gui.contrast_slider.value = 1.0
-    gui.brightness_slider.value = 1.0
+    if not from_auto:
+        gui.contrast_slider.value = 1.0
+        gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
     gui.brightness_slider.update()
     bfc = gui.csp.config.get_bf_channel()
@@ -24,12 +23,22 @@ def on_image_click(img_id,channel_id,gui: GUI):
     else:
         gui.drawing_button.disabled = True
     gui.drawing_button.update()
-    if gui.csp.linux:
-        asyncio.run(gui.image_tuning.update_main_image_async(True,True))
+
+    if not gui.auto_image_tuning.active:
+        gui.contrast_slider.disabled = False
+        gui.brightness_slider.disabled = False
+        if gui.csp.linux:
+            if from_auto:
+                asyncio.run(gui.image_tuning.update_main_image_async(False,True))
+            else:
+                asyncio.run(gui.image_tuning.update_main_image_async(True,True))
+        else:
+            if from_auto:
+                asyncio.run(gui.image_tuning.update_main_image_async(False))
+            else:
+                asyncio.run(gui.image_tuning.update_main_image_async(True))
     else:
-        asyncio.run(gui.image_tuning.update_main_image_async(True))
-
-
+        gui.auto_image_tuning.update_main_image_auto()
 
 
 

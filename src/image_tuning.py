@@ -3,8 +3,13 @@ import base64
 import os
 from io import BytesIO
 
+import numpy as np
+import numexpr as ne
 from PIL import Image, ImageEnhance
 from src.GUI import GUI
+import flet as ft
+
+from src.GUI.gui_canvas import on_image_click
 
 
 class ImageTuning:
@@ -119,7 +124,7 @@ class ImageTuning:
         """
         if self.gui.csp.adjusted_image_path is None:
             self.gui.csp.adjusted_image_path = os.path.join(self.gui.csp.working_directory, "adjusted_image.png")
-        if round(self.gui.brightness_slider.value, 2) == 1 and round(self.gui.contrast_slider.value, 2) == 1:
+        if round(self.gui.brightness_slider.value, 2) == 1 and round(self.gui.contrast_slider.value, 2) == 1 and not self.gui.auto_image_tuning.active:
             image = self.load_image(self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id])
             image.save(self.gui.csp.adjusted_image_path, format="PNG")
         else:
@@ -127,3 +132,56 @@ class ImageTuning:
             buffer = BytesIO(image_data)
             image = Image.open(buffer)
             image.save(self.gui.csp.adjusted_image_path, format="PNG")
+
+class AutoImageTuning:
+    def __init__(self, gui: GUI):
+        self.gui = gui
+        self.active = False
+
+    def pressed(self,e):
+        if self.active:
+            self.active = False
+            self.gui.auto_brightness_contrast.icon_color = ft.Colors.GREY_700
+            if self.gui.csp.image_id is not None:
+                self.gui.brightness_slider.disabled = False
+                self.gui.contrast_slider.disabled = False
+            self.gui.brightness_icon.color = None
+            self.gui.contrast_icon.color = None
+            self.gui.page.update()
+            if self.gui.csp.image_id is not None:
+                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui,True)
+        else:
+            self.active = True
+            self.gui.auto_brightness_contrast.icon_color= ft.Colors.ORANGE_700
+            if self.gui.csp.image_id is not None:
+                self.gui.brightness_slider.disabled = True
+                self.gui.contrast_slider.disabled = True
+            self.gui.brightness_icon.color = ft.Colors.GREY_700
+            self.gui.contrast_icon.color = ft.Colors.GREY_700
+            self.gui.page.update()
+            if self.gui.csp.image_id is not None:
+                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui,True)
+
+    def update_main_image_auto(self):
+        print("auto_brightness_contrast")
+        self.gui.canvas.main_image.content.src_base64 = self.auto_adjust()
+        self.gui.canvas.main_image.update()
+
+    def auto_adjust(self):
+        image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
+        image = Image.open(image_path).convert("RGB")
+
+        np_image = np.array(image)
+
+        min_val = np_image.min()
+        max_val = np_image.max()
+
+        scaled_image = ne.evaluate("(np_image - min_val) * (255.0 / (max_val - min_val))").astype(np.uint8)
+
+        adjusted_image = Image.fromarray(scaled_image)
+
+        buffer = BytesIO()
+        adjusted_image.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')

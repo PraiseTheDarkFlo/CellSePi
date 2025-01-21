@@ -4,7 +4,7 @@ import platform
 from cgitb import enable
 
 import numpy as np
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
@@ -37,6 +37,7 @@ class MyQtWindow(QMainWindow):
         self.adjusted_image_path = adjusted_image_path
         self.setWindowTitle("Drawing & Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
+        self.check_shifting.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,self.check_shifting)
 
         # Main layout with canvas and tools
@@ -118,15 +119,39 @@ class MyQtWindow(QMainWindow):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
 
 
+class Communicator(QObject):
+    update_window = pyqtSignal(dict)
 
+class QueueListener(QThread):
+    def __init__(self, queue, communicator):
+        super().__init__()
+        self.queue = queue
+        self.communicator = communicator
+
+    def run(self):
+        while True:
+            data = self.queue.get()
+            self.communicator.update_window.emit(data)
 
 # Start the window of the drawing tools
-def open_qt_window(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
+def open_qt_window(queue):
     app = QApplication(sys.argv)
-    window = MyQtWindow(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
-    window.show()
-    app.exec()
-
+    window = QWidget()
+    window.setWindowTitle("Waiting")
+    window.setGeometry(100, 100, 400, 300)
+    window.setVisible(False)
+    while True:
+        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = queue.get()
+        print(f"Mask Color: {mask_color}")
+        print(f"Outline Color: {outline_color}")
+        print(f"BF Channel: {bf_channel}")
+        print(f"Mask Paths: {mask_paths}")
+        print(f"Image ID: {image_id}")
+        print(f"Adjusted Image Path: {adjusted_image_path}")
+        window = MyQtWindow(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
+        window.setVisible(True)
+        window.show()
+        app.exec_()
 
 class DrawingCanvas(QGraphicsView):
     """

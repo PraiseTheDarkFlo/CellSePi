@@ -11,13 +11,8 @@ from .gui_directory import DirectoryCard
 from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
-from ..image_tuning import ImageTuning
-from screeninfo import get_monitors
+from ..image_tuning import ImageTuning, AutoImageTuning
 
-def debug_screen_info():
-    monitors = get_monitors()
-    for monitor in monitors:
-        print(f"Monitor: {monitor.name}, Width: {monitor.width}, Height: {monitor.height}")
 
 class GUI:
     """
@@ -28,10 +23,12 @@ class GUI:
         self.page = page
         self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
-        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.start_drawing_window(),disabled=True)
+        self.queue = multiprocessing.Queue()
+        self.start_drawing_window()
+        self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.set_queue_drawing_window(),disabled=True)
         self.page.window.width = 1400
-        self.page.window.height = 825
-        self.center_window()
+        self.page.window.height = 800
+        self.page.window.center()
         self.page.window.min_width = self.page.window.width
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
@@ -57,6 +54,12 @@ class GUI:
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
         )
+        self.auto_image_tuning = AutoImageTuning(self)
+        self.auto_brightness_contrast = ft.IconButton(icon=ft.Icons.AUTO_FIX_HIGH,icon_color=ft.Colors.GREY_700,style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=12),
+                ),on_click=lambda e: self.auto_image_tuning.pressed(e),tooltip="Auto brightness and contrast")
+        self.brightness_icon = ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness")
+        self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
 
     def build(self):
         """
@@ -72,7 +75,9 @@ class GUI:
                                 [
                                     self.canvas.canvas_card,
                                     ft.Row([self.switch_mask, self.drawing_button]),
-                                    ft.Row([self.gui_config,ft.Card(content=ft.Container(content=ft.Column([ft.Row([ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness"),ft.Container(self.brightness_slider,padding=-15)]),ft.Row([ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast"),ft.Container(self.contrast_slider,padding=-15)])]),padding=10))]),
+                                    ft.Row([self.gui_config,ft.Column([ft.Card(content=ft.Container(content=ft.Column([ft.Row([self.brightness_icon,ft.Container(self.brightness_slider,padding=-15)]),ft.Row([self.contrast_icon,ft.Container(self.contrast_slider,padding=-15)])]),padding=10)),
+                                                                       ft.Card(content=self.auto_brightness_contrast)])
+                                            ]),
                                     self.segmentation_card
                                 ],
                                 expand=True,
@@ -113,18 +118,9 @@ class GUI:
 
 
     def start_drawing_window(self):
+        multiprocessing.Process(target=open_qt_window, args=(self.queue,)).start()
+
+    def set_queue_drawing_window(self):
         self.image_tuning.save_current_main_image()
-        multiprocessing.Process(target=open_qt_window, args=(self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path)).start()
+        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
 
-    def center_window(self):
-        """
-        Centers the GUI window.
-        """
-        debug_screen_info()
-        monitor = get_monitors()[0]
-
-        left = (monitor.width - self.page.window.width) // 2
-        top = (monitor.height - self.page.window.height) // 2
-
-        self.page.window_left = left
-        self.page.window_top = top
