@@ -320,7 +320,8 @@ class GUIConfig:
                                              bf_channel=e.control.value)
             self.txt_bf_ref.current.color = None
             self.page.update()
-            on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui)
+            if self.gui.csp.image_id is not None:
+                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui)
             if not self.gui.csp.readout_running and not self.gui.csp.segmentation_running:
                 self.gui.directory.check_masks()
         except ValueError:

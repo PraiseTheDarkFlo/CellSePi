@@ -18,10 +18,11 @@ def on_image_click(img_id,channel_id,gui: GUI,from_auto = False):
     gui.contrast_slider.update()
     gui.brightness_slider.update()
     bfc = gui.csp.config.get_bf_channel()
-    if img_id in gui.csp.mask_paths and bfc in gui.csp.mask_paths[img_id]:
-        gui.drawing_button.disabled = False
-    else:
-        gui.drawing_button.disabled = True
+    if img_id is not None:
+        if img_id in gui.csp.mask_paths and bfc in gui.csp.mask_paths[img_id]:
+            gui.drawing_button.disabled = False
+        else:
+            gui.drawing_button.disabled = True
     gui.drawing_button.update()
     if not gui.auto_image_tuning.active:
         gui.contrast_slider.disabled = False

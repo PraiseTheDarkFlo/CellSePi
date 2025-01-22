@@ -495,14 +495,15 @@ class DirectoryCard(ft.Card):
         """
         Checks if all masks are there, if not the readout button is invisible.
         """
-        bfc = self.gui.csp.config.get_bf_channel()
-        all_mask_present = all(image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id] for image_id in self.gui.csp.image_paths)
-        if all_mask_present:
-            fluorescence_button.visible = True
-        else:
-            fluorescence_button.visible = False
-        fluorescence_button.update()
-        print(f"all_masks: {all_mask_present}")
+        if self.gui.csp.mask_paths is not None:
+            bfc = self.gui.csp.config.get_bf_channel()
+            all_mask_present = all(image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id] for image_id in self.gui.csp.image_paths)
+            if all_mask_present:
+                fluorescence_button.visible = True
+            else:
+                fluorescence_button.visible = False
+            fluorescence_button.update()
+            print(f"all_masks: {all_mask_present}")
     #test bench for the parallelization of select directory
     def benchmark_seq_and_par(self, path):
         """
