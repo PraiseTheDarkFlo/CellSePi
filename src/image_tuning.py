@@ -171,21 +171,13 @@ class AutoImageTuning:
     def auto_adjust(self):
         image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
 
-        image = cv2.imread(image_path)
+        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        #self.show_histograms(image, title="Histogramme des Originalbilds")
-
         normalized_image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
-        #self.show_histograms(normalized_image, title="Histogramme des normalisierten Bilds")
+        _, buffer = cv2.imencode('.png', normalized_image)
 
-        pil_image = Image.fromarray(normalized_image)
-
-        buffer = BytesIO()
-        pil_image.save(buffer, format="PNG")
-        buffer.seek(0)
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return base64.b64encode(buffer).decode('utf-8')
 
     def show_histograms(self, image, title="Histogramm"):
         """
