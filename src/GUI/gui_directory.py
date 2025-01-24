@@ -79,8 +79,8 @@ class DirectoryCard(ft.Card):
         super().__init__()
         self.gui = gui
         self.count_results_txt = ft.Text(value="Results: 0")
-        self.directory_path = ft.Text(weight="bold",value='Directory Path')
-        self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight="bold")
+        self.directory_path = ft.Text(weight=ft.FontWeight.BOLD,value='Directory Path')
+        self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight=ft.FontWeight.BOLD)
         self.is_lif = True
         self.lif_slider = ft.CupertinoSlidingSegmentedButton(
             selected_index=1,
@@ -359,7 +359,7 @@ class DirectoryCard(ft.Card):
             self.image_gallery.controls.append(
                 ft.Column(
                     [
-                        ft.Text(f"{image_id}", weight="bold", text_align=ft.TextAlign.CENTER),
+                        ft.Text(f"{image_id}", weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                         group_row
                     ],
                     spacing=10,
