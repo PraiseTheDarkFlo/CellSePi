@@ -323,7 +323,7 @@ class GUIConfig:
             if self.gui.csp.image_id is not None:
                 on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui)
             if not self.gui.csp.readout_running and not self.gui.csp.segmentation_running:
-                self.gui.directory.check_masks()
+                self.gui.page.run_task(self.gui.directory.check_masks)
         except ValueError:
             self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel must be not empty!"))
             self.page.snack_bar.open = True

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import pathlib
 import platform
@@ -308,8 +309,7 @@ class DirectoryCard(ft.Card):
 
         print(f"This directory contains {len(mask_paths)} unique mask ids.")
 
-    #TODO review by Jenna: Ich würde hier anstatt den kompletten Code zu duplizieren die benötigten Änderungen ausführen in der if
-    # und mir dann die gebrauchten images zwischenspeichern, sonst ist hier sehr viel Code doppelt, was auf den ersten Blick nicht nötig erscheint.
+
     def load_images(self):
         """
         Load images to gallery in order and with names.
@@ -324,7 +324,7 @@ class DirectoryCard(ft.Card):
         self.gui.open_button.visible = False
         self.gui.drawing_button.disabled = True
         self.gui.page.update()
-        self.check_masks()
+        self.page.run_task(self.check_masks)
 
         src = self.gui.csp.image_paths
         if platform.system() == "Linux":
@@ -492,23 +492,38 @@ class DirectoryCard(ft.Card):
             for control in slider.controls:
                 control.color = None
 
-    def check_masks(self):
+    async def check_masks(self):
         """
-        Checks if all masks are there, if not the readout button is invisible.
+        Check if all masks are present (non-blocking).
         """
         if self.gui.csp.mask_paths is not None:
             bfc = self.gui.csp.config.get_bf_channel()
-            all_mask_present = all(image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id] for image_id in self.gui.csp.image_paths)
-            if all_mask_present:
+
+            loop = asyncio.get_event_loop()
+            all_mask_present = await loop.run_in_executor(
+                None,
+                lambda: all(
+                    image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id]
+                    for image_id in self.gui.csp.image_paths
+                )
+            )
+
+            if all_mask_present and self.gui.csp.image_paths is not None and len(self.gui.csp.image_paths) != 0 :
                 fluorescence_button.visible = True
-                self.gui.diameter_text.value = AverageDiameter(self.gui.csp).get_avg_diameter()
+                await fluorescence_button.update_async()
+                avg_diameter = await loop.run_in_executor(
+                    None,
+                    lambda: AverageDiameter(self.gui.csp).get_avg_diameter()
+                )
+                self.gui.diameter_text.value = avg_diameter
                 self.gui.diameter_display.visible = True
-                self.gui.page.update()
             else:
                 fluorescence_button.visible = False
-            fluorescence_button.update()
-            print(f"all_masks: {all_mask_present}")
-    #test bench for the parallelization of select directory
+                await fluorescence_button.update_async()
+                self.gui.diameter_display.visible = False
+
+            await self.gui.diameter_display.update_async()
+
     def benchmark_seq_and_par(self, path):
         """
         The method is only included for testing purposes.

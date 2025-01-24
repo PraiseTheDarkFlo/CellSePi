@@ -1,7 +1,9 @@
 import base64
 import os
 import pathlib
+import platform
 import shutil
+import stat
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from io import BytesIO
 
@@ -81,10 +83,22 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None):
     files = listdir(source_dir)
     files_to_copy = [file for file in files if file_filter(file)]
 
-    for file in files_to_copy:
-        src_path = file
-        target_path = target_dir / file.name
-        shutil.copyfile(src_path, target_path)
+    for src_path in files_to_copy:
+        target_path = target_dir / src_path.name
+
+        try:
+            if target_path.exists():
+                if platform.system() == "Windows":
+                    os.chmod(target_path, stat.S_IWRITE)
+                else:
+                    target_path.chmod(0o777)
+                target_path.unlink()
+
+            shutil.copy(str(src_path), str(target_path))
+
+        except Exception as e:
+            print(f"Something went wrong while processing {src_path.name}: {str(e)}")
+            continue
 
 
 
@@ -102,8 +116,19 @@ def extract_from_lif_file(lif_path, target_dir):
             n_channels = series.channels
             for channel_id in range(n_channels):
                 img = series.get_frame(c=channel_id)
-                img.save(target_dir / f"{img_id}c{channel_id + 1}.tif")
-                pass
+                file_name = f"{img_id}c{channel_id + 1}.tif"
+                target_path = target_dir / file_name
+                try:
+                    if target_path.exists():
+                        if platform.system() == "Windows":
+                            os.chmod(target_path, stat.S_IWRITE)
+                        else:
+                            target_path.chmod(0o777)
+                        target_path.unlink()
+                    img.save(target_path)
+                except Exception as e:
+                    print(f"Something went wrong while processing {file_name}: {str(e)}")
+                    continue
 
 
 def load_image_to_numpy(path):

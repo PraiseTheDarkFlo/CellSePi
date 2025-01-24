@@ -219,7 +219,7 @@ class GUISegmentation():
             progress_bar_text.value = "Ready to Start"
             progress_bar.value = 0
             start_button.visible = True
-            self.gui.directory.check_masks()
+            self.gui.page.run_task(self.gui.directory.check_masks)
             if self.gui.csp.readout_path is not None:
                 self.gui.open_button.visible = True
             self.segmentation_cancelling = False

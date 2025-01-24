@@ -37,7 +37,7 @@ class Fluorescence(Notifier):
                 self.csp.readout_running=False
                 if readout_path is not None:
                     self.gui.open_button.visible=True
-                self.gui.directory.check_masks()
+                self.gui.page.run_task(self.gui.directory.check_masks)
                 fluorescence_button.disabled = False
                 if self.csp.model_path is not None:
                     self.gui.start_button.disabled =False

@@ -11,3 +11,4 @@ pytest
 pyqt5
 flet_contrib
 opencv-python
+flet_core
