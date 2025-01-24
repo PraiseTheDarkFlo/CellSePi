@@ -67,7 +67,7 @@ class GUI:
         self.diameter_display = ft.Container(
             content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), self.diameter_text]),
             border_radius=12,
-            padding=10,
+            padding=8,
             visible=False
         )
 
