@@ -29,7 +29,7 @@ class GUI:
         self.queue = multiprocessing.Queue()
         self.start_drawing_window()
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.set_queue_drawing_window(),disabled=True)
-        self.page.window.width = 1400
+        self.page.window.width = 1408
         self.page.window.height = 800
         self.page.window.center()
         self.page.window.min_width = self.page.window.width
