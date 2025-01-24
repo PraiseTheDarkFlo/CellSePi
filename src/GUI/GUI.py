@@ -2,6 +2,8 @@ import asyncio
 import multiprocessing
 
 import flet as ft
+from flet_core import BoxShape
+
 from .gui_options import Options
 from .gui_segmentation import GUISegmentation
 from .drawing.gui_drawing import open_qt_window
@@ -11,6 +13,7 @@ from .gui_directory import DirectoryCard
 from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
+from ..avg_diameter import AverageDiameter
 from ..image_tuning import ImageTuning, AutoImageTuning
 
 
@@ -60,6 +63,14 @@ class GUI:
                 ),on_click=lambda e: self.auto_image_tuning.pressed(e),tooltip="Auto brightness and contrast")
         self.brightness_icon = ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness")
         self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
+        self.diameter_text = ft.Text("125.0", size=14, weight=ft.FontWeight.BOLD)
+        self.diameter_display = ft.Container(
+            content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), self.diameter_text]),
+            border_radius=12,
+            padding=10,
+            visible=False
+        )
+
 
     def build(self):
         """
@@ -76,7 +87,7 @@ class GUI:
                                     self.canvas.canvas_card,
                                     ft.Row([self.switch_mask, self.drawing_button]),
                                     ft.Row([self.gui_config,ft.Column([ft.Card(content=ft.Container(content=ft.Column([ft.Row([self.brightness_icon,ft.Container(self.brightness_slider,padding=-15)]),ft.Row([self.contrast_icon,ft.Container(self.contrast_slider,padding=-15)])]),padding=10)),
-                                                                       ft.Card(content=self.auto_brightness_contrast)])
+                                                                       ft.Row([ft.Card(content=self.auto_brightness_contrast), ft.Card(content=self.diameter_display)])])
                                             ]),
                                     self.segmentation_card
                                 ],

@@ -10,6 +10,7 @@ from PIL import Image
 from . import GUI
 from .gui_canvas import on_image_click
 from .gui_fluorescence import fluorescence_button
+from ..avg_diameter import AverageDiameter
 from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
@@ -155,7 +156,7 @@ class DirectoryCard(ft.Card):
 
     def select_directory(self,directory_path):
         """
-        Gets the working directory and copys the images in their.
+        Gets the working directory and copies the images in there.
 
         Args:
             directory_path (str): the selected directory_path
@@ -500,6 +501,9 @@ class DirectoryCard(ft.Card):
             all_mask_present = all(image_id in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[image_id] for image_id in self.gui.csp.image_paths)
             if all_mask_present:
                 fluorescence_button.visible = True
+                self.gui.diameter_text.value = AverageDiameter(self.gui.csp).get_avg_diameter()
+                self.gui.diameter_display.visible = True
+                self.gui.page.update()
             else:
                 fluorescence_button.visible = False
             fluorescence_button.update()

@@ -1,4 +1,5 @@
 import os
+import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -31,12 +32,41 @@ class BatchImageSegmentation(Notifier):
         self.segmentation = segmentation
         self.gui = gui
         self.device = device
+        self.masks_backup = {}
+        self.prev_masks_exist = False
+        self.num_seg_images = 0
         # TODO REVIEW by Flo: ich würde entweder alle Statis drausen bei Segmentation machen oder alles hier bzw. oder sogar in csp?
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
         self.executor = None
 
+    def backup_masks(self):
+        self.prev_masks_exist = False
+        for image_id, channels in self.gui.csp.mask_paths.items():
+            self.masks_backup[image_id] = {}
+            for segmentation_channel, path in channels.items():
+                if os.path.exists(path):
+                    self.prev_masks_exist = True
+                    mask = np.load(path, allow_pickle=True)
+                    self.masks_backup[image_id][segmentation_channel] = mask
+
+    def restore_backup(self):
+        if self.prev_masks_exist:
+            for image_id, channels in self.masks_backup.items():
+                if image_id not in self.gui.csp.mask_paths:
+                    self.gui.csp.mask_paths[image_id] = {}
+                for segmentation_channel, mask in channels.items():
+                    if mask is not None:
+                        backup_path = self.gui.csp.mask_paths[image_id].get(segmentation_channel)
+                        if backup_path:
+                            np.save(backup_path, mask)
+        else: # case where no masks existed before
+            for image_id, channels in self.gui.csp.mask_paths.items():
+                for segmentation_channel, path in channels.items():
+                    if os.path.exists(path):
+                        os.remove(path)
+            self.gui.csp.mask_paths = {}
 
     def cancel_action(self):
         self.cancel_now = True
@@ -53,15 +83,20 @@ class BatchImageSegmentation(Notifier):
     Apply the segmentation model to every image
     """
     def run(self):
+        if self.num_seg_images == 0: # shouldn't backup again, if it was paused and now resuming
+            self.backup_masks()
         if self.cancel_now:
             self.cancel_now = False
+            self.restore_backup()
+            self.num_seg_images = 0
             return
         elif self.pause_now:
             self.pause_now = False
             return
         elif self.resume_now:
             self.resume_now = False
-            return
+            self.segmentation.is_resuming()
+
         self._call_start_listeners()
         image_paths = self.gui.csp.image_paths
         segmentation_channel = self.gui.csp.config.get_bf_channel()
@@ -77,16 +112,19 @@ class BatchImageSegmentation(Notifier):
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
         start_time_sequential= time()
-        for iN, image_id in enumerate(image_paths):
+        start_index = self.num_seg_images
+        for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             if self.cancel_now:
                 self.cancel_now = False
+                self.restore_backup()
+                self.num_seg_images = 0
                 return
             elif self.pause_now:
                 self.pause_now = False
                 return
             elif self.resume_now:
                 self.resume_now = False
-                return
+                self.segmentation.is_resuming()
 
             image_path = image_paths[image_id][segmentation_channel]
             image = imread(image_path)
@@ -104,7 +142,7 @@ class BatchImageSegmentation(Notifier):
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
             # Rename the file to the desired name
-            # TODO REVIEW by Flo: umbennen hat halt nachteil fällt mir gerade ein,
+            # TODO REVIEW by Flo: umbenennen hat halt nachteil fällt mir gerade ein,
             #  dass wenn wir segs schon haben diese überschrieben werden ob wohl er anderen namen extra angelegt hat
             #  maybe vorher schauen ob schon _seg da sind und diese so sichern das diese nicht überschrieben werden?
             default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
@@ -116,24 +154,32 @@ class BatchImageSegmentation(Notifier):
 
             self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-            progress = str(round((iN + 1) / n_images * 100)) + "%"
+            progress = str(round((iN + 1) / n_images * 100)) + " %"
             current_image = {"image_id": image_id, "path": image_path}
             self._call_update_listeners(progress, current_image)
+            self.num_seg_images = self.num_seg_images + 1
 
         end_time_sequential = time()
         print(f"The segmentation lasted {end_time_sequential-start_time_sequential}\n")
         self._call_completion_listeners()
+        # reset variables
+        self.num_seg_images = 0
+
 
     def run_parallel(self):
+        self.backup_masks()
         if self.cancel_now:
             self.cancel_now = False
+            self.restore_backup()
+            self.num_seg_images = 0
             return
         elif self.pause_now:
             self.pause_now = False
             return
         elif self.resume_now:
             self.resume_now = False
-            return
+            self.segmentation.is_resuming()
+
         self._call_start_listeners()
         image_paths = self.gui.csp.image_paths
         segmentation_channel = self.gui.csp.config.get_bf_channel()
@@ -162,17 +208,21 @@ class BatchImageSegmentation(Notifier):
         print(f"The segmentation took {end_time_parallel-start_time_parallel}\n")
         if self.cancel_now:
             self.cancel_now = False
+            self.restore_backup()
+            self.num_seg_images = 0
             return
         self._call_completion_listeners()
 
     def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
         n_images = len(image_paths)
         if self.cancel_now:
+            self.restore_backup()
+            self.num_seg_images = 0
             return
         elif self.pause_now:
             return
         elif self.resume_now:
-            return
+            self.segmentation.is_resuming()
 
         image_path = image_paths[image_id][segmentation_channel]
         image = imread(image_path)
@@ -202,7 +252,7 @@ class BatchImageSegmentation(Notifier):
 
         self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-        progress = str(round((iN + 1) / n_images * 100)) + "%"
+        progress = str(round((iN + 1) / n_images * 100)) + " %"
         current_image = {"image_id": iN, "path": image_path}
         self._call_update_listeners(progress, current_image)
         self._call_update_listeners(progress, current_image)

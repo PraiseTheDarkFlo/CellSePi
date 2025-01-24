@@ -5,6 +5,7 @@ import sys
 
 import flet as ft
 from . import GUI
+from ..avg_diameter import AverageDiameter
 from ..fluorescence import Fluorescence
 from .gui_fluorescence import fluorescence_button
 from ..segmentation import Segmentation
@@ -17,6 +18,8 @@ class GUISegmentation():
         self.fluorescence = Fluorescence(gui.csp, gui)
         self.segmentation_cancelling = False
         self.segmentation_pausing = False
+        self.segmentation_resuming = False
+        self.segmentation_currently_paused = False
 
     def create_segmentation_card(self):
         """
@@ -104,19 +107,19 @@ class GUISegmentation():
             """
             state_fl_button = fl_button.visible # visibility of fluorescence button before start of segmentation
             state_open_button = self.gui.open_button.visible
-            try:
-                start_button.visible = False
-                pause_button.visible = True
-                cancel_button.visible = True
-                model_text.disabled = True
-                model_chooser.disabled = True
-                fl_button.visible = False
-                self.gui.open_button.visible = False
-                self.gui.directory.disable_path_choosing()
-                self.gui.page.update()
-                self.segmentation.run()
+            #try:
+            start_button.visible = False
+            pause_button.visible = True
+            cancel_button.visible = True
+            model_text.disabled = True
+            model_chooser.disabled = True
+            fl_button.visible = False
+            self.gui.open_button.visible = False
+            self.gui.directory.disable_path_choosing()
+            self.gui.page.update()
+            self.segmentation.run()
                 # this will throw an error if something other than a model was chosen
-            except:
+            """except:
                 #TODO stop segmentation when exception is thrown
                 self.gui.page.snack_bar = ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model."))
                 self.gui.page.snack_bar.open = True
@@ -131,7 +134,7 @@ class GUISegmentation():
                 self.gui.directory.enable_path_choosing()
                 self.gui.csp.segmentation_running = False
                 progress_bar_text.value = "Select new Model"
-                self.gui.page.update()
+                self.gui.page.update()"""
 
 
         def cancel_segmentation(e): # called when the cancel button is clicked
@@ -140,7 +143,15 @@ class GUISegmentation():
             """
             #TODO hier muss ein notifier hin, der segmentation notified, dass die berechnung gestoppt werden soll
             #TODO in der Wartezeit soll klar sein, dass gerade gecancelt wird (weil es dauern könnte bis aktuelles Bild fertig bearbeitet wird)
-            pause_button.visible = False
+            if self.segmentation_currently_paused:
+                resume_button.visible = False
+                extracted_percentage = re.search(r'\d+', progress_bar_text.value)
+                progress_bar_text.value = "Cancelling: " + extracted_percentage.group(0) + " %"
+                self.segmentation_currently_paused = False
+            else:
+                pause_button.visible = False
+                progress_bar_text.value = "Cancelling: " + progress_bar_text.value
+
             cancel_button.visible = False
             model_text.disabled = False
             model_chooser.disabled = False
@@ -148,28 +159,37 @@ class GUISegmentation():
             self.gui.page.update()
             self.segmentation_cancelling = True
             self.segmentation.to_be_cancelled()
+            self.segmentation.run()
 
         def pause_segmentation(e): # called when the pause button is clicked
             """
             The running segmentation is paused and can be resumed again.
             """
-            self.segmentation.to_be_paused()
+            #TODO was wollen wir während des pausieren erlauben? neues Modell zuweisen, canceln?
             pause_button.visible = False
             resume_button.visible = True
-            progress_bar_text.value = "Paused: " + progress_bar_text.value
+            resume_button.disabled = True
+            cancel_button.disabled = True
+            progress_bar_text.value = "Pausing: " + progress_bar_text.value
             self.gui.page.update()
-            self.gui.csp.segmentation_pausing = True
+            self.segmentation_pausing = True
+            self.segmentation.to_be_paused()
 
         def resume_segmentation(e): # called when the resume button is clicked
             """
             The segmentation is resumed again from the previously paused state.
             """
-            self.segmentation.to_be_resumed()
+            self.segmentation_currently_paused = False
             resume_button.visible = False
             pause_button.visible = True
-            progress_words = progress_bar_text.value.split()
-            progress_bar_text.value = progress_words[1] + progress_words[2] # remove "paused:" from string
+            pause_button.disabled = True
+            cancel_button.disabled = True
+            extracted_percentage = re.search(r'\d+', progress_bar_text.value)
+            progress_bar_text.value =  extracted_percentage.group(0) + " %" # remove "paused at " from string
             self.gui.page.update()
+            self.segmentation.to_be_resumed()
+            self.segmentation.run()
+            self.segmentation_resuming = True
 
         start_button.on_click = start_segmentation
         cancel_button.on_click = cancel_segmentation
@@ -189,6 +209,8 @@ class GUISegmentation():
             start_button.disabled = False
             model_text.disabled = False
             model_chooser.disabled = False
+            self.gui.diameter_text.value = AverageDiameter(self.gui.csp).get_avg_diameter()
+            self.gui.diameter_display.visible = True
             self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
             self.gui.page.update()
@@ -203,6 +225,21 @@ class GUISegmentation():
             self.segmentation_cancelling = False
             self.gui.csp.segmentation_running = False
             self.gui.page.update()
+
+        def paused_segmentation():
+            resume_button.disabled = False
+            cancel_button.disabled = False
+            extracted_percentage = re.search(r'\d+', progress_bar_text.value)
+            progress_bar_text.value = "Paused at " + extracted_percentage.group(0) + " %"
+            self.gui.page.update()
+            self.segmentation_pausing = False
+            self.segmentation_currently_paused = True
+
+        def resumed_segmentation():
+            pause_button.disabled = False
+            cancel_button.disabled = False
+            self.gui.page.update()
+            self.segmentation_resuming = False
 
         def update_progress_bar(progress,current_image):
             """
@@ -230,6 +267,12 @@ class GUISegmentation():
                     else:
                         self.gui.drawing_button.disabled = True
             self.gui.page.update()
+
+        self.segmentation.add_update_listener(listener=update_progress_bar)
+        self.segmentation.add_completion_listener(listener=finished_segmentation)
+        self.segmentation.add_cancel_listener(listener=cancelled_segmentation)
+        self.segmentation.add_pause_listener(listener=paused_segmentation)
+        self.segmentation.add_resume_listener(listener=resumed_segmentation)
 
     #TODO wenn vorher schon masken vorhanden sind, dann sollen diese als backup gespeichert werden bevor die segmentierung startet und wenn der abbrechen button gedrückt wird sollen die alten wiederhergestellt werden
     #TODO wenn neue files ausgewählt werden muss fluoreszenz button verschwinden
@@ -265,9 +308,6 @@ class GUISegmentation():
         self.fluorescence.add_start_listener(listener=start_fl)
         self.fluorescence.add_update_listener(listener=update_progress_bar)
         self.fluorescence.add_completion_listener(listener=complete_fl)
-        self.segmentation.add_update_listener(listener=update_progress_bar)
-        self.segmentation.add_completion_listener(listener=finished_segmentation)
-        self.segmentation.add_cancel_listener(listener=cancelled_segmentation)
 
         pick_model_row = ft.Row(
             [
