@@ -92,7 +92,8 @@ class GUISegmentation():
                 if self.gui.ready_to_start:
                     progress_bar_text.value = "Ready to Start"
                     start_button.disabled = False
-                model_text.title.value = e.files[0].name
+                model_text.value = e.files[0].name
+                model_text.color = None
                 self.gui.csp.model_path = e.files[0].path
                 self.gui.page.update()
             else:
@@ -111,7 +112,7 @@ class GUISegmentation():
             start_button.visible = False
             pause_button.visible = True
             cancel_button.visible = True
-            model_text.disabled = True
+            model_title.disabled = True
             model_chooser.disabled = True
             fl_button.visible = False
             self.gui.open_button.visible = False
@@ -127,7 +128,9 @@ class GUISegmentation():
                 start_button.disabled = True
                 pause_button.visible = False
                 cancel_button.visible = False
-                model_text.disabled = False
+                model_title.disabled = False
+                model_text.color = ft.Colors.RED
+                model_title.update()
                 model_chooser.disabled = False
                 fl_button.visible = state_fl_button
                 self.gui.open_button.visible = state_open_button
@@ -153,7 +156,7 @@ class GUISegmentation():
                 progress_bar_text.value = "Cancelling: " + progress_bar_text.value
 
             cancel_button.visible = False
-            model_text.disabled = False
+            model_title.disabled = False
             model_chooser.disabled = False
             self.gui.directory.enable_path_choosing()
             self.gui.page.update()
@@ -207,7 +210,7 @@ class GUISegmentation():
             fl_button.disabled = False
             start_button.visible = True
             start_button.disabled = False
-            model_text.disabled = False
+            model_title.disabled = False
             model_chooser.disabled = False
             self.gui.diameter_text.value = AverageDiameter(self.gui.csp).get_avg_diameter()
             self.gui.diameter_display.visible = True
@@ -315,17 +318,17 @@ class GUISegmentation():
                 ft.Container(content=ft.Row([start_button, pause_button, resume_button, cancel_button, fl_button, open_button]))
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
         )
-
-        model_text = ft.ListTile(
+        model_text = ft.Text("Choose Model")
+        model_title = ft.ListTile(
                                         leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
-                                        title=ft.Text("Choose Model"),
+                                        title= model_text,
                                     )
 
         segmentation_container = ft.Container(
                             content=ft.Column(
-                                [   model_text,
-                                    pick_model_row,
-                                ]
+                                [model_title,
+                                 pick_model_row,
+                                 ]
                             )
                         )
 

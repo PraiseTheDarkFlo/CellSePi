@@ -9,12 +9,13 @@ from .gui_segmentation import GUISegmentation
 from .drawing.gui_drawing import open_qt_window
 from .gui_canvas import Canvas
 from .gui_config import GUIConfig
-from .gui_directory import DirectoryCard
+from .gui_directory import DirectoryCard, copy_to_clipboard
 from src.CellSePi import CellSePi
 from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on
 from ..avg_diameter import AverageDiameter
 from ..image_tuning import ImageTuning, AutoImageTuning
+
 
 
 class GUI:
@@ -65,10 +66,10 @@ class GUI:
         self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
         self.diameter_text = ft.Text("125.0", size=14, weight=ft.FontWeight.BOLD)
         self.diameter_display = ft.Container(
-            content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), self.diameter_text]),
+            content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), ft.GestureDetector(content=self.diameter_text,on_tap=lambda e: copy_to_clipboard(page=self.page,value=str(self.diameter_text.value),name="Average diameter"),on_enter=lambda e:self.on_enter_diameter(),on_exit=lambda e:self.on_exit_diameter()),]),
             border_radius=12,
             padding=8,
-            visible=False
+            visible=False,
         )
 
 
@@ -135,3 +136,9 @@ class GUI:
         self.image_tuning.save_current_main_image()
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
 
+    def on_enter_diameter(self):
+        self.diameter_text.color = ft.Colors.BLUE_400
+        self.diameter_text.update()
+    def on_exit_diameter(self):
+        self.diameter_text.color = None
+        self.diameter_text.update()

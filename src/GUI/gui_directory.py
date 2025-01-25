@@ -36,14 +36,18 @@ def format_directory_path(dir_path, max_length=30):
 
     return path
 
-def copy_directory_to_clipboard(e,gui: GUI):
+def copy_to_clipboard(page,value: str,name: str):
     """
-    Adds the directory in to the clipboard and opens the snack_bar and say that it has been copied.
+    Adds the value in to the clipboard and opens the snack_bar and say that it has been copied.
+    Args:
+        page: ft.Page object.
+        value (str): Value to add to the clipboard.
+        name (str): Name of the thing that got copied.
     """
-    gui.page.set_clipboard(gui.directory.directory_path.value)
-    gui.page.snack_bar = ft.SnackBar(ft.Text("Directory path copied to clipboard!"))
-    gui.page.snack_bar.open = True
-    gui.page.update()
+    page.set_clipboard(value)
+    page.snack_bar = ft.SnackBar(ft.Text(f"{name} copied to clipboard!"))
+    page.snack_bar.open = True
+    page.update()
 
 
 def get_Image(linux: bool, src):
@@ -441,7 +445,7 @@ class DirectoryCard(ft.Card):
                                 content=ft.IconButton(
                                     icon=ft.icons.COPY,
                                     tooltip="Copy to clipboard",
-                                    on_click=lambda e, g = self.gui: copy_directory_to_clipboard(e,g)
+                                    on_click=lambda e: copy_to_clipboard(self.gui.page,self.gui.directory.directory_path.value,"Directory path")
                                 ),
                                 alignment=ft.alignment.top_right,
                             )
