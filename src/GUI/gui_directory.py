@@ -117,6 +117,7 @@ class DirectoryCard(ft.Card):
                                               )
         self.content = self.create_directory_container()
         self.output_dir = False
+        self.is_supported_lif = True
         self.files_row.visible = True
         self.directory_row.visible = False
 
@@ -149,7 +150,7 @@ class DirectoryCard(ft.Card):
                 self.image_gallery.update()
 
             self.formatted_path.value = format_directory_path(self.directory_path)
-            if self.output_dir:
+            if self.output_dir or not self.is_supported_lif:
                 self.formatted_path.color = ft.Colors.RED
             else:
                 self.formatted_path.color = None
@@ -167,7 +168,8 @@ class DirectoryCard(ft.Card):
             directory_path (str): the selected directory_path
         """
         is_lif = self.is_lif
-        is_supported = True
+        is_supported_tif = True
+        self.is_supported_lif = True
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
@@ -177,7 +179,8 @@ class DirectoryCard(ft.Card):
             if path.suffix.lower() == ".lif":
                 # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
                 extract_from_lif_file(lif_path=path, target_dir=working_directory)
-            pass
+            else:
+                self.is_supported_lif = False
 
 
         # Tiff Case
@@ -190,6 +193,7 @@ class DirectoryCard(ft.Card):
                 self.gui.csp.image_paths = {}
                 self.gui.csp.linux_images = {}
                 self.gui.csp.mask_paths = {}
+                self.gui.ready_to_start = False
                 return
             self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
@@ -200,11 +204,11 @@ class DirectoryCard(ft.Card):
             #converting the 16 bit images in 8 bit
             for path in working_directory.iterdir():
                 converted = self.convert_tiffs_to_8_bit(path)
-                is_supported = is_supported and converted
+                is_supported_tif = is_supported_tif and converted
 
 
         self.gui.csp.working_directory = working_directory
-        self.set_paths(is_supported)
+        self.set_paths(is_supported_tif)
 
     def select_directory_parallel(self, directory_path):
         """
@@ -214,7 +218,10 @@ class DirectoryCard(ft.Card):
                 directory_path (str): the selected directory_path
                 """
         is_lif = self.is_lif
-        is_supported = True
+        is_supported_tif = True
+        self.is_supported_lif = True
+        self.gui.start_button.disabled = True
+        self.gui.progress_bar_text.value = "Waiting for Input"
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
@@ -224,7 +231,8 @@ class DirectoryCard(ft.Card):
             if path.suffix.lower() == ".lif":
                 # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
                 extract_from_lif_file(lif_path=path, target_dir=working_directory)
-            pass
+            else:
+                self.is_supported_lif = False
 
 
         # Tiff Case
@@ -237,6 +245,7 @@ class DirectoryCard(ft.Card):
                 self.gui.csp.image_paths = {}
                 self.gui.csp.linux_images = {}
                 self.gui.csp.mask_paths = {}
+                self.gui.ready_to_start = False
                 return
             self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
@@ -248,10 +257,10 @@ class DirectoryCard(ft.Card):
             with ThreadPoolExecutor() as executor:
                 result = list(executor.map(self.convert_tiffs_to_8_bit,working_directory.iterdir()))
                 if False in result:
-                    is_supported=False
+                    is_supported_tif=False
 
         self.gui.csp.working_directory = working_directory
-        self.set_paths(is_supported)
+        self.set_paths(is_supported_tif)
 
     def convert_tiffs_to_8_bit(self, path):
         """
@@ -268,43 +277,50 @@ class DirectoryCard(ft.Card):
                 print("8 bit")
         return converted
 
-    def set_paths(self, is_supported):
+    def set_paths(self, is_supported_tif):
         """
         Updates the image and mask paths in csp (CellSePi).
 
         Args:
-             is_supported (bool): True if the image types are supported.
+             is_supported_tif (bool): True if the image types for tif are supported.
         """
         bfc = self.gui.csp.config.get_bf_channel()
         cp = self.gui.csp.config.get_channel_prefix()
         ms = self.gui.csp.config.get_mask_suffix()
         working_directory = self.gui.csp.working_directory
 
-        image_paths, mask_paths = load_directory(working_directory, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
-        self.gui.start_button.disabled=True
-        self.gui.progress_bar_text.value = "Waiting for Input"
-        if len(image_paths) == 0:
+        if not self.is_supported_lif:
             self.gui.ready_to_start = False
-            self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current Channel Prefix!"))
+            self.gui.page.snack_bar = ft.SnackBar(
+                ft.Text("The selected file is not supported! Only .lif are supported."))
             self.gui.page.snack_bar.open = True
-            self.gui.page.update()
-            self.count_results_txt.color = ft.Colors.RED
-            if not self.is_lif:
-                os.rmdir(self.gui.csp.working_directory)
-        elif not is_supported:
-            self.gui.ready_to_start = False
-            self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
-            self.gui.page.snack_bar.open = True
-            self.count_results_txt.color = ft.Colors.RED
-            self.gui.page.update()
             image_paths = {}
             mask_paths = {}
+            self.gui.page.update()
         else:
-            self.count_results_txt.color = None
-            if self.gui.csp.model_path is not None:
-                self.gui.progress_bar_text.value = "Ready to Start"
-                self.gui.start_button.disabled = False
-            self.gui.ready_to_start = True
+            image_paths, mask_paths = load_directory(working_directory, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
+            if len(image_paths) == 0:
+                self.gui.ready_to_start = False
+                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current Channel Prefix!"))
+                self.gui.page.snack_bar.open = True
+                self.gui.page.update()
+                self.count_results_txt.color = ft.Colors.RED
+                if not self.is_lif:
+                    os.rmdir(self.gui.csp.working_directory)
+            elif not is_supported_tif:
+                self.gui.ready_to_start = False
+                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
+                self.gui.page.snack_bar.open = True
+                self.count_results_txt.color = ft.Colors.RED
+                self.gui.page.update()
+                image_paths = {}
+                mask_paths = {}
+            else:
+                self.count_results_txt.color = None
+                if self.gui.csp.model_path is not None:
+                    self.gui.progress_bar_text.value = "Ready to Start"
+                    self.gui.start_button.disabled = False
+                self.gui.ready_to_start = True
 
         self.gui.csp.image_paths = image_paths
         self.gui.csp.mask_paths = mask_paths
