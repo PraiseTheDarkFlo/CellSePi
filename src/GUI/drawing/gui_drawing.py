@@ -149,7 +149,7 @@ class Updater(QObject):
     Handles the signals that he becomes from the query.
     """
     update_signal = pyqtSignal(object,object)  # Signal für GUI-Updates
-    close_signal = pyqtSignal(object,object,object,object)
+    close_signal = pyqtSignal(object,object,object,object,object)
 
     def __init__(self, window):
         super().__init__()
@@ -171,7 +171,7 @@ class Updater(QObject):
         else:
             self.my_qt_window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
 
-    def handle_close(self,app,thread,end,conn):
+    def handle_close(self,app,thread,end,conn,queue):
         """
         If the close signal is received, close the process.
         """
@@ -179,8 +179,9 @@ class Updater(QObject):
         conn.close()
         self.window.close()
         self.window.deleteLater()
-        thread.join()
         end[0] = False
+        queue.send("close")
+        thread.join()
         app.quit()
 
 def open_qt_window(queue,conn):
@@ -199,7 +200,7 @@ def open_qt_window(queue,conn):
                 while end[0]:
                     data = await asyncio.to_thread(queue.get)
                     if data == "close":
-                        updater.close_signal.emit(app,thread,end,conn)
+                        updater.close_signal.emit(app,thread,end,conn,queue)
                         break
                     else:
                         updater.update_signal.emit(data,conn)
@@ -208,7 +209,6 @@ def open_qt_window(queue,conn):
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()
-
         app.exec_()
     sys.exit(0)
 
