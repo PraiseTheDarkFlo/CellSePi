@@ -100,6 +100,9 @@ class MyQtWindow(QMainWindow):
         if self.draw_toggle_button.isChecked():
             self.draw_toggle_button.setText("Drawing : ON")
             self.canvas.enable_draw_mode(True)
+            self.delete_toggle_button.setChecked(False)
+            self.delete_toggle_button.setText("Delete Mode: OFF")
+            self.canvas.enable_delete_mode(False)
         else:
             self.draw_toggle_button.setText("Drawing : OFF")
             self.canvas.enable_draw_mode(False)
@@ -111,6 +114,9 @@ class MyQtWindow(QMainWindow):
         if self.delete_toggle_button.isChecked():
             self.delete_toggle_button.setText("Delete Mode: ON")
             self.canvas.enable_delete_mode(True)
+            self.draw_toggle_button.setChecked(False)
+            self.draw_toggle_button.setText("Drawing : OFF")
+            self.canvas.enable_draw_mode(False)
         else:
             self.delete_toggle_button.setText("Delete Mode: OFF")
             self.canvas.enable_delete_mode(False)
@@ -181,6 +187,7 @@ class DrawingCanvas(QGraphicsView):
         self.setScene(self.scene)
         self.draw_mode = False
         self.last_point = QPoint()
+        self.start_point = None
         self.drawing = False
         self.delete_mode = False
         self.image_array = None
@@ -190,8 +197,13 @@ class DrawingCanvas(QGraphicsView):
         self.check_box = check_box
         self.image_rect = None  # Stores the boundaries of the background image
 
+        self.current_path_points = [] #saves all points in the drawing
+
+
     def enable_draw_mode(self, enabled):
 
+        if enabled:
+            self.enable_delete_mode(False)
         self.draw_mode = enabled
         print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
@@ -199,14 +211,21 @@ class DrawingCanvas(QGraphicsView):
         """
         Enable or disable delete mode.
         """
+        if enable:
+            self.enable_draw_mode(False)
         self.delete_mode = enable
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
     def is_point_within_image(self, point):
+
         """
-        Check if the given point in scene coordinates is within the background image.
+            Check if a point is within the boundaries of the image.
         """
-        return self.image_rect and self.image_rect.contains(point)
+
+        if self.image_array is None:
+            return False  # Kein Bild geladen
+        x, y = int(point.x()), int(point.y())
+        return 0 <= x < self.image_array.shape[1] and 0 <= y < self.image_array.shape[0]
 
 
     def mousePressEvent(self, event):
@@ -215,11 +234,12 @@ class DrawingCanvas(QGraphicsView):
         """
         if self.draw_mode:
             if event.button() == Qt.LeftButton:
-                # Map the mouse click position to the scene coordinates
-                mapped_point = self.mapToScene(event.pos())
-                if self.is_point_within_image(mapped_point):  # Check if within the image boundaries
-                    self.drawing = True
-                    self.last_point = mapped_point  # Store the starting point for the drawing
+                self.drawing = True
+                current_point = self.mapToScene(event.pos())
+                self.last_point = current_point
+
+                if self.start_point is None:
+                    self.start_point = current_point
         elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
@@ -230,22 +250,54 @@ class DrawingCanvas(QGraphicsView):
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if self.draw_mode and self.drawing:
+        if self.draw_mode:
             current_point = self.mapToScene(event.pos())
+
+            # drawing in picture
             if self.is_point_within_image(current_point):
-                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
-                                          current_point.x(), current_point.y())
-                r,g,b = self.outline_color
-                pen = QPen(QColor(r,g,b), 2, Qt.SolidLine)
-                line_item.setPen(pen)
-                self.scene.addItem(line_item)
-                self.last_point = current_point
-                self.update()
+                x, y = int(current_point.x()), int(current_point.y())
+
+                # drawing in cell
+                if self.image_array[y, x] != 0:
+                    self.drawing = False
+                else:
+                    # after cell continue drawing
+                    if not self.drawing:
+                        self.drawing = True
+                        self.last_point = current_point
+
+                    # draw a line
+                    line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                                  current_point.x(), current_point.y())
+                    r, g, b = self.outline_color
+                    pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+                    line_item.setPen(pen)
+                    self.scene.addItem(line_item)
+                    self.last_point = current_point
+            else:
+                self.drawing = False
+
 
     def mouseReleaseEvent(self, event):
         if self.draw_mode and self.drawing:
             self.drawing = False
+
+            # start last point connection
+            if self.last_point and self.start_point:
+                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                              self.start_point.x(), self.start_point.y())
+                r, g, b = self.outline_color
+                pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+                line_item.setPen(pen)
+                self.scene.addItem(line_item)
+
+            # Reset start and last points
+            self.start_point = None
+            self.last_point = None
+
             self.update()
+        else:
+            super().mouseReleaseEvent(event)
 
 
     def get_cell_id_from_position(self, position):
@@ -351,3 +403,4 @@ class DrawingCanvas(QGraphicsView):
 
         self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
