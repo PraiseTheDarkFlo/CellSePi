@@ -4,6 +4,7 @@ import pathlib
 import platform
 import threading
 from cgitb import enable
+from tabnanny import process_tokens
 from threading import Thread
 
 
@@ -31,7 +32,7 @@ class MyQtWindow(QMainWindow):
         canvas: DrawingCanvas object for displaying and interacting with the mask.
         tools_widget: Container for tools on the right side.
     """
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,conn):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -42,7 +43,8 @@ class MyQtWindow(QMainWindow):
         self.setWindowTitle("Drawing & Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
         self.check_shifting.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
-        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,self.check_shifting)
+        self.conn = conn
+        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,self.check_shifting,self.conn)
 
         # Main layout with canvas and tools
         central_widget = QWidget()
@@ -95,7 +97,7 @@ class MyQtWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
 
-    def set_query_image(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
+    def set_query_image(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,conn):
         self.mask_color = mask_color
         self.outline_color = outline_color
         self.bf_channel = bf_channel
@@ -103,7 +105,7 @@ class MyQtWindow(QMainWindow):
         self.image_id = image_id
         self.adjusted_image_path = adjusted_image_path
         new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                    self.check_shifting,self.canvas.draw_mode,self.canvas.delete_mode)
+                                    self.check_shifting,conn,self.canvas.draw_mode,self.canvas.delete_mode)
         self.canvas.disconnect()
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
@@ -146,8 +148,8 @@ class Updater(QObject):
     """
     Handles the signals that he becomes from the query.
     """
-    update_signal = pyqtSignal(object)  # Signal für GUI-Updates
-    close_signal = pyqtSignal(object,object,object)
+    update_signal = pyqtSignal(object,object)  # Signal für GUI-Updates
+    close_signal = pyqtSignal(object,object,object,object)
 
     def __init__(self, window):
         super().__init__()
@@ -156,30 +158,32 @@ class Updater(QObject):
         self.window = window
         self.my_qt_window: MyQtWindow = None
 
-    def handle_update(self, data):
+    def handle_update(self, data, conn):
         """
         If the update signal is received, update the window accordingly.
         """
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
         if self.my_qt_window is None:
             self.window.close()
-            self.my_qt_window = MyQtWindow(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path)
+            self.my_qt_window = MyQtWindow(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
             self.my_qt_window.show()
             self.window = self.my_qt_window
         else:
-            self.my_qt_window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path)
+            self.my_qt_window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
 
-    def handle_close(self,app,thread,end):
+    def handle_close(self,app,thread,end,conn):
         """
         If the close signal is received, close the process.
         """
+        conn.send("close")
+        conn.close()
         self.window.close()
         self.window.deleteLater()
         thread.join()
         end[0] = False
         app.quit()
 
-def open_qt_window(queue):
+def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
     end = [True]
     while end[0]:
@@ -195,10 +199,10 @@ def open_qt_window(queue):
                 while end[0]:
                     data = await asyncio.to_thread(queue.get)
                     if data == "close":
-                        updater.close_signal.emit(app,thread,end)
+                        updater.close_signal.emit(app,thread,end,conn)
                         break
                     else:
-                        updater.update_signal.emit(data)
+                        updater.update_signal.emit(data,conn)
 
             asyncio.run(query_listener())
 
@@ -224,7 +228,7 @@ class DrawingCanvas(QGraphicsView):
         check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
 
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,draw_mode = False,delete_mode = False):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,conn,draw_mode = False,delete_mode = False):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -246,6 +250,7 @@ class DrawingCanvas(QGraphicsView):
         self.check_box = check_box
         self.image_rect = None  # Stores the boundaries of the background image
         self.current_path_points = []  # saves all points in the drawing
+        self.conn = conn
         self.load_mask_to_scene()
         self.load_image_to_scene()
 
@@ -376,6 +381,7 @@ class DrawingCanvas(QGraphicsView):
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
+        self.conn.send("update_mask")
 
     def restore_cell(self):
         """
@@ -397,6 +403,7 @@ class DrawingCanvas(QGraphicsView):
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         print(f"Restored cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
+        self.conn.send("update_mask")
 
     def load_mask_to_scene(self):
         """

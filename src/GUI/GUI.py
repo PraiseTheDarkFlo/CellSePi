@@ -1,6 +1,7 @@
 import asyncio
 import atexit
 import multiprocessing
+import threading
 
 import flet as ft
 from flet_core import BoxShape
@@ -30,6 +31,11 @@ class GUI:
         self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.queue = multiprocessing.Queue()
+        parent_conn, child_conn = multiprocessing.Pipe()
+        self.parent_conn, self.child_conn = parent_conn, child_conn
+        self.running = True
+        self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
+        self.thread.start()
         self.page.window.prevent_close = True
         self.page.window.on_event = lambda e: self.handle_closing_event(e)
         self.mp_drawing_window = self.start_drawing_window()
@@ -135,7 +141,7 @@ class GUI:
 
     def start_drawing_window(self):
         proces = multiprocessing.Process(target=open_qt_window,
-                                args=(self.queue,))
+                                args=(self.queue,self.child_conn))
         proces.start()
         return proces
 
@@ -145,11 +151,29 @@ class GUI:
 
     def handle_closing_event(self,e):
         if e.data == "close":
+            self.running = False
             self.queue.put("close")
             self.page.window.destroy()
             self.mp_drawing_window.join()
+            print("test5")
+            self.thread.join()
+            self.parent_conn.close()
             #TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
             print("closing window finished")
+
+
+    def child_conn_listener(self):
+        async def pipe_listener():
+            while self.running:
+                data = await asyncio.to_thread(self.parent_conn.recv)
+                print(f"Empfangene Daten: {data}")
+                if data == "close":
+                    break
+                else:
+                    print(f"Empfangene Daten: {data}")
+                    #TODO: hier mask updaten in Flet
+        asyncio.run(pipe_listener())
+
 
     def on_enter_diameter(self):
         self.diameter_text.color = ft.Colors.BLUE_400
