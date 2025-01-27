@@ -158,6 +158,7 @@ class GUI:
             print("test5")
             self.thread.join()
             self.parent_conn.close()
+            #TODO: wenn zeichen window bereits offen war und dann wieder zu ist und dann flet schließt wird es nicht geschlossen
             #TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
             print("closing window finished")
 
