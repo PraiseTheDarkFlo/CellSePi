@@ -188,6 +188,7 @@ class DrawingCanvas(QGraphicsView):
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
         self.check_box = check_box
+        self.image_rect = None  # Stores the boundaries of the background image
 
     def enable_draw_mode(self, enabled):
 
@@ -201,6 +202,12 @@ class DrawingCanvas(QGraphicsView):
         self.delete_mode = enable
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
+    def is_point_within_image(self, point):
+        """
+        Check if the given point in scene coordinates is within the background image.
+        """
+        return self.image_rect and self.image_rect.contains(point)
+
 
     def mousePressEvent(self, event):
         """
@@ -208,9 +215,11 @@ class DrawingCanvas(QGraphicsView):
         """
         if self.draw_mode:
             if event.button() == Qt.LeftButton:
-                self.drawing = True
-                self.last_point = self.mapToScene(event.pos())
-
+                # Map the mouse click position to the scene coordinates
+                mapped_point = self.mapToScene(event.pos())
+                if self.is_point_within_image(mapped_point):  # Check if within the image boundaries
+                    self.drawing = True
+                    self.last_point = mapped_point  # Store the starting point for the drawing
         elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
@@ -223,19 +232,21 @@ class DrawingCanvas(QGraphicsView):
     def mouseMoveEvent(self, event):
         if self.draw_mode and self.drawing:
             current_point = self.mapToScene(event.pos())
-            line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+            if self.is_point_within_image(current_point):
+                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
                                           current_point.x(), current_point.y())
-            r,g,b = self.outline_color
-            pen = QPen(QColor(r,g,b), 2, Qt.SolidLine)
-            line_item.setPen(pen)
-            self.scene.addItem(line_item)
-            self.last_point = current_point
-            self.update()
+                r,g,b = self.outline_color
+                pen = QPen(QColor(r,g,b), 2, Qt.SolidLine)
+                line_item.setPen(pen)
+                self.scene.addItem(line_item)
+                self.last_point = current_point
+                self.update()
 
     def mouseReleaseEvent(self, event):
         if self.draw_mode and self.drawing:
             self.drawing = False
             self.update()
+
 
     def get_cell_id_from_position(self, position):
         """
@@ -335,6 +346,8 @@ class DrawingCanvas(QGraphicsView):
             self.scene.removeItem(self.background_item)
         self.background_item = self.scene.addPixmap(pixmap)
         self.background_item.setZValue(-1)
+
+        self.image_rect = self.background_item.boundingRect()
 
         self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
