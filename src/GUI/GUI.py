@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import multiprocessing
 
 import flet as ft
@@ -18,6 +19,7 @@ from ..image_tuning import ImageTuning, AutoImageTuning
 
 
 
+
 class GUI:
     """
     Class GUI to handle the complete GUI and their attributes, also contains the CellSePi class and updates their attributes
@@ -28,7 +30,9 @@ class GUI:
         self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.queue = multiprocessing.Queue()
-        self.start_drawing_window()
+        self.page.window.prevent_close = True
+        self.page.window.on_event = lambda e: self.handle_closing_event(e)
+        self.mp_drawing_window = self.start_drawing_window()
         self.drawing_button= ft.ElevatedButton(text="Drawing Tools", icon="brush_rounded",on_click=lambda e: self.set_queue_drawing_window(),disabled=True)
         self.page.window.width = 1408
         self.page.window.height = 800
@@ -73,11 +77,11 @@ class GUI:
         )
 
 
-    def build(self):
+    async def build(self):
         """
         Build up the main page of the GUI
         """
-        self.page.add(
+        await self.page.add_async(
             ft.Column(
                 [
                     ft.Row(
@@ -130,11 +134,22 @@ class GUI:
 
 
     def start_drawing_window(self):
-        multiprocessing.Process(target=open_qt_window, args=(self.queue,)).start()
+        proces = multiprocessing.Process(target=open_qt_window,
+                                args=(self.queue,))
+        proces.start()
+        return proces
 
     def set_queue_drawing_window(self):
         self.image_tuning.save_current_main_image()
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
+
+    def handle_closing_event(self,e):
+        if e.data == "close":
+            self.queue.put("close")
+            self.page.window.destroy()
+            self.mp_drawing_window.join()
+            #TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
+            print("closing window finished")
 
     def on_enter_diameter(self):
         self.diameter_text.color = ft.Colors.BLUE_400

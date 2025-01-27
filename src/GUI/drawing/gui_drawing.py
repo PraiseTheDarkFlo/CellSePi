@@ -1,10 +1,14 @@
 #TODO REVIEW unused imports
+import asyncio
 import pathlib
 import platform
+import threading
 from cgitb import enable
+from threading import Thread
+
 
 import numpy as np
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject, QTimer, QCoreApplication
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
@@ -42,11 +46,11 @@ class MyQtWindow(QMainWindow):
 
         # Main layout with canvas and tools
         central_widget = QWidget()
-        main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins on all sides
+        self.main_layout = QHBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins on all sides
 
         # Add canvas to the left
-        main_layout.addWidget(self.canvas, stretch=3)
+        self.main_layout.addWidget(self.canvas, stretch=3)
 
         # Add tools box to the right
         self.tools_widget = QWidget()
@@ -85,13 +89,28 @@ class MyQtWindow(QMainWindow):
         self.tools_widget.setLayout(tools_layout)
         self.tools_widget.setStyleSheet("background-color: #FAFAFA; border-left: 2px solid #E0E0E0;")  # Subtle border and clean background
         self.tools_widget.setFixedWidth(250)
-        main_layout.addWidget(self.tools_widget)
+        self.main_layout.addWidget(self.tools_widget)
 
-        central_widget.setLayout(main_layout)
+        central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
-        self.canvas.load_mask_to_scene()
-        self.canvas.load_image_to_scene()
+
+    def set_query_image(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path):
+        self.mask_color = mask_color
+        self.outline_color = outline_color
+        self.bf_channel = bf_channel
+        self.mask_paths = mask_paths
+        self.image_id = image_id
+        self.adjusted_image_path = adjusted_image_path
+        new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+                                    self.check_shifting,self.canvas.draw_mode,self.canvas.delete_mode)
+        self.canvas.disconnect()
+        self.main_layout.replaceWidget(self.canvas, new_canvas)
+        self.canvas.deleteLater()
+        self.canvas = new_canvas
+        self.restore_button.clicked.connect(self.canvas.restore_cell)
+        self.canvas.update()
+        self.main_layout.update()
 
     def toggle_draw_mode(self):
         """
@@ -99,13 +118,12 @@ class MyQtWindow(QMainWindow):
         """
         if self.draw_toggle_button.isChecked():
             self.draw_toggle_button.setText("Drawing : ON")
-            self.canvas.enable_draw_mode(True)
             self.delete_toggle_button.setChecked(False)
             self.delete_toggle_button.setText("Delete Mode: OFF")
-            self.canvas.enable_delete_mode(False)
+            self.canvas.delete_mode = False
         else:
             self.draw_toggle_button.setText("Drawing : OFF")
-            self.canvas.enable_draw_mode(False)
+        self.canvas.change_draw_mode()
 
     def toggle_delete_mode(self):
         """
@@ -113,51 +131,82 @@ class MyQtWindow(QMainWindow):
         """
         if self.delete_toggle_button.isChecked():
             self.delete_toggle_button.setText("Delete Mode: ON")
-            self.canvas.enable_delete_mode(True)
             self.draw_toggle_button.setChecked(False)
             self.draw_toggle_button.setText("Drawing : OFF")
-            self.canvas.enable_draw_mode(False)
+            self.canvas.draw_mode = False
         else:
             self.delete_toggle_button.setText("Delete Mode: OFF")
-            self.canvas.enable_delete_mode(False)
+        self.canvas.change_delete_mode()
 
     def resizeEvent(self, event):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
 
 
-class Communicator(QObject):
-    update_window = pyqtSignal(dict)
+class Updater(QObject):
+    """
+    Handles the signals that he becomes from the query.
+    """
+    update_signal = pyqtSignal(object)  # Signal für GUI-Updates
+    close_signal = pyqtSignal(object,object,object)
 
-class QueueListener(QThread):
-    def __init__(self, queue, communicator):
+    def __init__(self, window):
         super().__init__()
-        self.queue = queue
-        self.communicator = communicator
+        self.update_signal.connect(self.handle_update)
+        self.close_signal.connect(self.handle_close)
+        self.window = window
+        self.my_qt_window: MyQtWindow = None
 
-    def run(self):
-        while True:
-            data = self.queue.get()
-            self.communicator.update_window.emit(data)
+    def handle_update(self, data):
+        """
+        If the update signal is received, update the window accordingly.
+        """
+        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
+        if self.my_qt_window is None:
+            self.window.close()
+            self.my_qt_window = MyQtWindow(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path)
+            self.my_qt_window.show()
+            self.window = self.my_qt_window
+        else:
+            self.my_qt_window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path)
 
-# Start the window of the drawing tools
+    def handle_close(self,app,thread,end):
+        """
+        If the close signal is received, close the process.
+        """
+        self.window.close()
+        self.window.deleteLater()
+        thread.join()
+        end[0] = False
+        app.quit()
+
 def open_qt_window(queue):
     app = QApplication(sys.argv)
-    window = QWidget()
-    window.setWindowTitle("Waiting")
-    window.setGeometry(100, 100, 400, 300)
-    window.setVisible(False)
-    while True:
-        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = queue.get()
-        print(f"Mask Color: {mask_color}")
-        print(f"Outline Color: {outline_color}")
-        print(f"BF Channel: {bf_channel}")
-        print(f"Mask Paths: {mask_paths}")
-        print(f"Image ID: {image_id}")
-        print(f"Adjusted Image Path: {adjusted_image_path}")
-        window = MyQtWindow(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path)
-        window.setVisible(True)
-        window.show()
+    end = [True]
+    while end[0]:
+        window = QWidget()
+        window.setWindowTitle("Waiting")
+        window.setGeometry(300, 300, 300, 300)
+        window.setVisible(False)
+
+        updater = Updater(window)
+
+        def background_listener():
+            async def query_listener():
+                while end[0]:
+                    data = await asyncio.to_thread(queue.get)
+                    if data == "close":
+                        updater.close_signal.emit(app,thread,end)
+                        break
+                    else:
+                        updater.update_signal.emit(data)
+
+            asyncio.run(query_listener())
+
+        thread = threading.Thread(target=background_listener, daemon=True)
+        thread.start()
+
         app.exec_()
+    sys.exit(0)
 
 class DrawingCanvas(QGraphicsView):
     """
@@ -175,7 +224,7 @@ class DrawingCanvas(QGraphicsView):
         check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
 
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,draw_mode = False,delete_mode = False):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -185,35 +234,30 @@ class DrawingCanvas(QGraphicsView):
         self.adjusted_image_path = adjusted_image_path
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-        self.draw_mode = False
+        self.draw_mode = draw_mode
         self.last_point = QPoint()
         self.start_point = None
         self.drawing = False
-        self.delete_mode = False
+        self.delete_mode = delete_mode
         self.image_array = None
         self.mask_item = None
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
         self.check_box = check_box
         self.image_rect = None  # Stores the boundaries of the background image
+        self.current_path_points = []  # saves all points in the drawing
+        self.load_mask_to_scene()
+        self.load_image_to_scene()
 
-        self.current_path_points = [] #saves all points in the drawing
-
-
-    def enable_draw_mode(self, enabled):
-
-        if enabled:
-            self.enable_delete_mode(False)
-        self.draw_mode = enabled
+    def change_draw_mode(self):
+        self.draw_mode = not self.draw_mode
         print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
-    def enable_delete_mode(self, enable):
+    def change_delete_mode(self):
         """
         Enable or disable delete mode.
         """
-        if enable:
-            self.enable_draw_mode(False)
-        self.delete_mode = enable
+        self.delete_mode = not self.delete_mode
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
     def is_point_within_image(self, point):
@@ -226,7 +270,6 @@ class DrawingCanvas(QGraphicsView):
             return False  # Kein Bild geladen
         x, y = int(point.x()), int(point.y())
         return 0 <= x < self.image_array.shape[1] and 0 <= y < self.image_array.shape[0]
-
 
     def mousePressEvent(self, event):
         """
@@ -277,7 +320,6 @@ class DrawingCanvas(QGraphicsView):
             else:
                 self.drawing = False
 
-
     def mouseReleaseEvent(self, event):
         if self.draw_mode and self.drawing:
             self.drawing = False
@@ -298,7 +340,6 @@ class DrawingCanvas(QGraphicsView):
             self.update()
         else:
             super().mouseReleaseEvent(event)
-
 
     def get_cell_id_from_position(self, position):
         """
@@ -346,7 +387,6 @@ class DrawingCanvas(QGraphicsView):
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
 
-
         # Restore the most recent cell
         mask_old, outline_old, cell_id = self.cell_history.pop()
 
@@ -393,7 +433,6 @@ class DrawingCanvas(QGraphicsView):
         """
         pixmap = QPixmap(self.adjusted_image_path)
 
-
         if self.background_item:
             self.scene.removeItem(self.background_item)
         self.background_item = self.scene.addPixmap(pixmap)
@@ -403,4 +442,6 @@ class DrawingCanvas(QGraphicsView):
 
         self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+
 
