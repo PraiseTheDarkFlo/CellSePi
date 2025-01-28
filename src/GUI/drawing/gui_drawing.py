@@ -184,6 +184,7 @@ class Updater(QObject):
         queue.put("close")
         thread.join()
         app.quit()
+        print("handle close finished")
 
 def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
@@ -210,7 +211,9 @@ def open_qt_window(queue,conn):
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()
+        print("before app.exec")
         app.exec_()
+    print("main window closed")
     sys.exit(0)
 
 class DrawingCanvas(QGraphicsView):
