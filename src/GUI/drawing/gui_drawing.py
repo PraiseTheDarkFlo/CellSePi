@@ -180,13 +180,13 @@ class Updater(QObject):
         self.window.deleteLater()
         end[0] = False
         queue.put("close")
-        thread.join()
         app.quit()
         print("handle close finished")
 
 def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
     end = [True]
+    thread = None
     while end[0]:
         window = QWidget()
         window.setWindowTitle("Waiting")
@@ -211,6 +211,8 @@ def open_qt_window(queue,conn):
         thread.start()
         print("before app.exec")
         app.exec_()
+    print("join thread")
+    thread.join()
     print("main window closed")
     sys.exit(0)
 
