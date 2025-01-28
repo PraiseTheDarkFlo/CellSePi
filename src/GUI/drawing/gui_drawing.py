@@ -175,12 +175,13 @@ class Updater(QObject):
         """
         If the close signal is received, close the process.
         """
+        print("test close")
         conn.send("close")
         conn.close()
         self.window.close()
         self.window.deleteLater()
         end[0] = False
-        queue.send("close")
+        queue.put("close")
         thread.join()
         app.quit()
 
