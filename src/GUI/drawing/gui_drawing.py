@@ -28,8 +28,8 @@ class MyQtWindow(QMainWindow):
     Main PyQt window for drawing tools and deleting cells.
 
     Attributes:
-        csp: Current CellSePi instance to access images and masks.
         canvas: DrawingCanvas object for displaying and interacting with the mask.
+        canvas_dummy: says if the canvas is a dummy or not.
         tools_widget: Container for tools on the right side.
     """
     def __init__(self):
@@ -37,7 +37,7 @@ class MyQtWindow(QMainWindow):
         self.setWindowTitle("Drawing & Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
         self.check_shifting.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
-        self.canvas_default = True
+        self.canvas_dummy = True
 
         self.canvas = QWidget()
 
@@ -97,51 +97,54 @@ class MyQtWindow(QMainWindow):
         self.move(x, y)
 
     def restore_cell(self):
-        if not self.canvas_default:
+        if not self.canvas_dummy:
             self.canvas.restore_cell()
 
-    def set_query_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn):
-        print("test")
-        if self.canvas_default:
+    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn):
+        """
+        Sets the current selected mask and image into the MyQtWindow, with replacing the canvas with the current parameters.
+        """
+        if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                         self.check_shifting, conn, False, False)
         else:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                         self.check_shifting, conn, self.canvas.draw_mode, self.canvas.delete_mode)
-        self.canvas_default = False
+        self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
         self.canvas = new_canvas
         self.canvas.update()
         self.main_layout.update()
         QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #Use singleShot to delay the fitInView so that it can update
-        print("test2")
 
     def toggle_draw_mode(self):
         """
         Drawing Button functionality
         """
-        if self.draw_toggle_button.isChecked():
-            self.draw_toggle_button.setText("Drawing : ON")
-            self.delete_toggle_button.setChecked(False)
-            self.delete_toggle_button.setText("Delete Mode: OFF")
-            self.canvas.delete_mode = False
-        else:
-            self.draw_toggle_button.setText("Drawing : OFF")
-        self.canvas.change_draw_mode()
+        if not self.canvas_dummy:
+            if self.draw_toggle_button.isChecked():
+                self.draw_toggle_button.setText("Drawing : ON")
+                self.delete_toggle_button.setChecked(False)
+                self.delete_toggle_button.setText("Delete Mode: OFF")
+                self.canvas.set_delete_mode(False)
+            else:
+                self.draw_toggle_button.setText("Drawing : OFF")
+            self.canvas.toggle_draw_mode()
 
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
         """
-        if self.delete_toggle_button.isChecked():
-            self.delete_toggle_button.setText("Delete Mode: ON")
-            self.draw_toggle_button.setChecked(False)
-            self.draw_toggle_button.setText("Drawing : OFF")
-            self.canvas.draw_mode = False
-        else:
-            self.delete_toggle_button.setText("Delete Mode: OFF")
-        self.canvas.change_delete_mode()
+        if not self.canvas_dummy:
+            if self.delete_toggle_button.isChecked():
+                self.delete_toggle_button.setText("Delete Mode: ON")
+                self.draw_toggle_button.setChecked(False)
+                self.draw_toggle_button.setText("Drawing : OFF")
+                self.canvas.set_draw_mode(False)
+            else:
+                self.delete_toggle_button.setText("Delete Mode: OFF")
+            self.canvas.toggle_delete_mode()
 
     def resizeEvent(self, event):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
@@ -149,7 +152,7 @@ class MyQtWindow(QMainWindow):
 
 class Updater(QObject):
     """
-    Handles the signals that he becomes from the query.
+    Handles the signals that he becomes from the queue.
     """
     update_signal = pyqtSignal(object,object)  # Signal für GUI-Updates
     close_signal = pyqtSignal(object,object,object)
@@ -166,7 +169,7 @@ class Updater(QObject):
         """
         print("update signal")
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
-        self.window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
+        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
         self.window.setVisible(True)
 
     def handle_close(self,app,running,queue):
@@ -254,15 +257,20 @@ class DrawingCanvas(QGraphicsView):
         self.load_mask_to_scene()
         self.load_image_to_scene()
 
-    def change_draw_mode(self):
+    def toggle_draw_mode(self):
         self.draw_mode = not self.draw_mode
         print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
-    def change_delete_mode(self):
-        """
-        Enable or disable delete mode.
-        """
+    def toggle_delete_mode(self):
         self.delete_mode = not self.delete_mode
+        print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
+
+    def set_draw_mode(self,value: bool):
+        self.draw_mode = value
+        print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
+
+    def set_delete_mode(self,value: bool):
+        self.delete_mode = value
         print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
     def is_point_within_image(self, point):

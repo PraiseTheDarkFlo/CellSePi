@@ -140,17 +140,26 @@ class GUI:
 
 
     def start_drawing_window(self):
+        """
+        Start the drawing window in multiprocessing.
+        """
         proces = multiprocessing.Process(target=open_qt_window,
                                 args=(self.queue,self.child_conn))
         proces.start()
         return proces
 
     def set_queue_drawing_window(self):
+        """
+        Sets queue for drawing window with the current selected image and mask.
+        """
         self.image_tuning.save_current_main_image()
         #TODO: maybe checken ob pyQT window abgestürtzt ist und wenn ja neu starten
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
 
     def handle_closing_event(self,e):
+        """
+        Handle the closing event of Flet GUI.
+        """
         if e.data == "close":
             self.running = False
             self.queue.put("close")
@@ -166,6 +175,9 @@ class GUI:
 
 
     def child_conn_listener(self):
+        """
+        Listener for the child connection.
+        """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         async def pipe_listener():
