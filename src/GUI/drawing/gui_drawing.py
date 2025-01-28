@@ -32,26 +32,21 @@ class MyQtWindow(QMainWindow):
         canvas: DrawingCanvas object for displaying and interacting with the mask.
         tools_widget: Container for tools on the right side.
     """
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,conn):
+    def __init__(self):
         super().__init__()
-        self.mask_color = mask_color
-        self.outline_color = outline_color
-        self.bf_channel = bf_channel
-        self.mask_paths = mask_paths
-        self.image_id = image_id
-        self.adjusted_image_path = adjusted_image_path
         self.setWindowTitle("Drawing & Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
         self.check_shifting.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
-        self.conn = conn
-        self.canvas = DrawingCanvas(mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,self.check_shifting,self.conn)
+        self.canvas_default = True
+
+        self.canvas = QWidget()
 
         # Main layout with canvas and tools
         central_widget = QWidget()
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins on all sides
 
-        # Add canvas to the left
+
         self.main_layout.addWidget(self.canvas, stretch=3)
 
         # Add tools box to the right
@@ -64,8 +59,6 @@ class MyQtWindow(QMainWindow):
         title = QLabel("Tools")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
         tools_layout.addWidget(title)
-
-        #TODO REVIEW bei mir wird die Schrift der Buttons als weiß auf weißem Hintergrund angezeigt -> nicht so gut lesbar, sowohl im dark und light mode
 
         # Add buttons to the tools box
         self.draw_toggle_button = QPushButton("Drawing : OFF")
@@ -80,13 +73,12 @@ class MyQtWindow(QMainWindow):
         self.delete_toggle_button.clicked.connect(self.toggle_delete_mode)
         tools_layout.addWidget(self.delete_toggle_button)
 
-        tools_layout.addWidget(self.check_shifting,alignment=Qt.AlignCenter)
+        tools_layout.addWidget(self.check_shifting, alignment=Qt.AlignCenter)
 
         self.restore_button = QPushButton("Restore Deleted Cell")
         self.restore_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
-        self.restore_button.clicked.connect(self.canvas.restore_cell)
+        self.restore_button.clicked.connect(self.restore_cell)
         tools_layout.addWidget(self.restore_button)
-
 
         self.tools_widget.setLayout(tools_layout)
         self.tools_widget.setStyleSheet("background-color: #FAFAFA; border-left: 2px solid #E0E0E0;")  # Subtle border and clean background
@@ -96,23 +88,34 @@ class MyQtWindow(QMainWindow):
         central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+        window_geometry = self.geometry()
+        x = (screen_geometry.width() - window_geometry.width()) // 2
+        y = (screen_geometry.height() - window_geometry.height()) // 2
 
-    def set_query_image(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,conn):
-        self.mask_color = mask_color
-        self.outline_color = outline_color
-        self.bf_channel = bf_channel
-        self.mask_paths = mask_paths
-        self.image_id = image_id
-        self.adjusted_image_path = adjusted_image_path
-        new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                    self.check_shifting,conn,self.canvas.draw_mode,self.canvas.delete_mode)
-        self.canvas.disconnect()
+        self.move(x, y)
+
+    def restore_cell(self):
+        if not self.canvas_default:
+            self.canvas.restore_cell()
+
+    def set_query_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn):
+        print("test")
+        if self.canvas_default:
+            new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+                                        self.check_shifting, conn, False, False)
+        else:
+            new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+                                        self.check_shifting, conn, self.canvas.draw_mode, self.canvas.delete_mode)
+        self.canvas_default = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
         self.canvas = new_canvas
-        self.restore_button.clicked.connect(self.canvas.restore_cell)
         self.canvas.update()
         self.main_layout.update()
+        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #Use singleShot to delay the fitInView so that it can update
+        print("test2")
 
     def toggle_draw_mode(self):
         """
@@ -149,63 +152,57 @@ class Updater(QObject):
     Handles the signals that he becomes from the query.
     """
     update_signal = pyqtSignal(object,object)  # Signal für GUI-Updates
-    close_signal = pyqtSignal(object,object,object,object)
+    close_signal = pyqtSignal(object,object,object)
 
     def __init__(self, window):
         super().__init__()
         self.update_signal.connect(self.handle_update)
         self.close_signal.connect(self.handle_close)
-        self.window = window
-        self.my_qt_window: MyQtWindow = None
+        self.window: MyQtWindow = window
 
     def handle_update(self, data, conn):
         """
         If the update signal is received, update the window accordingly.
         """
+        print("update signal")
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
-        if self.my_qt_window is None:
-            self.window.close()
-            self.my_qt_window = MyQtWindow(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
-            self.my_qt_window.show()
-            self.window = self.my_qt_window
-        else:
-            self.my_qt_window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
+        self.window.set_query_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
+        self.window.setVisible(True)
 
-    def handle_close(self,app,thread,end,queue):
+    def handle_close(self,app,running,queue):
         """
         If the close signal is received, close the process.
         """
         print("test close")
         self.window.close()
         self.window.deleteLater()
-        end[0] = False
+        running[0] = False
         queue.put("close")
         app.quit()
         print("handle close finished")
 
 def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
-    end = [True]
+    running = [True]
     thread = None
-    while end[0]:
-        window = QWidget()
-        window.setWindowTitle("Waiting")
-        window.setGeometry(300, 300, 300, 300)
+    while running[0]:
+        window = MyQtWindow()
         window.setVisible(False)
-
         updater = Updater(window)
 
         def background_listener():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             async def query_listener():
-                while end[0]:
+                while running[0]:
                     data = await asyncio.to_thread(queue.get)
                     if data == "close":
-                        updater.close_signal.emit(app,thread,end,queue)
+                        updater.close_signal.emit(app, running, queue)
                         break
                     else:
-                        updater.update_signal.emit(data,conn)
+                        updater.update_signal.emit(data, conn)
 
-            asyncio.run(query_listener())
+            loop.run_until_complete(query_listener())
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()
@@ -252,7 +249,6 @@ class DrawingCanvas(QGraphicsView):
         self.background_item = None
         self.cell_history = []  # Track deleted cells for restoration
         self.check_box = check_box
-        self.image_rect = None  # Stores the boundaries of the background image
         self.current_path_points = []  # saves all points in the drawing
         self.conn = conn
         self.load_mask_to_scene()
@@ -449,10 +445,5 @@ class DrawingCanvas(QGraphicsView):
         self.background_item = self.scene.addPixmap(pixmap)
         self.background_item.setZValue(-1)
 
-        self.image_rect = self.background_item.boundingRect()
-
         self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
-
-
-

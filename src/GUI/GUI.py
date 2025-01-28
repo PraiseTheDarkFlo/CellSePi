@@ -166,6 +166,8 @@ class GUI:
 
 
     def child_conn_listener(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         async def pipe_listener():
             while self.running:
                 data = await asyncio.to_thread(self.parent_conn.recv)
@@ -175,7 +177,8 @@ class GUI:
                 else:
                     print(f"Empfangene Daten: {data}")
                     #TODO: hier mask updaten in Flet
-        asyncio.run(pipe_listener())
+
+        loop.run_until_complete(pipe_listener())
 
 
     def on_enter_diameter(self):
