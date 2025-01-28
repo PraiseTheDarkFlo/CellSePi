@@ -147,6 +147,7 @@ class GUI:
 
     def set_queue_drawing_window(self):
         self.image_tuning.save_current_main_image()
+        #TODO: maybe checken ob pyQT window abgestürtzt ist und wenn ja neu starten
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
 
     def handle_closing_event(self,e):
@@ -156,7 +157,9 @@ class GUI:
             self.page.window.destroy()
             self.mp_drawing_window.join()
             print("test5")
+            self.child_conn.send("close")
             self.thread.join()
+            self.child_conn.close()
             self.parent_conn.close()
             #TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
             print("closing window finished")
