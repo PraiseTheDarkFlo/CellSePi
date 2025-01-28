@@ -5,6 +5,14 @@ from cellpose.io import imread
 
 
 def calculate_mask_diameters(mask):
+    """
+    Calculates the diameter of each cell in the given mask.
+
+    Attributes:
+        mask: the mask of an image
+    Returns:
+        list[]: the diameter of each cell in the given mask
+    """
     unique_masks = np.unique(mask)
     diameters = []
 
@@ -17,28 +25,33 @@ def calculate_mask_diameters(mask):
         diameter = np.sqrt((y_max - y_min) ** 2 + (x_max - x_min) ** 2)
         if diameter is not None:
             diameters.append(diameter)
-        print(diameter)
     return diameters
+    #alternative way of calculating the diameter
     #cell_ids = np.unique(mask)
     #diameters = []
     #cell_ids = cell_ids[1:]
 
     #for cell_id in cell_ids:
-     #   cell_mask = mask == cell_id
-      #  cell_area = np.sum(cell_mask)
+        #cell_mask = mask == cell_id
+        #cell_area = np.sum(cell_mask)
 
         # Approximate diameter assuming circular cells
-       # cell_diameter = 2 * np.sqrt(cell_area / np.pi)
+        #cell_diameter = 2 * np.sqrt(cell_area / np.pi)
         #diameters.append(cell_diameter)
 
     #return diameters
 
 class AverageDiameter:
-
+    """
+    This class calculates the average diameter of a cell in all the given images.
+    """
     def __init__(self, csp):
         self.csp = csp
 
     def get_avg_diameter(self):
+        """
+        This method calculates the average diameter of a cell in all the given images.
+        """
         mask_paths = self.csp.mask_paths
         image_paths = self.csp.image_paths
         segmentation_channel = self.csp.config.get_bf_channel()

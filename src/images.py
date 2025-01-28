@@ -15,20 +15,14 @@ from src.notifier import Notifier
 from multiprocessing import Process
 
 class BatchImageSegmentation(Notifier):
-
+    """
+    This class handles the segmentation of the images.
+    """
     def __init__(self,
                  segmentation,
                  gui,
-                 device=None):
+                 device):
         super().__init__()
-        # TODO REVIEW by Flo: was ist mit device ist auch GPU möglich dann
-        #  in seg auch irgendwie aktivieren lassen? einfach komisch
-        #  das davor in seg auf cpu fest gesetzt wird und hier nochmal
-        #  falls nicht none auch wieder gesetzt hätte es wenn nicht überprüft
-        #  wahrscheinlich einfach nicht device mit gegeben so dass das hier auslöst:
-        if device is None:
-            device = "cpu"
-
         self.segmentation = segmentation
         self.gui = gui
         self.device = device
@@ -42,6 +36,9 @@ class BatchImageSegmentation(Notifier):
         self.executor = None
 
     def backup_masks(self):
+        """
+        This method creates a backup of the previously generated masks.
+        """
         self.prev_masks_exist = False
         for image_id, channels in self.gui.csp.mask_paths.items():
             self.masks_backup[image_id] = {}
@@ -52,6 +49,9 @@ class BatchImageSegmentation(Notifier):
                     self.masks_backup[image_id][segmentation_channel] = mask
 
     def restore_backup(self):
+        """
+        This method restores the previously generated masks and deletes the old ones.
+        """
         if self.prev_masks_exist:
             for image_id, channels in self.masks_backup.items():
                 if image_id not in self.gui.csp.mask_paths:
@@ -68,6 +68,7 @@ class BatchImageSegmentation(Notifier):
                         os.remove(path)
             self.gui.csp.mask_paths = {}
 
+    # the following methods handle the different actions and handle accordingly
     def cancel_action(self):
         self.cancel_now = True
         if self.executor is not None:
@@ -75,14 +76,17 @@ class BatchImageSegmentation(Notifier):
 
     def pause_action(self):
         self.pause_now = True
+        if self.executor is not None:
+            self.executor.shutdown(wait=True)
 
     def resume_action(self):
         self.resume_now = True
 
-    """
-    Apply the segmentation model to every image
-    """
+
     def run(self):
+        """
+        Applies the segmentation model to every image and stores the resulting masks.
+        """
         if self.num_seg_images == 0: # shouldn't backup again, if it was paused and now resuming
             self.backup_masks()
         if self.cancel_now:
@@ -113,6 +117,7 @@ class BatchImageSegmentation(Notifier):
 
         start_time_sequential= time()
         start_index = self.num_seg_images
+
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             if self.cancel_now:
                 self.cancel_now = False
@@ -167,7 +172,11 @@ class BatchImageSegmentation(Notifier):
 
 
     def run_parallel(self):
-        self.backup_masks()
+        """
+        Applies the segmentation model to every image in parallel and stores the resulting masks.
+        """
+        if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
+            self.backup_masks()
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -196,9 +205,10 @@ class BatchImageSegmentation(Notifier):
 
         start_time_parallel= time()
 
+        start_index = self.num_seg_images
         self.executor = ThreadPoolExecutor(max_workers=8)
         futures = []
-        for iN, image_id in enumerate(image_paths):
+        for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             futures.append(self.executor.submit(
                 self.image_segmentation,
                 iN, image_id, image_paths, segmentation_channel, diameter, suffix, model
@@ -212,16 +222,32 @@ class BatchImageSegmentation(Notifier):
             self.num_seg_images = 0
             return
         self._call_completion_listeners()
+        # reset variables
+        self.num_seg_images = 0
 
     def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
+        """
+        Applies the segmentation model to a single image.
+
+        Attributes:
+            iN: number of images that have been segmented until now
+            image_id: identification number of the image
+            image_paths: list of image paths
+            segmentation_channel: bright field channel
+            suffix: suffix to be applied to the mask filename
+            model: cellpose model to be used
+        """
         n_images = len(image_paths)
         if self.cancel_now:
+            self.cancel_now = False
             self.restore_backup()
             self.num_seg_images = 0
             return
         elif self.pause_now:
+            self.pause_now = False
             return
         elif self.resume_now:
+            self.resume_now = False
             self.segmentation.is_resuming()
 
         image_path = image_paths[image_id][segmentation_channel]
@@ -256,6 +282,18 @@ class BatchImageSegmentation(Notifier):
         current_image = {"image_id": iN, "path": image_path}
         self._call_update_listeners(progress, current_image)
         self._call_update_listeners(progress, current_image)
+        self.num_seg_images = self.num_seg_images + 1
+        if self.cancel_now:
+            self.cancel_now = False
+            self.restore_backup()
+            self.num_seg_images = 0
+            return
+        elif self.pause_now:
+            self.pause_now = False
+            return
+        elif self.resume_now:
+            self.resume_now = False
+            self.segmentation.is_resuming()
 
 
 class BatchImageReadout(Notifier):

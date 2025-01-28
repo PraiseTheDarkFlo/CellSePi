@@ -11,7 +11,9 @@ from .gui_fluorescence import fluorescence_button
 from ..segmentation import Segmentation
 
 class GUISegmentation():
-
+    """
+    This class handles the segmentation, which can be controlled by the start, pause, resume and cancel buttons.
+    """
     def __init__(self, gui):
         self.gui = gui
         self.segmentation = Segmentation(self, gui)
@@ -105,23 +107,23 @@ class GUISegmentation():
         def start_segmentation(e): # called when the start button is clicked
             """
             The start of the segmentation is initialized.
+            This includes error handling for the case where something other than a model is chosen.
             """
-            state_fl_button = fl_button.visible # visibility of fluorescence button before start of segmentation
+            # visibility of buttons before start of segmentation (needed in case of error)
+            state_fl_button = fl_button.visible
             state_open_button = self.gui.open_button.visible
-            #try:
-            start_button.visible = False
-            pause_button.visible = True
-            cancel_button.visible = True
-            model_title.disabled = True
-            model_chooser.disabled = True
-            fl_button.visible = False
-            self.gui.open_button.visible = False
-            self.gui.directory.disable_path_choosing()
-            self.gui.page.update()
-            self.segmentation.run()
-                # this will throw an error if something other than a model was chosen
-            """except:
-                #TODO stop segmentation when exception is thrown
+            try:
+                start_button.visible = False
+                pause_button.visible = True
+                cancel_button.visible = True
+                model_title.disabled = True
+                model_chooser.disabled = True
+                fl_button.visible = False
+                self.gui.open_button.visible = False
+                self.gui.directory.disable_path_choosing()
+                self.gui.page.update()
+                self.segmentation.run() # this will throw an error if something other than a model was chosen
+            except:
                 self.gui.page.snack_bar = ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model."))
                 self.gui.page.snack_bar.open = True
                 start_button.visible = True
@@ -137,36 +139,36 @@ class GUISegmentation():
                 self.gui.directory.enable_path_choosing()
                 self.gui.csp.segmentation_running = False
                 progress_bar_text.value = "Select new Model"
-                self.gui.page.update()"""
+                self.gui.page.update()
 
 
         def cancel_segmentation(e): # called when the cancel button is clicked
             """
-            The running segmentation is cancelled and the masks calculated so far are deleted, i.e. return to the start state.
+            The running segmentation is cancelled and everything returns to the start state.
+            The masks calculated so far are deleted and the previously calculated masks are restored.
             """
-            #TODO hier muss ein notifier hin, der segmentation notified, dass die berechnung gestoppt werden soll
-            #TODO in der Wartezeit soll klar sein, dass gerade gecancelt wird (weil es dauern könnte bis aktuelles Bild fertig bearbeitet wird)
+            cancel_button.visible = False
+            model_title.disabled = False
+            model_chooser.disabled = False
+            self.gui.directory.enable_path_choosing()
+            self.segmentation_cancelling = True
+            self.segmentation.to_be_cancelled()
             if self.segmentation_currently_paused:
                 resume_button.visible = False
                 extracted_percentage = re.search(r'\d+', progress_bar_text.value)
                 progress_bar_text.value = "Cancelling: " + extracted_percentage.group(0) + " %"
                 self.segmentation_currently_paused = False
+                self.gui.page.update()
+                self.segmentation.run()
             else:
                 pause_button.visible = False
                 progress_bar_text.value = "Cancelling: " + progress_bar_text.value
-
-            cancel_button.visible = False
-            model_title.disabled = False
-            model_chooser.disabled = False
-            self.gui.directory.enable_path_choosing()
             self.gui.page.update()
-            self.segmentation_cancelling = True
-            self.segmentation.to_be_cancelled()
-            self.segmentation.run()
+
 
         def pause_segmentation(e): # called when the pause button is clicked
             """
-            The running segmentation is paused and can be resumed again.
+            The running segmentation is paused (the progress of the segmentation so far is stored).
             """
             #TODO was wollen wir während des pausieren erlauben? neues Modell zuweisen, canceln?
             pause_button.visible = False
@@ -194,6 +196,7 @@ class GUISegmentation():
             self.segmentation.run()
             self.segmentation_resuming = True
 
+        # define behavior of buttons when they are clicked
         start_button.on_click = start_segmentation
         cancel_button.on_click = cancel_segmentation
         pause_button.on_click = pause_segmentation
@@ -202,6 +205,7 @@ class GUISegmentation():
         def finished_segmentation():
             """
             This method updates the segmentation card when the segmentation is finished.
+            After this a new segmentation can be started again.
             """
             progress_bar_text.value = "Finished"
             pause_button.visible = False
@@ -219,6 +223,9 @@ class GUISegmentation():
             self.gui.page.update()
 
         def cancelled_segmentation():
+            """
+            This method updates the segmentation card when the cancellation is finished.
+            """
             progress_bar_text.value = "Ready to Start"
             progress_bar.value = 0
             start_button.visible = True
@@ -230,15 +237,21 @@ class GUISegmentation():
             self.gui.page.update()
 
         def paused_segmentation():
+            """
+            This method updates the segmentation card when the pausing is finished.
+            """
             resume_button.disabled = False
             cancel_button.disabled = False
             extracted_percentage = re.search(r'\d+', progress_bar_text.value)
-            progress_bar_text.value = "Paused at " + extracted_percentage.group(0) + " %"
+            progress_bar_text.value = "Paused at: " + extracted_percentage.group(0) + " %"
             self.gui.page.update()
             self.segmentation_pausing = False
             self.segmentation_currently_paused = True
 
         def resumed_segmentation():
+            """
+            This method updates the segmentation card when the resuming has successfully started.
+            """
             pause_button.disabled = False
             cancel_button.disabled = False
             self.gui.page.update()
@@ -271,19 +284,17 @@ class GUISegmentation():
                         self.gui.drawing_button.disabled = True
             self.gui.page.update()
 
+        # listeners for getting different information from the state of the segmentation process
         self.segmentation.add_update_listener(listener=update_progress_bar)
         self.segmentation.add_completion_listener(listener=finished_segmentation)
         self.segmentation.add_cancel_listener(listener=cancelled_segmentation)
         self.segmentation.add_pause_listener(listener=paused_segmentation)
         self.segmentation.add_resume_listener(listener=resumed_segmentation)
 
-    #TODO wenn vorher schon masken vorhanden sind, dann sollen diese als backup gespeichert werden bevor die segmentierung startet und wenn der abbrechen button gedrückt wird sollen die alten wiederhergestellt werden
-    #TODO wenn neue files ausgewählt werden muss fluoreszenz button verschwinden
-    #TODO modell muss neu ausgewählt werden können
-    #TODO error anzeigen mit snack_bar (s.gui_config), z.B. wenn man starten will, ohne dass dateien ausgewählt sind
-        # wenn image_path==none len(image_path)==0, dann start button nicht anzeigen
-    #TODO checken ob für alle bilder schon masken haben -> wenn ja, dann soll der fluoreszenz button schon erscheinen
         def fluorescence_readout(e):
+            """
+            Updates the segmentation card and starts readout of the fluorescence data when the fluorescence button is clicked.
+            """
             self.fluorescence.readout_fluorescence()
             fl_button.disabled = True
             start_button.disabled = True

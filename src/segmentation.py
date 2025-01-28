@@ -3,35 +3,39 @@ from src.notifier import Notifier
 
 
 class Segmentation(Notifier):
-
+    """
+    This class handles connection of GUISegmentation and BatchImageSegmentation.
+    """
     def __init__(self, gui_seg, gui):
         super().__init__()
-
         self.gui = gui
         self.gui_seg = gui_seg
         self.lif_value= gui.directory.is_lif
-        device = "cpu"
-        self.batch_image_segmentation = BatchImageSegmentation(self,
-                                                               self.gui,
-                                                               device)
+        self.device = "cpu"
+        self.batch_image_segmentation = BatchImageSegmentation(self, self.gui, self.device)
 
+    # methods, that communicate a change in the state of the segmentation between GUISegmentation and BatchImageSegmentation
     def to_be_cancelled(self):
         self.batch_image_segmentation.cancel_action()
-        #self.csp.segmentation_running = False
+        self.gui.csp.segmentation_running = False
 
     def to_be_paused(self):
         self.batch_image_segmentation.pause_action()
-        #self.csp.segmentation_running = False
+        self.gui.csp.segmentation_running = False
 
     def to_be_resumed(self):
         self.batch_image_segmentation.resume_action()
-        #self.csp.segmentation_running = True
+        self.gui.csp.segmentation_running = True
 
     def is_resuming(self):
         self._call_resume_listeners()
 
     def run(self):
-        self._call_update_listeners("Preparing segmentation", None)
+        """
+        This method starts the segmentation process and manages the different interactions.
+        """
+        if not self.gui_seg.segmentation_cancelling and not self.gui_seg.segmentation_pausing:
+            self._call_update_listeners("Preparing segmentation", None)
 
         if self.gui.csp.segmentation_running:
             self._call_completion_listeners()
@@ -44,9 +48,7 @@ class Segmentation(Notifier):
             self._call_update_listeners(progress, current_image)
 
         def start():
-            print("start num seg images: ", self.batch_image_segmentation.num_seg_images)
             current_percentage = round(self.batch_image_segmentation.num_seg_images / len(self.gui.csp.image_paths) * 100)
-            print("current percentage: ", current_percentage)
             self._call_update_listeners(str(current_percentage) + " %", None)
 
         self.gui.csp.segmentation_running = True
@@ -66,9 +68,6 @@ class Segmentation(Notifier):
         else:
             self._call_completion_listeners()
 
-
-    def stop(self):
-        self.gui.csp.segmentation_running = False
 
 
 

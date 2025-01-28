@@ -212,7 +212,7 @@ class DirectoryCard(ft.Card):
 
     def select_directory_parallel(self, directory_path):
         """
-            Gets the working directory and copies the images in their.
+            Gets the working directory and copies the images in there.
 
             Args:
                 directory_path (str): the selected directory_path
@@ -531,6 +531,8 @@ class DirectoryCard(ft.Card):
             if all_mask_present and self.gui.csp.image_paths is not None and len(self.gui.csp.image_paths) != 0 :
                 fluorescence_button.visible = True
                 await fluorescence_button.update_async()
+                self.gui.diameter_display.visible = False
+                await self.gui.diameter_display.update_async()
                 avg_diameter = await loop.run_in_executor(
                     None,
                     lambda: AverageDiameter(self.gui.csp).get_avg_diameter()
