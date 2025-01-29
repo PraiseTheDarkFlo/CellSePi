@@ -3,7 +3,7 @@ pillow
 pandas
 openpyxl
 cellpose
-flet
+flet==0.25.2
 flet-desktop
 flet-runtime
 matplotlib
