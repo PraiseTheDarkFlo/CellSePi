@@ -229,7 +229,7 @@ class DirectoryCard(ft.Card):
             os.makedirs(working_directory, exist_ok=True)
             if path.suffix.lower() == ".lif":
                 # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
-                extract_from_lif_file(lif_path=path, target_dir=working_directory)
+                extract_from_lif_file(lif_path=path, target_dir=working_directory,channel_prefix=self.gui.csp.config.get_channel_prefix())
             else:
                 self.is_supported_lif = False
 
