@@ -133,6 +133,7 @@ class GUISegmentation():
                 pause_button.visible = False
                 cancel_button.visible = False
                 model_title.disabled = False
+                model_title.color = ft.Colors.RED
                 model_title.update()
                 model_chooser.disabled = False
                 fl_button.visible = state_fl_button
