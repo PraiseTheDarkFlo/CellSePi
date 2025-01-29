@@ -149,7 +149,6 @@ def extract_from_lif_file(lif_path, target_dir):
 
         # get all series in the lif file
         scenes= bio_image.scenes
-        print(scenes)
 
         for index,scene_id in enumerate(scenes):
             scene= scene_id
@@ -170,7 +169,6 @@ def extract_from_lif_file(lif_path, target_dir):
 
                 # Construct file name and path
                 file_name = f"{scene}_c{channel_id + 1}.tif"
-                print(file_name)
                 target_path = target_dir / file_name
 
                 try:
