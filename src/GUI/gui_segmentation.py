@@ -151,8 +151,6 @@ class GUISegmentation():
             The masks calculated so far are deleted and the previously calculated masks are restored.
             """
             cancel_button.visible = False
-            model_title.disabled = False
-            model_chooser.disabled = False
             self.segmentation_cancelling = True
             self.segmentation.to_be_cancelled()
             if self.segmentation_currently_paused:
@@ -242,6 +240,8 @@ class GUISegmentation():
             self.segmentation_cancelling = False
             self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
+            model_title.disabled = False
+            model_chooser.disabled = False
             self.gui.page.update()
 
         def paused_segmentation():

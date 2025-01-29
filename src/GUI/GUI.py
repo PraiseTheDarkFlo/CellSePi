@@ -30,10 +30,11 @@ class GUI:
         self.page = page
         self.directory = DirectoryCard(self)
         self.switch_mask = ft.Switch(label="Mask", value=False)
+        self.switch_mask.on_change = lambda e: self.update_view_mask()
         self.queue = multiprocessing.Queue()
         parent_conn, child_conn = multiprocessing.Pipe()
         self.parent_conn, self.child_conn = parent_conn, child_conn
-        self.running = True
+        self.pipe_listener_running = True
         self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
         self.thread.start()
         self.page.window.prevent_close = True
@@ -126,19 +127,16 @@ class GUI:
             )
         )
 
-        def update_view_mask(e):
-            """
-            Method that controls what happened when switch is on/off
-            """
-            if self.csp.image_id is None:
-                print("No image selected")
-                error_banner(self,"No image selected!")
-                self.switch_mask.value=False
-            else:
-                handle_image_switch_mask_on(self)
-
-        self.switch_mask.on_change = update_view_mask
-
+    def update_view_mask(self):
+        """
+        Method that controls what happened when switch is on/off
+        """
+        if self.csp.image_id is None:
+            print("No image selected")
+            error_banner(self,"No image selected!")
+            self.switch_mask.value=False
+        else:
+            handle_image_switch_mask_on(self)
 
     def start_drawing_window(self):
         """
@@ -172,8 +170,9 @@ class GUI:
         Handle the closing event of Flet GUI.
         """
         if e.data == "close":
-            self.cancel_segmentation()
-            self.running = False
+            if self.csp.segmentation_running:
+                self.cancel_segmentation()
+            self.pipe_listener_running = False
             self.queue.put("close")
             self.page.window.destroy()
             self.process_drawing_window.join()
@@ -195,7 +194,7 @@ class GUI:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         async def pipe_listener():
-            while self.running:
+            while self.pipe_listener_running:
                 data = await asyncio.to_thread(self.parent_conn.recv)
                 print(f"Empfangene Daten: {data}")
                 if data == "close":

@@ -28,7 +28,6 @@ class BatchImageSegmentation(Notifier):
         self.masks_backup = {}
         self.prev_masks_exist = False
         self.num_seg_images = 0
-        # TODO REVIEW by Flo: ich würde entweder alle Statis drausen bei Segmentation machen oder alles hier bzw. oder sogar in csp?
         self.cancel_now = False
         self.pause_now = False
         self.resume_now = False
@@ -39,18 +38,39 @@ class BatchImageSegmentation(Notifier):
         This method creates a backup of the previously generated masks.
         """
         self.prev_masks_exist = False
+
         for image_id, channels in self.gui.csp.mask_paths.items():
-            self.masks_backup[image_id] = {}
             for segmentation_channel, path in channels.items():
-                if os.path.exists(path):
-                    self.prev_masks_exist = True
-                    mask = np.load(path, allow_pickle=True)
-                    self.masks_backup[image_id][segmentation_channel] = mask
+                if segmentation_channel == self.gui.csp.config.get_bf_channel():
+                    if os.path.exists(path):
+                        self.masks_backup[image_id] = {}
+                        self.prev_masks_exist = True
+                        mask = np.load(path, allow_pickle=True)
+                        self.masks_backup[image_id][segmentation_channel] = mask
+
+        if self.prev_masks_exist:
+            for image_id in self.gui.csp.image_paths:
+                if image_id not in self.masks_backup:
+                    self.masks_backup[image_id] = {}
+                    self.masks_backup[image_id][self.gui.csp.config.get_bf_channel()] = None
+
+    def delete_mask(self,path,channels_to_delete,image_id,segmentation_channel):
+        if os.path.exists(path):
+            channels_to_delete.append((image_id, segmentation_channel))
+            if image_id == self.gui.csp.image_id:
+                if self.gui.csp.config.get_bf_channel() == segmentation_channel:
+                    self.gui.drawing_button.disabled = True #disables the button to start the drawing window
+                    self.gui.queue.put("delete_image") #sends the info that the current image is deleted to the drawing window
+                    self.gui.switch_mask.value = False #sets the mask switch to False because there is no longer a mask
+                    self.gui.canvas.container_mask.visible = False #and sets the mask picture invisible because it is no longer valid
+                    self.gui.page.update()
+            os.remove(path)
 
     def restore_backup(self):
         """
         This method restores the previously generated masks and deletes the old ones.
         """
+        channels_to_delete = []
         if self.prev_masks_exist:
             for image_id, channels in self.masks_backup.items():
                 if image_id not in self.gui.csp.mask_paths:
@@ -60,12 +80,18 @@ class BatchImageSegmentation(Notifier):
                         backup_path = self.gui.csp.mask_paths[image_id].get(segmentation_channel)
                         if backup_path:
                             np.save(backup_path, mask)
-        else: # case where no masks existed before
+                    else:
+                        path = self.gui.csp.mask_paths[image_id][segmentation_channel]
+                        self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
+
+        else: # case where no masks for this bf_channel existed before
             for image_id, channels in self.gui.csp.mask_paths.items():
                 for segmentation_channel, path in channels.items():
-                    if os.path.exists(path):
-                        os.remove(path)
-            self.gui.csp.mask_paths = {}
+                    if segmentation_channel == self.gui.csp.config.get_bf_channel():
+                        self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
+
+        for image_id, segmentation_channel in channels_to_delete:
+            del self.gui.csp.mask_paths[image_id][segmentation_channel]
 
     # the following methods handle the different actions and handle accordingly
     def cancel_action(self):
@@ -87,7 +113,7 @@ class BatchImageSegmentation(Notifier):
         Applies the segmentation model to every image and stores the resulting masks.
         """
         if self.num_seg_images == 0: # shouldn't backup again, if it was paused and now resuming
-            self.backup_masks()
+            self.backup_masks()             #TODO REVIEW FLO: Reset nicht wenn du nach einem run nochmal startest also musst num_seg_images reseten lassen
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -101,7 +127,7 @@ class BatchImageSegmentation(Notifier):
             self.segmentation.is_resuming()
 
         self._call_start_listeners()
-        image_paths = self.gui.csp.image_paths
+        image_paths = self.gui.csp.image_paths      #TODO REVIEW FLO: Diese values musst du beim ersten run sichern wie bei backup
         segmentation_channel = self.gui.csp.config.get_bf_channel()
         diameter = self.gui.csp.config.get_diameter()
         suffix = self.gui.csp.config.get_mask_suffix()

@@ -156,13 +156,15 @@ class Updater(QObject):
     """
     Handles the signals that he becomes from the queue.
     """
-    update_signal = pyqtSignal(object,object)  # Signal für GUI-Updates
-    close_signal = pyqtSignal(object,object,object)
+    update_signal = pyqtSignal(object,object)  # Signal for new main_image
+    close_signal = pyqtSignal(object,object) # Signal for close the drawing window
+    delete_signal = pyqtSignal(object,) # Signal that the main_image mask got deleted
 
     def __init__(self, window):
         super().__init__()
         self.update_signal.connect(self.handle_update)
         self.close_signal.connect(self.handle_close)
+        self.delete_signal.connect(self.handle_delete)
         self.window: MyQtWindow = window
 
     def handle_update(self, data, conn):
@@ -174,7 +176,7 @@ class Updater(QObject):
         self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
         self.window.setVisible(True)
 
-    def handle_close(self,app,running,queue):
+    def handle_close(self,app,running):
         """
         If the close signal is received, close the process.
         """
@@ -184,6 +186,13 @@ class Updater(QObject):
         running[0] = False
         app.quit()
         print("handle close finished")
+
+    def handle_delete(self,app):
+        print("delete signal")
+        self.window.close()
+        self.window.deleteLater()
+        app.quit()
+
 
 def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
@@ -201,8 +210,10 @@ def open_qt_window(queue,conn):
                 while running[0]:
                     data = await asyncio.to_thread(queue.get)
                     if data == "close":
-                        updater.close_signal.emit(app, running, queue)
+                        updater.close_signal.emit(app, running)
                         break
+                    elif data == "delete_image":
+                        updater.delete_signal.emit(app)
                     else:
                         updater.update_signal.emit(data, conn)
 
