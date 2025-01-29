@@ -131,9 +131,10 @@ class DirectoryCard(ft.Card):
         self.count_results_txt.value = f"Results: {len(self.gui.csp.image_paths)}"
         self.count_results_txt.update()
 
+    #TODO Review: ein paar Kommentare in dieser Methode wären hilfreich fürs Verständnis
     def get_directory_result(self, e: ft.FilePickerResultEvent):
         """
-        Checks if the picked directory or file exists and if it worked updates every thing with the new values.
+        Checks if the picked directory or file exists and if it worked updates everything with the new values.
         """
         if not(e.files is None and e.path is None):
             if self.is_lif:
@@ -143,7 +144,7 @@ class DirectoryCard(ft.Card):
             if path:
                 self.directory_path.value = path
                 self.select_directory_parallel(path)
-                #self.benchmark_seq_and_par(path)
+                # self.benchmark_seq_and_par(path)
                 self.load_images()
             else:
                 self.image_gallery.controls.clear()
@@ -182,7 +183,6 @@ class DirectoryCard(ft.Card):
             else:
                 self.is_supported_lif = False
 
-
         # Tiff Case
         else:
             if path.name == "output":
@@ -205,7 +205,6 @@ class DirectoryCard(ft.Card):
             for path in working_directory.iterdir():
                 converted = self.convert_tiffs_to_8_bit(path)
                 is_supported_tif = is_supported_tif and converted
-
 
         self.gui.csp.working_directory = working_directory
         self.set_paths(is_supported_tif)
@@ -272,9 +271,6 @@ class DirectoryCard(ft.Card):
         if path.suffix.lower() == ".tif" or path.suffix.lower() == ".tiff":
             if path.is_file():
                 converted=transform_image_path(path, path)
-
-            if Image.open(path).mode in ["L", "RGB"]:
-                print("8 bit")
         return converted
 
     def set_paths(self, is_supported_tif):
@@ -324,10 +320,6 @@ class DirectoryCard(ft.Card):
 
         self.gui.csp.image_paths = image_paths
         self.gui.csp.mask_paths = mask_paths
-        print(f"Selected Directory: {working_directory}")
-        print(f"This directory contains {len(image_paths)} unique image ids.")
-
-        print(f"This directory contains {len(mask_paths)} unique mask ids.")
 
 
     def load_images(self):

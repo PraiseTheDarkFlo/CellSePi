@@ -233,10 +233,7 @@ def remove_gradient(img):
     corrected_img = img + correction
     return corrected_img
 
-#TODO Review by Jenna:
-# Warum weist ihr die bit depth zu ? So wie ich das verstehe benötigt ihr die  nur
-# für die Abfrage, dann könnte man doch den Code von der zweiten Abfrage einfach
-# oben zuschreiben und man spart sich eine Abfrage sowie unnötige Zuweisungen
+
 def transform_image_path(image_path, output_path):
     """
     This method converts images with bit depth of 16 bit to 8 bit
@@ -249,23 +246,16 @@ def transform_image_path(image_path, output_path):
         True if the image was converted successfully
         False if the image was not converted because it had an incompatible format
     """
-    # check bit depth
     with Image.open(image_path) as img:
-        mode = img.mode
-        bit_depth = 0
-        if mode == "I;16":
-            bit_depth = 16
-        elif mode in ["L", "RGB"]:
-            bit_depth = 8
-        else:
-            return False
         # convert to 8 bit if necessary
-        if bit_depth == 16:
+        if img.mode == "I;16":
             array16 = np.array(img, dtype=np.uint16)
             array8 = (array16 / 256).astype(np.uint8)
             img8 = Image.fromarray(array8)
             img8.save(output_path, format="TIFF")
-        return True
+            return True
+        else:
+            return False
 
 
 def process_channel(channel_id, channel_path):
