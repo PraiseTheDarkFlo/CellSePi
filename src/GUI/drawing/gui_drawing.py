@@ -132,6 +132,8 @@ class MyQtWindow(QMainWindow):
                 self.draw_toggle_button.setText("Drawing : OFF")
             self.canvas.toggle_draw_mode()
 
+    #TODO: review by Jenna: warum prüfst und setzt vorher das isChecked, wenn du gar kein
+    # checkbox-Kästchen verwendest ? Dann ist das ja egal
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
@@ -264,19 +266,15 @@ class DrawingCanvas(QGraphicsView):
 
     def toggle_draw_mode(self):
         self.draw_mode = not self.draw_mode
-        print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
     def toggle_delete_mode(self):
         self.delete_mode = not self.delete_mode
-        print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
     def set_draw_mode(self,value: bool):
         self.draw_mode = value
-        print(f"Drawing mode {'enabled' if self.draw_mode else 'disabled'}")
 
     def set_delete_mode(self,value: bool):
         self.delete_mode = value
-        print(f"Delete mode {'enabled' if self.delete_mode else 'disabled'}.")
 
     def is_point_within_image(self, point):
 
@@ -396,6 +394,10 @@ class DrawingCanvas(QGraphicsView):
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
+    #ToDO by Jenna: in dem Fall, dass keine Cellen in der cell_history sind, ist der Print unnötigt, denn
+    # der wird ja nie in der GUI ausgeführt. ALso entweder error banner in der GUI oder gar keinen print machen
+    # vielleicht hier auch eine beschränkung einbauen für das restoren. Im Moment ist es möglich die Zellen unendlich oft
+    # zu storen, selbst wenn cell_history leer ist: Du könntest den Restore button vielleicht ausgrauen, wenn keine Zellen mehr drinn sind
     def restore_cell(self):
         """
         Restore the most recently deleted cell.
@@ -460,3 +462,13 @@ class DrawingCanvas(QGraphicsView):
 
         self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
+
+    def get_npy_of_mask(self):
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
+        mask_data = np.load(mask_path, allow_pickle=True).item()
+
+        mask = mask_data["masks"]
+        outline = mask_data["outlines"]
+
+        return mask, outline
+
