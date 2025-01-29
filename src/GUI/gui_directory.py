@@ -522,9 +522,9 @@ class DirectoryCard(ft.Card):
 
             if all_mask_present and self.gui.csp.image_paths is not None and len(self.gui.csp.image_paths) != 0 :
                 fluorescence_button.visible = True
-                await fluorescence_button.update_async()
+                fluorescence_button.update()
                 self.gui.diameter_display.visible = False
-                await self.gui.diameter_display.update_async()
+                self.gui.diameter_display.update()
                 avg_diameter = await loop.run_in_executor(
                     None,
                     lambda: AverageDiameter(self.gui.csp).get_avg_diameter()
@@ -533,10 +533,10 @@ class DirectoryCard(ft.Card):
                 self.gui.diameter_display.visible = True
             else:
                 fluorescence_button.visible = False
-                await fluorescence_button.update_async()
+                fluorescence_button.update()
                 self.gui.diameter_display.visible = False
 
-            await self.gui.diameter_display.update_async()
+            self.gui.diameter_display.update()
 
     def benchmark_seq_and_par(self, path):
         """

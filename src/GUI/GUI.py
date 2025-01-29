@@ -84,11 +84,11 @@ class GUI:
         )
 
 
-    async def build(self):
+    def build(self):
         """
         Build up the main page of the GUI
         """
-        await self.page.add_async(
+        self.page.add(
             ft.Column(
                 [
                     ft.Row(
