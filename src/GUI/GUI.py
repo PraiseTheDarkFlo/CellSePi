@@ -191,7 +191,8 @@ class GUI:
                     #TODO: hier mask updaten in Flet
 
         loop.run_until_complete(pipe_listener())
-
+        loop.stop()
+        loop.close()
 
     def on_enter_diameter(self):
         self.diameter_text.color = ft.Colors.BLUE_400
