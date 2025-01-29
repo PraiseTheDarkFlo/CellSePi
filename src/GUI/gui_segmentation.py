@@ -50,7 +50,8 @@ class GUISegmentation():
             icon=ft.icons.CANCEL,
             visible=False,
             on_click=None,
-            color=ft.Colors.RED
+            color=ft.Colors.RED,
+            icon_color=ft.Colors.RED,
         )
         resume_button = ft.ElevatedButton( # button to resume the segmentation calculation after it has been paused
             text="Resume",
@@ -95,7 +96,6 @@ class GUISegmentation():
                     progress_bar_text.value = "Ready to Start"
                     start_button.disabled = False
                 model_text.value = e.files[0].name
-                model_text.color = None
                 self.gui.csp.model_path = e.files[0].path
                 self.gui.page.update()
             else:
@@ -119,6 +119,8 @@ class GUISegmentation():
                 model_title.disabled = True
                 model_chooser.disabled = True
                 fl_button.visible = False
+                cancel_button.color = ft.Colors.RED
+                cancel_button.icon_color = ft.Colors.RED
                 self.gui.open_button.visible = False
                 self.gui.directory.disable_path_choosing()
                 self.gui.page.update()
@@ -131,7 +133,6 @@ class GUISegmentation():
                 pause_button.visible = False
                 cancel_button.visible = False
                 model_title.disabled = False
-                model_text.color = ft.Colors.RED
                 model_title.update()
                 model_chooser.disabled = False
                 fl_button.visible = state_fl_button
@@ -151,7 +152,6 @@ class GUISegmentation():
             cancel_button.visible = False
             model_title.disabled = False
             model_chooser.disabled = False
-            self.gui.directory.enable_path_choosing()
             self.segmentation_cancelling = True
             self.segmentation.to_be_cancelled()
             if self.segmentation_currently_paused:
@@ -178,6 +178,7 @@ class GUISegmentation():
             cancel_button.disabled = True
             progress_bar_text.value = "Pausing: " + progress_bar_text.value
             cancel_button.color = None
+            cancel_button.icon_color = None
             self.gui.page.update()
             self.segmentation_pausing = True
             self.segmentation.to_be_paused()
@@ -194,6 +195,7 @@ class GUISegmentation():
             extracted_percentage = re.search(r'\d+', progress_bar_text.value)
             progress_bar_text.value =  extracted_percentage.group(0) + " %" # remove "paused at " from string
             cancel_button.color = None
+            cancel_button.icon_color = None
             self.gui.page.update()
             self.segmentation.to_be_resumed()
             self.segmentation_resuming = True
@@ -237,6 +239,7 @@ class GUISegmentation():
             if self.gui.csp.readout_path is not None:
                 self.gui.open_button.visible = True
             self.segmentation_cancelling = False
+            self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
             self.gui.page.update()
 
@@ -249,6 +252,7 @@ class GUISegmentation():
             extracted_percentage = re.search(r'\d+', progress_bar_text.value)
             progress_bar_text.value = "Paused at: " + extracted_percentage.group(0) + " %"
             cancel_button.color = ft.Colors.RED
+            cancel_button.icon_color = ft.Colors.RED
             self.gui.page.update()
             self.segmentation_pausing = False
             self.segmentation_currently_paused = True
@@ -260,6 +264,7 @@ class GUISegmentation():
             pause_button.disabled = False
             cancel_button.disabled = False
             cancel_button.color = ft.Colors.RED
+            cancel_button.icon_color = ft.Colors.RED
             self.gui.page.update()
             self.segmentation_resuming = False
 
