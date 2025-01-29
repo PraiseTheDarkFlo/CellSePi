@@ -195,7 +195,7 @@ def open_qt_window(queue,conn):
         def background_listener():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            async def query_listener():
+            async def queue_listener():
                 while running[0]:
                     data = await asyncio.to_thread(queue.get)
                     if data == "close":
@@ -204,9 +204,11 @@ def open_qt_window(queue,conn):
                     else:
                         updater.update_signal.emit(data, conn)
 
-            loop.run_until_complete(query_listener())
-            loop.stop()
-            loop.close()
+            try:
+                loop.run_until_complete(queue_listener())
+            finally:
+                loop.stop()
+                loop.close()
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()

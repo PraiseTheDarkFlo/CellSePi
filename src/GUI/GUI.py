@@ -200,10 +200,11 @@ class GUI:
                 else:
                     print(f"Empfangene Daten: {data}")
                     #TODO: hier mask updaten in Flet
-
-        loop.run_until_complete(pipe_listener())
-        loop.stop()
-        loop.close()
+        try:
+            loop.run_until_complete(pipe_listener())
+        finally:
+            loop.stop()
+            loop.close()
 
     def on_enter_diameter(self):
         self.diameter_text.color = ft.Colors.BLUE_400
