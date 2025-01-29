@@ -34,10 +34,10 @@ class Segmentation(Notifier):
         """
         This method starts the segmentation process and manages the different interactions.
         """
-        if not self.gui_seg.segmentation_cancelling and not self.gui_seg.segmentation_pausing:
+        if not self.gui_seg.segmentation_cancelling and not self.gui_seg.segmentation_pausing and not self.gui_seg.segmentation_resuming:
             self._call_update_listeners("Preparing segmentation", None)
 
-        if self.gui.csp.segmentation_running:
+        if self.gui.csp.segmentation_running and not self.gui_seg.segmentation_resuming:
             self._call_completion_listeners()
             return
 
@@ -67,7 +67,6 @@ class Segmentation(Notifier):
             return
         else:
             self._call_completion_listeners()
-
 
 
 
