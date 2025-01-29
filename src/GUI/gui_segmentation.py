@@ -139,6 +139,7 @@ class GUISegmentation():
                 self.gui.directory.enable_path_choosing()
                 self.gui.csp.segmentation_running = False
                 progress_bar_text.value = "Select new Model"
+                self.gui.csp.model_path = None
                 self.gui.page.update()
 
 
