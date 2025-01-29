@@ -4,13 +4,13 @@ import pathlib
 import platform
 import shutil
 import stat
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 
 import numpy as np
 from PIL import Image
-from readlif.reader import LifFile
-import flet as ft
+from bioio import BioImage
+import bioio_lif
 
 
 def listdir(directory):
@@ -100,9 +100,7 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None):
             print(f"Something went wrong while processing {src_path.name}: {str(e)}")
             continue
 
-
-
-
+"""
 def extract_from_lif_file(lif_path, target_dir):
 
     lif_path = pathlib.Path(lif_path)
@@ -112,6 +110,7 @@ def extract_from_lif_file(lif_path, target_dir):
         os.makedirs(target_dir, exist_ok=True)
 
         for series in lif.get_iter_image():
+            #get the series name
             img_id = series.info["name"]
             n_channels = series.channels
             for channel_id in range(n_channels):
@@ -129,6 +128,66 @@ def extract_from_lif_file(lif_path, target_dir):
                 except Exception as e:
                     print(f"Something went wrong while processing {file_name}: {str(e)}")
                     continue
+"""
+
+def extract_from_lif_file(lif_path, target_dir):
+    """
+    Extracts all series from the lif file using the bioio-lif library and
+    copies the images to the target directory.
+    Arguments:
+          lif_path {str} -- The path to the lif file.
+          target_dir {str} -- The path to the target directory.
+    """
+
+    lif_path = pathlib.Path(lif_path)
+    target_dir = pathlib.Path(target_dir)
+    if lif_path.suffix == ".lif":
+        bio_image = BioImage(lif_path,reader=bioio_lif.Reader)  # Specify the backend explicitly
+
+        # Create the target directory if it doesn't exist
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        # get all series in the lif file
+        scenes= bio_image.scenes
+
+        for index,scene_id in enumerate(scenes):
+            scene= scene_id
+
+            #remove the unnecessary data in the array
+            bio_image.set_scene(scene)
+            #TCZXY 5D array
+            npy_array= bio_image.data
+            squeezed_img= np.squeeze(npy_array)
+
+            #get the amount of channels
+            n_channels = squeezed_img.shape[0]
+
+            for channel_id in range(n_channels):
+                # Extract the height and width of the image
+                image= squeezed_img[channel_id]
+                img = Image.fromarray(image)#doesnt work
+
+                # Construct file name and path
+                file_name = f"{scene}_c{channel_id + 1}.tif"
+                target_path = target_dir / file_name
+
+                try:
+                    # Handle existing files
+                    if target_path.exists():
+                        if platform.system() == "Windows":
+                            os.chmod(target_path, stat.S_IWRITE)  # Set writable on Windows
+                        else:
+                            target_path.chmod(0o777)  # Set writable on Unix
+                        target_path.unlink()  # Remove the existing file
+
+                    # Save the image to the target path using pillows save function
+                    img.save(str(target_path))
+
+                except Exception as e:
+                    print(f"Error processing {file_name}: {e}")
+                    continue
+    else:
+        print(f"The file {lif_path} is not a .lif file")
 
 
 def load_image_to_numpy(path):

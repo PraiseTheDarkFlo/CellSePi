@@ -10,9 +10,8 @@ from cellpose.io import imread
 
 from src.data_util import load_image_to_numpy
 import pandas as pd
-from time import time
+
 from src.notifier import Notifier
-from multiprocessing import Process
 
 class BatchImageSegmentation(Notifier):
     """
@@ -115,7 +114,6 @@ class BatchImageSegmentation(Notifier):
         io.logger_setup() # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
-        start_time_sequential= time()
         start_index = self.num_seg_images
 
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
@@ -164,8 +162,6 @@ class BatchImageSegmentation(Notifier):
             self._call_update_listeners(progress, current_image)
             self.num_seg_images = self.num_seg_images + 1
 
-        end_time_sequential = time()
-        print(f"The segmentation lasted {end_time_sequential-start_time_sequential}\n")
         self._call_completion_listeners()
         # reset variables
         self.num_seg_images = 0
@@ -203,7 +199,6 @@ class BatchImageSegmentation(Notifier):
         io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
-        start_time_parallel= time()
 
         start_index = self.num_seg_images
         self.executor = ThreadPoolExecutor(max_workers=8)
@@ -214,8 +209,7 @@ class BatchImageSegmentation(Notifier):
                 iN, image_id, image_paths, segmentation_channel, diameter, suffix, model
             ))
 
-        end_time_parallel= time()
-        print(f"The segmentation took {end_time_parallel-start_time_parallel}\n")
+
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()

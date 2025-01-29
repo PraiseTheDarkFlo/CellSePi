@@ -6,9 +6,10 @@ cellpose
 flet
 flet-desktop
 matplotlib
-readlif
 pytest
 pyqt5
 flet_contrib
 opencv-python
 flet_core
+bioio-lif
+bioio
