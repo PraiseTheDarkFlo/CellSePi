@@ -214,7 +214,8 @@ def open_qt_window(queue,conn):
         app.exec_()
     print("join thread")
     queue.put("close")
-    thread.join()
+    if thread is not None and thread.is_alive():
+        thread.join()
     print("main window closed")
     sys.exit(0)
 
