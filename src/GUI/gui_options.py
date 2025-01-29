@@ -40,7 +40,7 @@ class Options(ft.Container):
             self.page.theme_mode = ft.ThemeMode.LIGHT
             self.dark_light_text.value = "Light Theme"
             self.dark_light_icon.icon = ft.Icons.BRIGHTNESS_2_OUTLINED
-        await self.page.update_async()
+        self.page.update()
 
     def check_current_theme(self,e):
         """

@@ -53,22 +53,22 @@ class ColorSelection:
             ),height=430,width=450,padding=10)]))],horizontal_alignment=ft.CrossAxisAlignment.CENTER,alignment=ft.MainAxisAlignment.CENTER),
             on_dismiss=self.close_dialog,
         )
-    async def open_color_picker_mask(self,e):
+    def open_color_picker_mask(self,e):
         e.control.page.open(self.dialog)
         self.color_picker.color = rgb_to_hex(self.config.get_mask_color())
         self.color_type = ColorTypes.Mask
         self.dialog.open = True
-        await e.control.page.update_async()
+        e.control.page.update()
 
 
-    async def open_color_picker_outline(self, e):
+    def open_color_picker_outline(self, e):
         e.control.page.open(self.dialog)
         self.color_picker.color = rgb_to_hex(self.config.get_outline_color())
         self.color_type = ColorTypes.Outline
         self.dialog.open = True
-        await e.control.page.update_async()
+        e.control.page.update()
 
-    async def change_color(self, e):
+    def change_color(self, e):
         print(f"Changing color to {self.color_type}")
 
         if self.color_type == ColorTypes.Mask:
@@ -78,11 +78,11 @@ class ColorSelection:
             self.color_icon_outline.icon_color = self.color_picker.color
             self.config.set_outline_color(hex_to_rgb(self.color_picker.color))
         e.control.page.close(self.dialog)
-        await e.control.page.update_async()
+        e.control.page.update()
 
-    async def close_dialog(self, e):
+    def close_dialog(self, e):
         print("Closing dialog...")
         e.control.page.close(self.dialog)
-        await self.dialog.update_async()
+        self.dialog.update()
 
 

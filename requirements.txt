@@ -5,6 +5,7 @@ openpyxl
 cellpose
 flet
 flet-desktop
+flet-runtime
 matplotlib
 pytest
 pyqt5
