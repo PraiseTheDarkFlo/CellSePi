@@ -205,6 +205,8 @@ def open_qt_window(queue,conn):
                         updater.update_signal.emit(data, conn)
 
             loop.run_until_complete(query_listener())
+            loop.stop()
+            loop.close()
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()
