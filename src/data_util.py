@@ -130,7 +130,7 @@ def extract_from_lif_file(lif_path, target_dir):
                     continue
 """
 
-def extract_from_lif_file(lif_path, target_dir):
+def extract_from_lif_file(lif_path, target_dir,channel_prefix):
     """
     Extracts all series from the lif file using the bioio-lif library and
     copies the images to the target directory.
@@ -168,7 +168,7 @@ def extract_from_lif_file(lif_path, target_dir):
                 img = Image.fromarray(image)#doesnt work
 
                 # Construct file name and path
-                file_name = f"{scene}_c{channel_id + 1}.tif"
+                file_name = f"{scene}{channel_prefix}{channel_id + 1}.tif"
                 target_path = target_dir / file_name
 
                 try:
@@ -181,7 +181,7 @@ def extract_from_lif_file(lif_path, target_dir):
                         target_path.unlink()  # Remove the existing file
 
                     # Save the image to the target path using pillows save function
-                    img.save(str(target_path))
+                    img.save(target_path)
 
                 except Exception as e:
                     print(f"Error processing {file_name}: {e}")
