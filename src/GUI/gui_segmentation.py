@@ -292,6 +292,7 @@ class GUISegmentation():
                 if current_image["image_id"] == self.gui.csp.image_id:
                     if current_image["image_id"] in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[current_image["image_id"]]:
                         self.gui.drawing_button.disabled = False
+                        self.gui.queue.put("refresh_mask")
                     else:
                         self.gui.drawing_button.disabled = True
             self.gui.page.update()

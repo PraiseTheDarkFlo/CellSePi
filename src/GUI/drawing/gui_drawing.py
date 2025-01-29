@@ -159,12 +159,14 @@ class Updater(QObject):
     update_signal = pyqtSignal(object,object)  # Signal for new main_image
     close_signal = pyqtSignal(object,object) # Signal for close the drawing window
     delete_signal = pyqtSignal(object,) # Signal that the main_image mask got deleted
+    refresh_signal = pyqtSignal() # Signal that the main_image mask got deleted
 
     def __init__(self, window):
         super().__init__()
         self.update_signal.connect(self.handle_update)
         self.close_signal.connect(self.handle_close)
         self.delete_signal.connect(self.handle_delete)
+        self.refresh_signal.connect(self.handle_refresh)
         self.window: MyQtWindow = window
 
     def handle_update(self, data, conn):
@@ -193,6 +195,12 @@ class Updater(QObject):
         self.window.deleteLater()
         app.quit()
 
+    def handle_refresh(self):
+        print("refresh signal")
+        if not self.window.canvas_dummy:
+            self.window.canvas.store_mask()
+            self.window.canvas.load_mask_to_scene()
+
 
 def open_qt_window(queue,conn):
     app = QApplication(sys.argv)
@@ -214,6 +222,8 @@ def open_qt_window(queue,conn):
                         break
                     elif data == "delete_image":
                         updater.delete_signal.emit(app)
+                    elif data == "refresh_mask":
+                        updater.refresh_signal.emit()
                     else:
                         updater.update_signal.emit(data, conn)
 
@@ -268,6 +278,7 @@ class DrawingCanvas(QGraphicsView):
         self.image_array = None
         self.mask_item = None
         self.background_item = None
+        self.mask_data = None
         self.cell_history = []  # Track deleted cells for restoration
         self.check_box = check_box
         self.current_path_points = []  # saves all points in the drawing
@@ -377,15 +388,24 @@ class DrawingCanvas(QGraphicsView):
             return self.image_array[y, x]
         return None
 
+    def store_mask(self):
+        mask = self.mask_data["masks"]
+        outline = self.mask_data["outlines"]
+
+        # Save current state of the cell for restoration
+        mask_old = mask.copy()
+        outline_old = outline.copy()
+        self.cell_history.append((mask_old, outline_old, "complete mask"))
+
     def delete_cell(self, cell_id):
         """
         Delete the specified cell by updating the mask data.
         """
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
-        mask_data = np.load(mask_path, allow_pickle=True).item()
+        self.mask_data = np.load(mask_path, allow_pickle=True).item()
 
-        mask = mask_data["masks"]
-        outline = mask_data["outlines"]
+        mask = self.mask_data["masks"]
+        outline = self.mask_data["outlines"]
 
         # Save current state of the cell for restoration
         mask_old = mask.copy()
@@ -398,7 +418,7 @@ class DrawingCanvas(QGraphicsView):
         mask[cell_mask] = 0
         outline[cell_outline] = 0
         if self.check_box.isChecked():
-            mask_shifting(mask_data, cell_id)
+            mask_shifting(self.mask_data, cell_id)
         # Save the updated mask
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
@@ -436,10 +456,10 @@ class DrawingCanvas(QGraphicsView):
         Load the mask and display it on the scene.
         """
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
-        mask_data = np.load(mask_path, allow_pickle=True).item()
+        self.mask_data = np.load(mask_path, allow_pickle=True).item()
 
-        mask = mask_data["masks"]
-        outline = mask_data["outlines"]
+        mask = self.mask_data["masks"]
+        outline = self.mask_data["outlines"]
         # Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r, g, b = self.mask_color
