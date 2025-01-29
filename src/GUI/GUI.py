@@ -162,6 +162,7 @@ class GUI:
                     self.process_drawing_window.join()
                 except Exception as e:
                     print(f"Error while terminating process: {e}")
+            self.queue = multiprocessing.Queue()
             self.process_drawing_window = self.start_drawing_window()
 
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
