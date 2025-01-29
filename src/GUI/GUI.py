@@ -51,7 +51,8 @@ class GUI:
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
-        seg_card,start_button,open_button,progress_bar,progress_bar_text = self.segmentation.create_segmentation_card()
+        seg_card,start_button,open_button,progress_bar,progress_bar_text,cancel_segmentation = self.segmentation.create_segmentation_card()
+        self.cancel_segmentation = cancel_segmentation
         self.ready_to_start = False
         self.segmentation_card = seg_card
         self.open_button = open_button
@@ -170,6 +171,7 @@ class GUI:
         Handle the closing event of Flet GUI.
         """
         if e.data == "close":
+            self.cancel_segmentation()
             self.running = False
             self.queue.put("close")
             self.page.window.destroy()

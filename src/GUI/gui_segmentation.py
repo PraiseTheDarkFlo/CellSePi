@@ -142,7 +142,7 @@ class GUISegmentation():
                 self.gui.page.update()
 
 
-        def cancel_segmentation(e): # called when the cancel button is clicked
+        def cancel_segmentation(): # called when the cancel button is clicked
             """
             The running segmentation is cancelled and everything returns to the start state.
             The masks calculated so far are deleted and the previously calculated masks are restored.
@@ -176,6 +176,7 @@ class GUISegmentation():
             resume_button.disabled = True
             cancel_button.disabled = True
             progress_bar_text.value = "Pausing: " + progress_bar_text.value
+            cancel_button.color = None
             self.gui.page.update()
             self.segmentation_pausing = True
             self.segmentation.to_be_paused()
@@ -191,14 +192,16 @@ class GUISegmentation():
             cancel_button.disabled = True
             extracted_percentage = re.search(r'\d+', progress_bar_text.value)
             progress_bar_text.value =  extracted_percentage.group(0) + " %" # remove "paused at " from string
+            cancel_button.color = None
             self.gui.page.update()
             self.segmentation.to_be_resumed()
-            self.segmentation.run()
             self.segmentation_resuming = True
+            self.segmentation.run()
+
 
         # define behavior of buttons when they are clicked
         start_button.on_click = start_segmentation
-        cancel_button.on_click = cancel_segmentation
+        cancel_button.on_click = lambda e: cancel_segmentation()
         pause_button.on_click = pause_segmentation
         resume_button.on_click = resume_segmentation
 
@@ -244,6 +247,7 @@ class GUISegmentation():
             cancel_button.disabled = False
             extracted_percentage = re.search(r'\d+', progress_bar_text.value)
             progress_bar_text.value = "Paused at: " + extracted_percentage.group(0) + " %"
+            cancel_button.color = ft.Colors.RED
             self.gui.page.update()
             self.segmentation_pausing = False
             self.segmentation_currently_paused = True
@@ -254,6 +258,7 @@ class GUISegmentation():
             """
             pause_button.disabled = False
             cancel_button.disabled = False
+            cancel_button.color = ft.Colors.RED
             self.gui.page.update()
             self.segmentation_resuming = False
 
@@ -364,4 +369,4 @@ class GUISegmentation():
                 padding=10
             ),
         )
-        return segmentation_card,start_button,open_button,progress_bar,progress_bar_text
+        return segmentation_card,start_button,open_button,progress_bar,progress_bar_text,cancel_segmentation

@@ -115,7 +115,6 @@ class BatchImageSegmentation(Notifier):
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
         start_index = self.num_seg_images
-
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             if self.cancel_now:
                 self.cancel_now = False
