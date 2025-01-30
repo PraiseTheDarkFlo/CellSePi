@@ -122,7 +122,10 @@ class BatchImageSegmentation(Notifier):
         Applies the segmentation model to every image and stores the resulting masks.
         """
         if self.num_seg_images == 0: # shouldn't backup again, if it was paused and now resuming
-            self.backup_masks()             #TODO REVIEW FLO: Reset nicht wenn du nach einem run nochmal startest also musst num_seg_images reseten lassen
+            self.backup_masks()
+            self.segmentation_channel = self.gui.csp.config.get_bf_channel()
+            self.diameter = self.gui.csp.config.get_diameter()
+            self.suffix = self.gui.csp.config.get_mask_suffix()
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -207,6 +210,9 @@ class BatchImageSegmentation(Notifier):
         """
         if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
             self.backup_masks()
+            self.segmentation_channel = self.gui.csp.config.get_bf_channel()
+            self.diameter = self.gui.csp.config.get_diameter()
+            self.suffix = self.gui.csp.config.get_mask_suffix()
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
