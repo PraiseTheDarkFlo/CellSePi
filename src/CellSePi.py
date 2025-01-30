@@ -15,6 +15,8 @@ class CellSePi:
 
         self.image_id = None
         self.channel_id = None
+        self.window_image_id = None
+        self.window_channel_id = None
 
         self.readout = None
 
