@@ -292,9 +292,12 @@ class GUISegmentation():
                 if current_image["image_id"] == self.gui.csp.image_id:
                     if current_image["image_id"] in self.gui.csp.mask_paths and bfc in self.gui.csp.mask_paths[current_image["image_id"]]:
                         self.gui.drawing_button.disabled = False
-                        self.gui.queue.put("refresh_mask")
                     else:
                         self.gui.drawing_button.disabled = True
+                if current_image["image_id"] == self.gui.csp.window_image_id:
+                    if bfc == self.gui.csp.window_channel_id:
+                        print("test")
+                        self.gui.queue.put("refresh_mask")
             self.gui.page.update()
 
         # listeners for getting different information from the state of the segmentation process

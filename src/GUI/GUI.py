@@ -162,8 +162,9 @@ class GUI:
                     print(f"Error while terminating process: {e}")
             self.queue = multiprocessing.Queue()
             self.process_drawing_window = self.start_drawing_window()
-
-        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.config.get_bf_channel(),self.csp.mask_paths,self.csp.image_id,self.csp.adjusted_image_path))
+        self.csp.window_image_id = self.csp.image_id
+        self.csp.window_channel_id = self.csp.config.get_bf_channel()
+        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.window_channel_id,self.csp.mask_paths,self.csp.window_image_id,self.csp.adjusted_image_path))
 
     def handle_closing_event(self,e):
         """

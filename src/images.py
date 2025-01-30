@@ -60,10 +60,12 @@ class BatchImageSegmentation(Notifier):
             if image_id == self.gui.csp.image_id:
                 if self.gui.csp.config.get_bf_channel() == segmentation_channel:
                     self.gui.drawing_button.disabled = True #disables the button to start the drawing window
-                    self.gui.queue.put("delete_image") #sends the info that the current image is deleted to the drawing window
                     self.gui.switch_mask.value = False #sets the mask switch to False because there is no longer a mask
                     self.gui.canvas.container_mask.visible = False #and sets the mask picture invisible because it is no longer valid
                     self.gui.page.update()
+            if image_id == self.gui.csp.window_image_id:
+               if segmentation_channel == self.gui.csp.window_channel_id:
+                   self.gui.queue.put("delete_image")  # sends the info that the current image is deleted to the drawing window
             os.remove(path)
 
     def restore_backup(self):
@@ -80,8 +82,9 @@ class BatchImageSegmentation(Notifier):
                         backup_path = self.gui.csp.mask_paths[image_id].get(segmentation_channel)
                         if backup_path:
                             np.save(backup_path, mask)
-                            if image_id == self.gui.csp.image_id:
-                                if self.gui.csp.config.get_bf_channel() == segmentation_channel:
+                            if image_id == self.gui.csp.window_image_id:
+                                if segmentation_channel == self.gui.csp.window_channel_id:
+                                    print("test")
                                     self.gui.queue.put("refresh_mask") #refreshes if the backup is the current selected image and the mask is the same channel
                     else:
                         path = self.gui.csp.mask_paths[image_id][segmentation_channel]
