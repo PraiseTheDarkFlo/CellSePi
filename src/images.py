@@ -25,6 +25,9 @@ class BatchImageSegmentation(Notifier):
         self.segmentation = segmentation
         self.gui = gui
         self.device = device
+        self.segmentation_channel = self.gui.csp.config.get_bf_channel()
+        self.diameter = self.gui.csp.config.get_diameter()
+        self.suffix = self.gui.csp.config.get_mask_suffix()
         self.masks_backup = {}
         self.prev_masks_exist = False
         self.num_seg_images = 0
@@ -41,7 +44,7 @@ class BatchImageSegmentation(Notifier):
 
         for image_id, channels in self.gui.csp.mask_paths.items():
             for segmentation_channel, path in channels.items():
-                if segmentation_channel == self.gui.csp.config.get_bf_channel():
+                if segmentation_channel == self.segmentation_channel:
                     if os.path.exists(path):
                         self.masks_backup[image_id] = {}
                         self.prev_masks_exist = True
@@ -52,13 +55,13 @@ class BatchImageSegmentation(Notifier):
             for image_id in self.gui.csp.image_paths:
                 if image_id not in self.masks_backup:
                     self.masks_backup[image_id] = {}
-                    self.masks_backup[image_id][self.gui.csp.config.get_bf_channel()] = None
+                    self.masks_backup[image_id][self.segmentation_channel] = None
 
     def delete_mask(self,path,channels_to_delete,image_id,segmentation_channel):
         if os.path.exists(path):
             channels_to_delete.append((image_id, segmentation_channel))
             if image_id == self.gui.csp.image_id:
-                if self.gui.csp.config.get_bf_channel() == segmentation_channel:
+                if self.segmentation_channel == segmentation_channel:
                     self.gui.drawing_button.disabled = True #disables the button to start the drawing window
                     self.gui.switch_mask.value = False #sets the mask switch to False because there is no longer a mask
                     self.gui.canvas.container_mask.visible = False #and sets the mask picture invisible because it is no longer valid
@@ -93,7 +96,7 @@ class BatchImageSegmentation(Notifier):
         else: # case where no masks for this bf_channel existed before
             for image_id, channels in self.gui.csp.mask_paths.items():
                 for segmentation_channel, path in channels.items():
-                    if segmentation_channel == self.gui.csp.config.get_bf_channel():
+                    if segmentation_channel == self.segmentation_channel:
                         self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
 
         for image_id, segmentation_channel in channels_to_delete:
@@ -134,9 +137,9 @@ class BatchImageSegmentation(Notifier):
 
         self._call_start_listeners()
         image_paths = self.gui.csp.image_paths      #TODO REVIEW FLO: Diese values musst du beim ersten run sichern wie bei backup
-        segmentation_channel = self.gui.csp.config.get_bf_channel()
-        diameter = self.gui.csp.config.get_diameter()
-        suffix = self.gui.csp.config.get_mask_suffix()
+        segmentation_channel = self.segmentation_channel
+        diameter = self.diameter
+        suffix = self.suffix
 
         segmentation_model = self.gui.csp.model_path
         device = torch.device(self.device) # converts string to device object
@@ -218,9 +221,9 @@ class BatchImageSegmentation(Notifier):
 
         self._call_start_listeners()
         image_paths = self.gui.csp.image_paths
-        segmentation_channel = self.gui.csp.config.get_bf_channel()
-        diameter = self.gui.csp.config.get_diameter()
-        suffix = self.gui.csp.config.get_mask_suffix()
+        segmentation_channel = self.segmentation_channel
+        diameter = self.diameter
+        suffix = self.suffix
 
         segmentation_model = self.gui.csp.model_path
         device = self.device
@@ -305,7 +308,6 @@ class BatchImageSegmentation(Notifier):
 
         progress = str(round((iN + 1) / n_images * 100)) + " %"
         current_image = {"image_id": iN, "path": image_path}
-        self._call_update_listeners(progress, current_image)
         self._call_update_listeners(progress, current_image)
         self.num_seg_images = self.num_seg_images + 1
         if self.cancel_now:
