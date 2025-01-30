@@ -90,8 +90,9 @@ class BatchImageSegmentation(Notifier):
                                     print("test")
                                     self.gui.queue.put("refresh_mask") #refreshes if the backup is the current selected image and the mask is the same channel
                     else:
-                        path = self.gui.csp.mask_paths[image_id][segmentation_channel]
-                        self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
+                        if segmentation_channel in self.gui.csp.mask_paths[image_id]:
+                            path = self.gui.csp.mask_paths[image_id][segmentation_channel]
+                            self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
 
         else: # case where no masks for this bf_channel existed before
             for image_id, channels in self.gui.csp.mask_paths.items():
