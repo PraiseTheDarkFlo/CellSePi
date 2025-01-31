@@ -1,6 +1,7 @@
 import asyncio
 import atexit
 import multiprocessing
+import os
 import threading
 
 import flet as ft
@@ -166,7 +167,13 @@ class GUI:
             self.process_drawing_window = self.start_drawing_window()
         self.csp.window_image_id = self.csp.image_id
         self.csp.window_channel_id = self.csp.config.get_bf_channel()
-        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.window_channel_id,self.csp.mask_paths,self.csp.window_image_id,self.csp.adjusted_image_path))
+
+        image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
+        directory, filename = os.path.split(image_path)
+        name, _ = os.path.splitext(filename)
+        mask_file_name = f"{name}{self.csp.config.get_mask_suffix()}.npy"
+        mask_path= os.path.join(directory, mask_file_name)
+        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.window_channel_id,self.csp.mask_paths,self.csp.window_image_id,self.csp.adjusted_image_path,mask_path))
 
     def handle_closing_event(self, e):
         """

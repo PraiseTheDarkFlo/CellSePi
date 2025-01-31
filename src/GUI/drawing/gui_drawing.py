@@ -100,16 +100,16 @@ class MyQtWindow(QMainWindow):
         if not self.canvas_dummy:
             self.canvas.restore_cell()
 
-    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn):
+    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,mask_path):
         """
         Sets the current selected mask and image into the MyQtWindow, with replacing the canvas with the current parameters.
         """
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                        self.check_shifting, conn, False, False)
+                                        self.check_shifting, conn,mask_path, False, False)
         else:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                        self.check_shifting, conn, self.canvas.draw_mode, self.canvas.delete_mode)
+                                        self.check_shifting, conn,mask_path, self.canvas.draw_mode, self.canvas.delete_mode)
         self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
@@ -174,8 +174,8 @@ class Updater(QObject):
         If the update signal is received, update the window accordingly.
         """
         print("update signal")
-        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
-        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
+        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path = data
+        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn,mask_path)
         self.window.setVisible(True)
         self.window.raise_()
         self.window.activateWindow()
@@ -263,7 +263,7 @@ class DrawingCanvas(QGraphicsView):
         check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
 
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,conn,draw_mode = False,delete_mode = False):
+    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,conn,mask_path,draw_mode = False,delete_mode = False):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -271,6 +271,7 @@ class DrawingCanvas(QGraphicsView):
         self.mask_paths = mask_paths
         self.image_id = image_id
         self.adjusted_image_path = adjusted_image_path
+        self.mask_path = mask_path
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         self.draw_mode = draw_mode
@@ -458,7 +459,22 @@ class DrawingCanvas(QGraphicsView):
         """
         Load the mask and display it on the scene.
         """
+
+        if self.image_id not in self.mask_paths:
+            self.mask_paths[self.image_id] = {}
+
+        if self.bf_channel not in self.mask_paths[self.image_id]:
+            pixmap = QPixmap(self.adjusted_image_path)
+            empty_mask = {
+                "masks": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8),
+                "outlines": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8)
+            }
+            np.save(self.mask_path, empty_mask)
+            self.mask_paths[self.image_id][self.bf_channel] = self.mask_path
+
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
+
+
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = self.mask_data["masks"]

@@ -299,11 +299,6 @@ class GUISegmentation():
             print("Update: ", progress)
             bfc = self.gui.csp.config.get_bf_channel()
             if current_image is not None:
-                if current_image["image_id"] == self.gui.csp.image_id:
-                    if current_image["image_id"] in self.gui.csp.mask_paths and self.segmentation.batch_image_segmentation.segmentation_channel == bfc:
-                        self.gui.drawing_button.disabled = False
-                    else:
-                        self.gui.drawing_button.disabled = True
                 if current_image["image_id"] == self.gui.csp.window_image_id:
                     if self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.window_channel_id:
                         print("test")

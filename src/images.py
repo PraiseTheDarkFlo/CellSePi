@@ -62,7 +62,6 @@ class BatchImageSegmentation(Notifier):
             channels_to_delete.append((image_id, segmentation_channel))
             if image_id == self.gui.csp.image_id:
                 if self.segmentation_channel == segmentation_channel:
-                    self.gui.drawing_button.disabled = True  # disables the button to start the drawing window
                     self.gui.switch_mask.value = False  # sets the mask switch to False because there is no longer a mask
                     self.gui.canvas.container_mask.visible = False  # and sets the mask picture invisible because it is no longer valid
                     self.gui.page.update()
