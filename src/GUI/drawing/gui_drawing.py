@@ -177,6 +177,8 @@ class Updater(QObject):
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path = data
         self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn)
         self.window.setVisible(True)
+        self.window.raise_()
+        self.window.activateWindow()
 
     def handle_close(self,app,running):
         """
