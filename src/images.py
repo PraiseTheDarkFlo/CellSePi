@@ -57,14 +57,14 @@ class BatchImageSegmentation(Notifier):
                     self.masks_backup[image_id] = {}
                     self.masks_backup[image_id][self.segmentation_channel] = None
 
-    def delete_mask(self,path,channels_to_delete,image_id,segmentation_channel):
+    def delete_mask(self, path, channels_to_delete, image_id, segmentation_channel):
         if os.path.exists(path):
             channels_to_delete.append((image_id, segmentation_channel))
             if image_id == self.gui.csp.image_id:
                 if self.segmentation_channel == segmentation_channel:
-                    self.gui.drawing_button.disabled = True #disables the button to start the drawing window
-                    self.gui.switch_mask.value = False #sets the mask switch to False because there is no longer a mask
-                    self.gui.canvas.container_mask.visible = False #and sets the mask picture invisible because it is no longer valid
+                    self.gui.drawing_button.disabled = True  # disables the button to start the drawing window
+                    self.gui.switch_mask.value = False  # sets the mask switch to False because there is no longer a mask
+                    self.gui.canvas.container_mask.visible = False  # and sets the mask picture invisible because it is no longer valid
                     self.gui.page.update()
             if image_id == self.gui.csp.window_image_id:
                if segmentation_channel == self.gui.csp.window_channel_id:
@@ -88,17 +88,16 @@ class BatchImageSegmentation(Notifier):
                             if image_id == self.gui.csp.window_image_id:
                                 if segmentation_channel == self.gui.csp.window_channel_id:
                                     print("test")
-                                    self.gui.queue.put("refresh_mask") #refreshes if the backup is the current selected image and the mask is the same channel
+                                    self.gui.queue.put("refresh_mask")  # refreshes if the backup is the current selected image and the mask is the same channel
                     else:
                         if segmentation_channel in self.gui.csp.mask_paths[image_id]:
                             path = self.gui.csp.mask_paths[image_id][segmentation_channel]
-                            self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
-
-        else: # case where no masks for this bf_channel existed before
+                            self.delete_mask(path, channels_to_delete, image_id, segmentation_channel)
+        else:  # case where no masks for this bf_channel existed before
             for image_id, channels in self.gui.csp.mask_paths.items():
                 for segmentation_channel, path in channels.items():
                     if segmentation_channel == self.segmentation_channel:
-                        self.delete_mask(path,channels_to_delete,image_id,segmentation_channel)
+                        self.delete_mask(path, channels_to_delete, image_id, segmentation_channel)
 
         for image_id, segmentation_channel in channels_to_delete:
             del self.gui.csp.mask_paths[image_id][segmentation_channel]
@@ -117,12 +116,11 @@ class BatchImageSegmentation(Notifier):
     def resume_action(self):
         self.resume_now = True
 
-
     def run(self):
         """
         Applies the segmentation model to every image and stores the resulting masks.
         """
-        if self.num_seg_images == 0: # shouldn't backup again, if it was paused and now resuming
+        if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
             self.backup_masks()
             self.segmentation_channel = self.gui.csp.config.get_bf_channel()
             self.diameter = self.gui.csp.config.get_diameter()
@@ -140,17 +138,17 @@ class BatchImageSegmentation(Notifier):
             self.segmentation.is_resuming()
 
         self._call_start_listeners()
-        image_paths = self.gui.csp.image_paths      #TODO REVIEW FLO: Diese values musst du beim ersten run sichern wie bei backup
+        image_paths = self.gui.csp.image_paths  # TODO REVIEW FLO: Diese values musst du beim ersten run sichern wie bei backup
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
         suffix = self.suffix
 
         segmentation_model = self.gui.csp.model_path
-        device = torch.device(self.device) # converts string to device object
+        device = torch.device(self.device)  # converts string to device object
 
         n_images = len(image_paths)
 
-        io.logger_setup() # configures logging system for Cellpose
+        io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
         start_index = self.num_seg_images
@@ -169,6 +167,15 @@ class BatchImageSegmentation(Notifier):
 
             image_path = image_paths[image_id][segmentation_channel]
             image = imread(image_path)
+
+            # Normalization
+            image = image.astype(np.float32)
+            min_val = np.min(image)
+            max_val = np.max(image)
+            if (max_val - min_val) > 0:
+                image = (image - min_val) / (max_val - min_val)
+            else:
+                image = np.zeros_like(image)
 
             res = model.eval(image, diameter=diameter, channels=[0, 0])
             mask, flow, style = res[:3]
@@ -204,7 +211,6 @@ class BatchImageSegmentation(Notifier):
         # reset variables
         self.num_seg_images = 0
 
-
     def run_parallel(self):
         """
         Applies the segmentation model to every image in parallel and stores the resulting masks.
@@ -236,10 +242,8 @@ class BatchImageSegmentation(Notifier):
         device = self.device
         device = torch.device(device)  # converts string to device object
 
-
         io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
-
 
         start_index = self.num_seg_images
         self.executor = ThreadPoolExecutor(max_workers=8)
@@ -250,7 +254,6 @@ class BatchImageSegmentation(Notifier):
                 iN, image_id, image_paths, segmentation_channel, diameter, suffix, model
             ))
 
-
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -260,7 +263,7 @@ class BatchImageSegmentation(Notifier):
         # reset variables
         self.num_seg_images = 0
 
-    def image_segmentation(self,iN,image_id,image_paths,segmentation_channel,diameter,suffix,model):
+    def image_segmentation(self, iN, image_id, image_paths, segmentation_channel, diameter, suffix, model):
         """
         Applies the segmentation model to a single image.
 
@@ -287,6 +290,15 @@ class BatchImageSegmentation(Notifier):
 
         image_path = image_paths[image_id][segmentation_channel]
         image = imread(image_path)
+
+        # Normalization
+        image = image.astype(np.float32)
+        min_val = np.min(image)
+        max_val = np.max(image)
+        if (max_val - min_val) > 0:
+            image = (image - min_val) / (max_val - min_val)
+        else:
+            image = np.zeros_like(image)
 
         res = model.eval(image, diameter=diameter, channels=[0, 0])
         mask, flow, style = res[:3]
