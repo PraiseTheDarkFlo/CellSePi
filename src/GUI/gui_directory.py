@@ -226,7 +226,8 @@ class DirectoryCard(ft.Card):
         self.gui.start_button.disabled = True
         self.gui.progress_bar_text.value = "Waiting for Input"
         self.gui.progress_bar.value = 0
-        self.gui.page.window.progress_bar = -1
+        if not platform.system() == "Linux":
+            self.gui.page.window.progress_bar = -1
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:

@@ -244,6 +244,7 @@ def open_qt_window(queue,conn):
     if thread is not None and thread.is_alive():
         thread.join(timeout=5)
     print("main window closed")
+    conn.send("close")
     sys.exit(0)
 
 class DrawingCanvas(QGraphicsView):

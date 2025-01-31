@@ -34,6 +34,8 @@ class GUI:
         self.queue = multiprocessing.Queue()
         parent_conn, child_conn = multiprocessing.Pipe()
         self.parent_conn, self.child_conn = parent_conn, child_conn
+        self.cancel_event = None
+        self.closing_event = False
         self.pipe_listener_running = True
         self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
         self.thread.start()
@@ -166,17 +168,26 @@ class GUI:
         self.csp.window_channel_id = self.csp.config.get_bf_channel()
         self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.window_channel_id,self.csp.mask_paths,self.csp.window_image_id,self.csp.adjusted_image_path))
 
-    def handle_closing_event(self,e):
+    def handle_closing_event(self, e):
         """
         Handle the closing event of Flet GUI.
         """
-        if e.data == "close":
+        if e.data == "close" and not self.closing_event:
+            self.closing_event = True
             if self.csp.segmentation_running:
+                self.cancel_event = multiprocessing.Event()
                 self.cancel_segmentation()
+                self.cancel_event.wait()
+                print("cancel wait")
             self.pipe_listener_running = False
             self.queue.put("close")
-            self.page.window.destroy()
-            self.process_drawing_window.join()
+            if self.process_drawing_window:
+                self.process_drawing_window.join(5)
+                if self.process_drawing_window is not None and self.process_drawing_window.is_alive():
+                    self.process_drawing_window.terminate()
+                    self.process_drawing_window.join()
+                self.process_drawing_window = None
+
             print("test5")
             self.child_conn.send("close")
 
@@ -184,8 +195,11 @@ class GUI:
                 self.thread.join()
             self.child_conn.close()
             self.parent_conn.close()
-            #TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
+            # TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
+            # TODO: block here some where until every thing is no longer running
+            self.page.window.destroy()
             print("closing window finished")
+
 
 
     def child_conn_listener(self):
