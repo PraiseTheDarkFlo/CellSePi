@@ -233,6 +233,7 @@ class GUISegmentation():
             """
             progress_bar_text.value = "Ready to Start"
             progress_bar.value = 0
+            self.gui.page.window.progress_bar = -1
             start_button.visible = True
             self.gui.page.run_task(self.gui.directory.check_masks)
             if self.gui.csp.readout_path is not None:
@@ -286,7 +287,8 @@ class GUISegmentation():
             extracted_num = re.search(r'\d+', progress)
             if extracted_num is not None:
                 progress_bar.value = int(extracted_num.group())/100
-
+                self.gui.page.window.progress_bar = progress_bar.value
+            print("Update: ", progress)
             bfc = self.gui.csp.config.get_bf_channel()
             if current_image is not None:
                 if current_image["image_id"] == self.gui.csp.image_id:
@@ -321,11 +323,13 @@ class GUISegmentation():
 
         def start_fl(e):
             progress_bar.value = 0
+            self.gui.page.window.progress_bar = 0
             progress_bar_text.value = "0 %"
             self.gui.page.update()
 
         def complete_fl():
             progress_bar.value = 0
+            self.gui.page.window.progress_bar = -1
             if self.gui.csp.model_path is not None:
                 progress_bar_text.value = "Ready to start"
             else:

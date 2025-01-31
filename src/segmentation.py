@@ -13,6 +13,9 @@ class Segmentation(Notifier):
         self.lif_value= gui.directory.is_lif
         self.device = "cpu"
         self.batch_image_segmentation = BatchImageSegmentation(self, self.gui, self.device)
+        self.batch_image_segmentation.add_start_listener(listener=self.start)
+        self.batch_image_segmentation.add_update_listener(listener=self.update)
+        self.batch_image_segmentation.add_completion_listener(listener=self.finished)
 
     # methods, that communicate a change in the state of the segmentation between GUISegmentation and BatchImageSegmentation
     def to_be_cancelled(self):
@@ -30,6 +33,16 @@ class Segmentation(Notifier):
     def is_resuming(self):
         self._call_resume_listeners()
 
+    def finished(self):
+        self._call_completion_listeners()
+
+    def update(self, progress, current_image):
+        self._call_update_listeners(progress, current_image)
+
+    def start(self):
+        current_percentage = round(self.batch_image_segmentation.num_seg_images / len(self.gui.csp.image_paths) * 100)
+        self._call_update_listeners(str(current_percentage) + " %", None)
+
     def run(self):
         """
         This method starts the segmentation process and manages the different interactions.
@@ -41,21 +54,7 @@ class Segmentation(Notifier):
             self._call_completion_listeners()
             return
 
-        def finished():
-            self._call_completion_listeners()
-
-        def update(progress, current_image):
-            self._call_update_listeners(progress, current_image)
-
-        def start():
-            current_percentage = round(self.batch_image_segmentation.num_seg_images / len(self.gui.csp.image_paths) * 100)
-            self._call_update_listeners(str(current_percentage) + " %", None)
-
         self.gui.csp.segmentation_running = True
-
-        self.batch_image_segmentation.add_start_listener(listener=start)
-        self.batch_image_segmentation.add_update_listener(listener=update)
-        self.batch_image_segmentation.add_completion_listener(listener=finished)
 
         self.batch_image_segmentation.run_parallel() if not self.lif_value else self.batch_image_segmentation.run()
         self.gui.csp.segmentation_running = False
