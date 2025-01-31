@@ -168,9 +168,13 @@ class DirectoryCard(ft.Card):
         Args:
             directory_path (str): the selected directory_path
         """
+
         is_lif = self.is_lif
         is_supported_tif = True
         self.is_supported_lif = True
+        self.gui.start_button.disabled = True
+        self.gui.progress_bar_text.value = "Waiting for Input"
+        self.gui.progress_bar.value = 0
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
@@ -221,6 +225,8 @@ class DirectoryCard(ft.Card):
         self.is_supported_lif = True
         self.gui.start_button.disabled = True
         self.gui.progress_bar_text.value = "Waiting for Input"
+        self.gui.progress_bar.value = 0
+        self.gui.page.window.progress_bar = -1
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
