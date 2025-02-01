@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPus
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
 import sys
 
+from distributed.utils_test import throws
 from matplotlib.pyplot import draw_if_interactive
 
 from ...CellSePi import CellSePi
@@ -185,16 +186,14 @@ class Updater(QObject):
         If the close signal is received, close the process.
         """
         print("test close")
-        self.window.close()
-        self.window.deleteLater()
+        self.window.hide()
         running[0] = False
         app.quit()
         print("handle close finished")
 
     def handle_delete(self,app):
         print("delete signal")
-        self.window.close()
-        self.window.deleteLater()
+        self.window.hide()
         app.quit()
 
     def handle_refresh(self):
@@ -202,6 +201,7 @@ class Updater(QObject):
         if not self.window.canvas_dummy:
             self.window.canvas.store_mask()
             self.window.canvas.load_mask_to_scene()
+
 
 
 def open_qt_window(queue,conn):
@@ -226,6 +226,8 @@ def open_qt_window(queue,conn):
                         updater.delete_signal.emit(app)
                     elif data == "refresh_mask":
                         updater.refresh_signal.emit()
+                    elif data == "close_thread":
+                        break
                     else:
                         updater.update_signal.emit(data, conn)
 
@@ -239,10 +241,12 @@ def open_qt_window(queue,conn):
         thread.start()
         print("before app.exec")
         app.exec_()
-    print("join thread")
-    queue.put("close")
-    if thread is not None and thread.is_alive():
-        thread.join(timeout=5)
+        if running[0]:
+            queue.put("close_thread")
+        if thread is not None and thread.is_alive():
+            thread.join()
+        window.close()
+        window.deleteLater()
     print("main window closed")
     conn.send("close")
     sys.exit(0)

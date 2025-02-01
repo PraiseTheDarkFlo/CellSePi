@@ -196,13 +196,9 @@ class GUI:
                 print("cancel wait")
             self.pipe_listener_running = False
             self.queue.put("close")
-            if self.process_drawing_window:
-                self.process_drawing_window.join(5)
-                if self.process_drawing_window is not None and self.process_drawing_window.is_alive():
-                    self.process_drawing_window.terminate()
-                    self.process_drawing_window.join()
-                self.process_drawing_window = None
-
+            print("test before drawing")
+            if self.process_drawing_window is not None and self.process_drawing_window.is_alive():
+                self.process_drawing_window.join()
             print("test5")
             self.child_conn.send("close")
 
