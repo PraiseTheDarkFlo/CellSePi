@@ -322,6 +322,8 @@ class GUISegmentation():
             self.gui.open_button.visible = False
             progress_bar_text.value = "Reading fluorescence"
             self.gui.directory.disable_path_choosing()
+            model_title.disabled = True
+            model_chooser.disabled = True
             self.gui.page.update()
 
         def start_fl(e):
@@ -340,6 +342,8 @@ class GUISegmentation():
             else:
                 progress_bar_text.value = "Waiting for Input"
             self.gui.directory.enable_path_choosing()
+            model_title.disabled = False
+            model_chooser.disabled = False
             self.gui.page.update()
 
 
