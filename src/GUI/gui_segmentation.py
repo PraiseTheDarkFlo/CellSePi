@@ -99,6 +99,7 @@ class GUISegmentation():
                     progress_bar_text.value = "Ready to Start"
                     start_button.disabled = False
                 model_text.value = e.files[0].name
+                model_text.color = None
                 self.gui.csp.model_path = e.files[0].path
                 self.gui.page.update()
             else:
@@ -136,8 +137,7 @@ class GUISegmentation():
                 pause_button.visible = False
                 cancel_button.visible = False
                 model_title.disabled = False
-                model_title.color = ft.Colors.RED
-                model_title.update()
+                model_text.color = ft.Colors.RED
                 model_chooser.disabled = False
                 fl_button.visible = state_fl_button
                 self.gui.open_button.visible = state_open_button
