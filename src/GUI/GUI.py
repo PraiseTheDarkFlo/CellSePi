@@ -66,6 +66,11 @@ class GUI:
         self.mask=Mask(self.csp)
         self.image_tuning = ImageTuning(self)
         self.progress_ring = ft.ProgressRing(visible=False)
+        self.closing_sheet = ft.CupertinoBottomSheet(
+            content=ft.Column([ft.ProgressRing()],
+                alignment=ft.MainAxisAlignment.CENTER,
+            )
+        )
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
@@ -182,6 +187,7 @@ class GUI:
         """
         if e.data == "close" and not self.closing_event:
             self.closing_event = True
+            self.page.open(self.closing_sheet)
             if self.csp.segmentation_running:
                 self.cancel_event = multiprocessing.Event()
                 self.cancel_segmentation()
