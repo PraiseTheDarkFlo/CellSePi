@@ -349,6 +349,7 @@ class DirectoryCard(ft.Card):
         Load images to gallery in order and with names.
         """
         self.page.run_task(self.check_masks)
+        self.gui.page.update()
 
         src = self.gui.csp.image_paths
         if platform.system() == "Linux":
