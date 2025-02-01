@@ -137,6 +137,22 @@ class DirectoryCard(ft.Card):
         Checks if the picked directory or file exists and if it worked updates everything with the new values.
         """
         if not(e.files is None and e.path is None):
+            self.gui.progress_ring.visible = True
+            self.image_gallery.controls.clear()
+            self.gui.canvas.main_image.content = ft.Image(
+                src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+                fit=ft.ImageFit.SCALE_DOWN)
+            # the window of the image display is cleared of all content
+            self.gui.switch_mask.value = False
+            self.gui.canvas.container_mask.visible = False
+            self.gui.csp.image_id = None
+            self.gui.csp.channel_id = None
+            self.gui.open_button.visible = False
+            self.gui.drawing_button.disabled = True
+            self.gui.start_button.disabled = True
+            self.gui.progress_bar_text.value = "Waiting for Input"
+            self.gui.progress_bar.value = 0
+            self.gui.page.update()
             if self.is_lif:
                 path = e.files[0].path
             else:
@@ -172,9 +188,6 @@ class DirectoryCard(ft.Card):
         is_lif = self.is_lif
         is_supported_tif = True
         self.is_supported_lif = True
-        self.gui.start_button.disabled = True
-        self.gui.progress_bar_text.value = "Waiting for Input"
-        self.gui.progress_bar.value = 0
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
@@ -198,6 +211,7 @@ class DirectoryCard(ft.Card):
                 self.gui.csp.linux_images = {}
                 self.gui.csp.mask_paths = {}
                 self.gui.ready_to_start = False
+                self.gui.progress_ring.visible = False
                 return
             self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
@@ -252,6 +266,7 @@ class DirectoryCard(ft.Card):
                 self.gui.csp.linux_images = {}
                 self.gui.csp.mask_paths = {}
                 self.gui.ready_to_start = False
+                self.gui.progress_ring.visible = False
                 return
             self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
@@ -299,6 +314,7 @@ class DirectoryCard(ft.Card):
             self.gui.page.snack_bar.open = True
             image_paths = {}
             mask_paths = {}
+            self.gui.progress_ring.visible = False
             self.gui.page.update()
         else:
             image_paths, mask_paths = load_directory(working_directory, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
@@ -308,6 +324,7 @@ class DirectoryCard(ft.Card):
                 self.gui.page.snack_bar.open = True
                 self.gui.page.update()
                 self.count_results_txt.color = ft.Colors.RED
+                self.gui.progress_ring.visible = False
                 if not self.is_lif:
                     os.rmdir(self.gui.csp.working_directory)
             elif not is_supported_tif:
@@ -315,6 +332,7 @@ class DirectoryCard(ft.Card):
                 self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
                 self.gui.page.snack_bar.open = True
                 self.count_results_txt.color = ft.Colors.RED
+                self.gui.progress_ring.visible = False
                 self.gui.page.update()
                 image_paths = {}
                 mask_paths = {}
@@ -333,16 +351,6 @@ class DirectoryCard(ft.Card):
         """
         Load images to gallery in order and with names.
         """
-        self.image_gallery.controls.clear()
-        self.gui.canvas.main_image.content = ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
-                                    fit=ft.ImageFit.SCALE_DOWN)
-        # the window of the image display is cleared of all content
-        self.gui.switch_mask.value = False
-        self.gui.canvas.container_mask.visible = False
-        self.gui.csp.image_id = None
-        self.gui.open_button.visible = False
-        self.gui.drawing_button.disabled = True
-        self.gui.page.update()
         self.page.run_task(self.check_masks)
 
         src = self.gui.csp.image_paths
@@ -387,6 +395,8 @@ class DirectoryCard(ft.Card):
             )
 
 
+        self.gui.progress_ring.visible = False
+        self.gui.progress_ring.update()
         self.image_gallery.update()
         self.update_results_text()
 

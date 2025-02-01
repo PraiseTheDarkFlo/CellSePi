@@ -65,6 +65,7 @@ class GUI:
         self.progress_bar_text = progress_bar_text
         self.mask=Mask(self.csp)
         self.image_tuning = ImageTuning(self)
+        self.progress_ring = ft.ProgressRing(visible=False)
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
@@ -115,7 +116,7 @@ class GUI:
                                 [
                                     self.directory,
                                     ft.Card(
-                                        content=ft.Container(self.directory.image_gallery,padding=20),
+                                        content=ft.Stack([ft.Container(self.progress_ring,alignment=ft.alignment.center),ft.Container(self.directory.image_gallery,padding=20)]),
                                         expand=True
                                     ),
                                 ],
