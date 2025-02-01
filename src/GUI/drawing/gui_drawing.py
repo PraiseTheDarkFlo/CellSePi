@@ -109,7 +109,12 @@ class MyQtWindow(QMainWindow):
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                         self.check_shifting, conn,mask_path, False, False)
         else:
-            new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+            if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
+                self.canvas.adjusted_image_path = adjusted_image_path
+                self.canvas.load_image_to_scene()
+                return
+            else:
+                new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                         self.check_shifting, conn,mask_path, self.canvas.draw_mode, self.canvas.delete_mode)
         self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
@@ -161,6 +166,7 @@ class Updater(QObject):
     close_signal = pyqtSignal(object,object) # Signal for close the drawing window
     delete_signal = pyqtSignal(object,) # Signal that the main_image mask got deleted
     refresh_signal = pyqtSignal() # Signal that the main_image mask got deleted
+    color_change_signal = pyqtSignal(object,object)
 
     def __init__(self, window):
         super().__init__()
@@ -168,6 +174,7 @@ class Updater(QObject):
         self.close_signal.connect(self.handle_close)
         self.delete_signal.connect(self.handle_delete)
         self.refresh_signal.connect(self.handle_refresh)
+        self.color_change_signal.connect(self.update_color)
         self.window: MyQtWindow = window
 
     def handle_update(self, data, conn):
@@ -202,6 +209,11 @@ class Updater(QObject):
             self.window.canvas.store_mask()
             self.window.canvas.load_mask_to_scene()
 
+    def update_color(self,mask_color,outline_color):
+        if not self.window.canvas_dummy:
+            self.window.canvas.mask_color = mask_color
+            self.window.canvas.outline_color = outline_color
+            self.window.canvas.load_mask_to_scene()
 
 
 def open_qt_window(queue,conn):
@@ -228,6 +240,9 @@ def open_qt_window(queue,conn):
                         updater.refresh_signal.emit()
                     elif data == "close_thread":
                         break
+                    elif isinstance(data, (tuple, list)) and data[0] == "color_change":
+                        _, mask_color, outline_color = data
+                        updater.color_change_signal.emit(mask_color, outline_color)
                     else:
                         updater.update_signal.emit(data, conn)
 

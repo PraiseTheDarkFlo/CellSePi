@@ -1,6 +1,7 @@
 import flet as ft
 
 from src.CellSePi import CellSePi
+from src.GUI import GUI
 from src.GUI.gui_colors import ColorSelection
 
 
@@ -8,16 +9,17 @@ class Options(ft.Container):
     """
     Class which handles the options in the right up corner in the GUI.
     """
-    def __init__(self, page: ft.Page, csp: CellSePi):
+    def __init__(self, gui: GUI):
         super().__init__()
-        self.page = page
+        self.page = gui.page
+        self.gui = gui
         self.dark_light_text = ft.Text("Light Theme")
         self.dark_light_icon = ft.IconButton(
             icon=ft.Icons.BRIGHTNESS_2_OUTLINED,
             icon_color=None,
             on_click=self.theme_changed,
         )
-        self.color_selection = ColorSelection(csp=csp)
+        self.color_selection = ColorSelection(gui)
         self.menu_button = ft.PopupMenuButton(
             items=self.create_appbar_items(),
             content=ft.Icon(ft.icons.MENU),

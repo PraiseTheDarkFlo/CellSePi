@@ -51,7 +51,7 @@ class GUI:
         self.page.window.min_height = self.page.window.height
         self.page.title = "CellSePi"
         self.canvas = Canvas()
-        self.op = Options(page=self.page,csp=self.csp)
+        self.op = Options(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -171,16 +171,18 @@ class GUI:
                 except Exception as e:
                     print(f"Error while terminating process: {e}")
             self.queue = multiprocessing.Queue()
+            parent_conn, child_conn = multiprocessing.Pipe()
+            self.parent_conn, self.child_conn = parent_conn, child_conn
             self.process_drawing_window = self.start_drawing_window()
         self.csp.window_image_id = self.csp.image_id
-        self.csp.window_channel_id = self.csp.config.get_bf_channel()
+        self.csp.window_bf_channel = self.csp.config.get_bf_channel()
 
         image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
         directory, filename = os.path.split(image_path)
         name, _ = os.path.splitext(filename)
         mask_file_name = f"{name}{self.csp.config.get_mask_suffix()}.npy"
         mask_path= os.path.join(directory, mask_file_name)
-        self.queue.put((self.csp.config.get_mask_color(),self.csp.config.get_outline_color(),self.csp.window_channel_id,self.csp.mask_paths,self.csp.window_image_id,self.csp.adjusted_image_path,mask_path))
+        self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(), self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, mask_path))
 
     def handle_closing_event(self, e):
         """
@@ -227,7 +229,11 @@ class GUI:
                     break
                 else:
                     print(f"Empfangene Daten: {data}")
-                    #TODO: hier mask updaten in Flet
+                    if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
+                        print("update Mask flet")
+                        #TODO: hier mask updaten in Flet
+
+                    #TODO: hier diameter neu berechnen
         try:
             loop.run_until_complete(pipe_listener())
         finally:
