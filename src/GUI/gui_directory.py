@@ -150,9 +150,15 @@ class DirectoryCard(ft.Card):
             self.gui.open_button.visible = False
             self.gui.drawing_button.disabled = True
             self.gui.start_button.disabled = True
+            fluorescence_button.visible = False
             self.gui.progress_bar_text.value = "Waiting for Input"
             self.gui.progress_bar.value = 0
+            self.gui.contrast_slider.disabled = True
+            self.gui.brightness_slider.disabled = True
+            if not platform.system() == "Linux":
+                self.gui.page.window.progress_bar = -1
             self.gui.page.update()
+            self.gui.queue.put("delete_image")
             if self.is_lif:
                 path = e.files[0].path
             else:
@@ -172,10 +178,6 @@ class DirectoryCard(ft.Card):
             else:
                 self.formatted_path.color = None
             self.formatted_path.update()
-            self.gui.contrast_slider.disabled = True
-            self.gui.brightness_slider.disabled = True
-            self.gui.contrast_slider.update()
-            self.gui.brightness_slider.update()
 
     def select_directory(self,directory_path):
         """
@@ -237,11 +239,6 @@ class DirectoryCard(ft.Card):
         is_lif = self.is_lif
         is_supported_tif = True
         self.is_supported_lif = True
-        self.gui.start_button.disabled = True
-        self.gui.progress_bar_text.value = "Waiting for Input"
-        self.gui.progress_bar.value = 0
-        if not platform.system() == "Linux":
-            self.gui.page.window.progress_bar = -1
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
