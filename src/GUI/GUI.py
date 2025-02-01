@@ -69,7 +69,8 @@ class GUI:
         self.closing_sheet = ft.CupertinoBottomSheet(
             content=ft.Column([ft.ProgressRing()],
                 alignment=ft.MainAxisAlignment.CENTER,
-            )
+            ),
+            modal=True,
         )
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
