@@ -83,7 +83,7 @@ class GUI:
         self.auto_image_tuning = AutoImageTuning(self)
         self.auto_brightness_contrast = ft.IconButton(icon=ft.Icons.AUTO_FIX_HIGH,icon_color=ft.Colors.GREY_700,style=ft.ButtonStyle(
                     shape=ft.RoundedRectangleBorder(radius=12),
-                ),on_click=lambda e: self.auto_image_tuning.pressed(e),tooltip="Auto brightness and contrast")
+                ),on_click=lambda e: self.auto_image_tuning.pressed(),tooltip="Auto brightness and contrast")
         self.brightness_icon = ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness")
         self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
         self.diameter_text = ft.Text("125.0", size=14, weight=ft.FontWeight.BOLD,tooltip="Copy to clipboard")
@@ -93,7 +93,8 @@ class GUI:
             padding=8,
             visible=False,
         )
-
+        if self.csp.config.get_auto_button():
+            self.auto_image_tuning.pressed()
 
     def build(self):
         """

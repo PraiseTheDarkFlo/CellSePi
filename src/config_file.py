@@ -33,9 +33,25 @@ def load_config(file_directory):
         try:
             with open(file_directory, 'r') as file:
                 return json.load(file)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, FileNotFoundError):
             time.sleep(0.1)
-    return create_default_config()
+
+    return reset_config(file_directory)
+
+
+def reset_config(file_directory):
+    """
+    Creates a new default config and tries to save it.
+    Returns:
+        create_default_config() (dict)
+    """
+    config = create_default_config()
+    try:
+        with open(file_directory, 'w') as file:
+            json.dump(config, file, indent=4)
+    except Exception as e:
+        print(f"Error while saving config: {e}")
+    return config
 
 def create_default_config():
     """
@@ -66,6 +82,10 @@ def create_default_config():
         "Colors":{
             "mask": "(255, 0, 0)",
             "outline": "(0, 255, 0)",
+        },
+        "States": {
+            "auto_button": False,
+            "lif_slider": True,
         }
     }
 
@@ -420,6 +440,32 @@ class ConfigFile:
             self.save_config()
         else:
             raise ValueError("Color must be an RGB tuple, e.g., (0, 255, 0)")
+    def get_auto_button(self):
+        """
+        Gets the last state of the auto bright-field and contrast button.
+        Returns:
+            bool: The last state of the auto bright-field and contrast button.
+        """
+        return self.config["States"]["auto_button"]
+    def get_lif_slider(self):
+        """
+        Gets the last state of the lif-slider button.
+        Returns:
+            bool: The last state of the lif-slider button (True means lif is active).
+        """
+        return self.config["States"]["lif_slider"]
+    def set_auto_button(self, val:bool):
+        """
+        Sets the state of the auto bright-field and contrast button.
+        """
+        self.config["States"]["auto_button"] = val
+        self.save_config()
+    def set_lif_slider(self, val:bool):
+        """
+        Sets the state of the lif-slider button (True means lif is active).
+        """
+        self.config["States"]["lif_slider"] = val
+        self.save_config()
     #-----------------------------------------------------
     #only for test_config
     def clear_config(self):

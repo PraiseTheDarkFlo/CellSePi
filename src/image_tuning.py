@@ -139,9 +139,10 @@ class AutoImageTuning:
         self.gui = gui
         self.active = False
 
-    def pressed(self,e):
+    def pressed(self):
         if self.active:
             self.active = False
+            self.gui.csp.config.set_auto_button(False)
             self.gui.auto_brightness_contrast.icon_color = ft.Colors.GREY_700
             if self.gui.csp.image_id is not None:
                 self.gui.brightness_slider.disabled = False
@@ -153,6 +154,7 @@ class AutoImageTuning:
                 on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui,True)
         else:
             self.active = True
+            self.gui.csp.config.set_auto_button(True)
             self.gui.auto_brightness_contrast.icon_color= ft.Colors.ORANGE_700
             if self.gui.csp.image_id is not None:
                 self.gui.brightness_slider.disabled = True

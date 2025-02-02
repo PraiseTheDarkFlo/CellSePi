@@ -65,6 +65,16 @@ def test_set_colors(config):
     config.set_outline_color((21,24,96))
     assert config.get_outline_color() == (21,24,96), "The outline_color is not right"
 
+def test_states(config):
+    config.set_auto_button(True)
+    assert config.get_auto_button() == True, "The auto_button is not right"
+    config.set_auto_button(False)
+    assert config.get_auto_button() == False, "The auto_button is not right"
+    config.set_lif_slider(True)
+    assert config.get_lif_slider() == True, "The auto_button is not right"
+    config.set_lif_slider(False)
+    assert config.get_lif_slider() == False, "The auto_button is not right"
+
 def test_attribute_getter(config):
     assert config.get_bf_channel() == create_default_config()["Profiles"]["Lif"]["bf_channel"], "bf_channel is wrong"
     assert config.get_mask_suffix() == create_default_config()["Profiles"]["Lif"]["mask_suffix"], "mask_suffix is wrong"

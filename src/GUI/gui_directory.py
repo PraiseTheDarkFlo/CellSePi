@@ -85,9 +85,13 @@ class DirectoryCard(ft.Card):
         self.count_results_txt = ft.Text(value="Results: 0")
         self.directory_path = ft.Text(weight=ft.FontWeight.BOLD,value='Directory Path')
         self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight=ft.FontWeight.BOLD)
-        self.is_lif = True
+        self.is_lif = self.gui.csp.config.get_lif_slider()
+        if self.is_lif:
+            index = 1
+        else:
+            index = 0
         self.lif_slider = ft.CupertinoSlidingSegmentedButton(
-            selected_index=1,
+            selected_index=index,
             thumb_color=ft.Colors.BLUE_400,
             on_change=self.update_view,
             padding=ft.padding.symmetric(0, 0),
@@ -118,8 +122,8 @@ class DirectoryCard(ft.Card):
         self.content = self.create_directory_container()
         self.output_dir = False
         self.is_supported_lif = True
-        self.files_row.visible = True
-        self.directory_row.visible = False
+        self.files_row.visible = self.is_lif
+        self.directory_row.visible = not self.is_lif
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -442,10 +446,12 @@ class DirectoryCard(ft.Card):
         """
         if int(e.data) == 1:
             self.is_lif = True
+            self.gui.csp.config.set_lif_slider(True)
             self.files_row.visible = True
             self.directory_row.visible = False
         else:
             self.is_lif = False
+            self.gui.csp.config.set_lif_slider(False)
             self.files_row.visible = False
             self.directory_row.visible = True
 
