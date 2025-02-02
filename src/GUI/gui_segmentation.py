@@ -300,7 +300,7 @@ class GUISegmentation():
             bfc = self.gui.csp.config.get_bf_channel()
             if current_image is not None:
                 if current_image["image_id"] == self.gui.csp.window_image_id:
-                    if self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.window_channel_id:
+                    if self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.window_bf_channel:
                         print("test")
                         self.gui.queue.put("refresh_mask")
             self.gui.page.update()
