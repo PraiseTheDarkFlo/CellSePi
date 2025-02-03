@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import os
 
 import numpy as np
@@ -6,40 +7,26 @@ from cellpose.io import imread
 
 def calculate_mask_diameters(mask):
     """
-    Calculates the diameter of each cell in the given mask.
+    Calculates the diameter of each cell in the given mask by assuming circular cells.
 
     Attributes:
         mask: the mask of an image
     Returns:
         list[]: the diameter of each cell in the given mask
     """
-    unique_masks = np.unique(mask)
+    cell_ids = np.unique(mask)
     diameters = []
+    cell_ids = cell_ids[1:]
 
-    for cell_id in unique_masks:
-        if cell_id == 0:
-            continue
-        cell_pixels = np.argwhere(mask == cell_id)
-        y_min, x_min = cell_pixels.min(axis=0)
-        y_max, x_max = cell_pixels.max(axis=0)
-        diameter = np.sqrt((y_max - y_min) ** 2 + (x_max - x_min) ** 2)
-        if diameter is not None:
-            diameters.append(diameter)
-    return diameters
-    #alternative way of calculating the diameter
-    #cell_ids = np.unique(mask)
-    #diameters = []
-    #cell_ids = cell_ids[1:]
-
-    #for cell_id in cell_ids:
-        #cell_mask = mask == cell_id
-        #cell_area = np.sum(cell_mask)
+    for cell_id in cell_ids:
+        cell_mask = mask == cell_id
+        cell_area = np.sum(cell_mask)
 
         # Approximate diameter assuming circular cells
-        #cell_diameter = 2 * np.sqrt(cell_area / np.pi)
-        #diameters.append(cell_diameter)
+        cell_diameter = 2 * np.sqrt(cell_area / np.pi)
+        diameters.append(cell_diameter)
 
-    #return diameters
+    return diameters
 
 class AverageDiameter:
     """
@@ -51,18 +38,25 @@ class AverageDiameter:
     def get_avg_diameter(self):
         """
         This method calculates the average diameter of a cell in all the given images.
+        Returns: The average diameter of all cells rounded to 2 decimal places.
         """
         mask_paths = self.csp.mask_paths
         image_paths = self.csp.image_paths
         segmentation_channel = self.csp.config.get_bf_channel()
         all_diameters = []
 
-        for iN, image_id in enumerate(image_paths):
+        def process_image(image_id):
             mask_path = mask_paths[image_id][segmentation_channel]
             mask_data = np.load(mask_path, allow_pickle=True).item()
             mask = mask_data["masks"]
-            diameters = calculate_mask_diameters(mask)
+            return calculate_mask_diameters(mask)
+
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(process_image, image_paths)
+
+        for diameters in results:
             all_diameters.extend(diameters)
+
         average_diameter = np.mean(all_diameters)
         return round(average_diameter, 2)
 
