@@ -1,4 +1,4 @@
-#TODO REVIEW unused imports
+# TODO REVIEW unused imports
 import asyncio
 import pathlib
 import platform
@@ -6,7 +6,6 @@ import threading
 from cgitb import enable
 from tabnanny import process_tokens
 from threading import Thread
-
 
 import numpy as np
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject, QTimer, QCoreApplication
@@ -33,11 +32,13 @@ class MyQtWindow(QMainWindow):
         canvas_dummy: says if the canvas is a dummy or not.
         tools_widget: Container for tools on the right side.
     """
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Drawing & Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
-        self.check_shifting.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.check_shifting.setStyleSheet(
+            "font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.canvas_dummy = True
 
         self.canvas = QWidget()
@@ -46,7 +47,6 @@ class MyQtWindow(QMainWindow):
         central_widget = QWidget()
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins on all sides
-
 
         self.main_layout.addWidget(self.canvas, stretch=3)
 
@@ -58,31 +58,42 @@ class MyQtWindow(QMainWindow):
 
         # Add title to the tools box
         title = QLabel("Tools")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
+        title.setStyleSheet(
+            "font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
         tools_layout.addWidget(title)
 
         # Add buttons to the tools box
         self.draw_toggle_button = QPushButton("Drawing : OFF")
         self.draw_toggle_button.setCheckable(True)
-        self.draw_toggle_button.setStyleSheet("font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.draw_toggle_button.setStyleSheet(
+            "font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.draw_toggle_button.clicked.connect(self.toggle_draw_mode)
         tools_layout.addWidget(self.draw_toggle_button)
 
         self.delete_toggle_button = QPushButton("Delete Mode: OFF")
         self.delete_toggle_button.setCheckable(True)
-        self.delete_toggle_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.delete_toggle_button.setStyleSheet(
+            "font-size: 16px; color: #000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.delete_toggle_button.clicked.connect(self.toggle_delete_mode)
         tools_layout.addWidget(self.delete_toggle_button)
 
         tools_layout.addWidget(self.check_shifting, alignment=Qt.AlignCenter)
 
         self.restore_button = QPushButton("Restore Deleted Cell")
-        self.restore_button.setStyleSheet("font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.restore_button.setStyleSheet(
+            "font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.restore_button.clicked.connect(self.restore_cell)
         tools_layout.addWidget(self.restore_button)
 
+        self.redo_button = QPushButton("Redo Delete")
+        self.redo_button.setStyleSheet(
+            "font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.redo_button.clicked.connect(self.redo_delete)
+        tools_layout.addWidget(self.redo_button)
+
         self.tools_widget.setLayout(tools_layout)
-        self.tools_widget.setStyleSheet("background-color: #FAFAFA; border-left: 2px solid #E0E0E0;")  # Subtle border and clean background
+        self.tools_widget.setStyleSheet(
+            "background-color: #FAFAFA; border-left: 2px solid #E0E0E0;")  # Subtle border and clean background
         self.tools_widget.setFixedWidth(250)
         self.main_layout.addWidget(self.tools_widget)
 
@@ -101,21 +112,29 @@ class MyQtWindow(QMainWindow):
         if not self.canvas_dummy:
             self.canvas.restore_cell()
 
-    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,mask_path):
+    def redo_delete(self):
+        if not self.canvas_dummy:
+            self.canvas.redo_delete()
+
+    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
+                        mask_path):
         """
-        Sets the current selected mask and image into the MyQtWindow, with replacing the canvas with the current parameters.
+        Sets the current selected mask and image into the MyQtWindow, replacing the canvas with the current parameters.
+        Also updates the window title to include the image_id.
         """
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                        self.check_shifting, conn,mask_path, False, False)
+                                       self.check_shifting, conn, mask_path, False, False)
         else:
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
                 self.canvas.adjusted_image_path = adjusted_image_path
                 self.canvas.load_image_to_scene()
                 return
             else:
-                new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                        self.check_shifting, conn,mask_path, self.canvas.draw_mode, self.canvas.delete_mode)
+                new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id,
+                                           adjusted_image_path,
+                                           self.check_shifting, conn, mask_path, self.canvas.draw_mode,
+                                           self.canvas.delete_mode)
         self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
@@ -123,8 +142,14 @@ class MyQtWindow(QMainWindow):
         self.canvas.update()
         self.main_layout.update()
 
+        # Update the window title with the current image's ID.
         self.setWindowTitle(f"Drawing & Mask Editing - {image_id}")
-        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #Use singleShot to delay the fitInView so that it can update
+
+        # Connect signals to update the state of the restore and redo buttons.
+        self.canvas.restoreAvailabilityChanged.connect(lambda available: self.restore_button.setEnabled(available))
+        self.canvas.redoAvailabilityChanged.connect(lambda available: self.redo_button.setEnabled(available))
+
+        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio))
 
     def toggle_draw_mode(self):
         """
@@ -140,8 +165,8 @@ class MyQtWindow(QMainWindow):
                 self.draw_toggle_button.setText("Drawing : OFF")
             self.canvas.toggle_draw_mode()
 
-    #TODO: review by Jenna: warum prüfst und setzt vorher das isChecked, wenn du gar kein
-    # checkbox-Kästchen verwendest ? Dann ist das ja egal
+    # TODO: review by Jenna: warum prüfst und setzt du vorher das isChecked, wenn du gar kein
+    # checkbox-Kästchen verwendest? Dann ist das ja egal.
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
@@ -162,13 +187,13 @@ class MyQtWindow(QMainWindow):
 
 class Updater(QObject):
     """
-    Handles the signals that he becomes from the queue.
+    Handles the signals that come from the queue.
     """
-    update_signal = pyqtSignal(object,object)  # Signal for new main_image
-    close_signal = pyqtSignal(object,object) # Signal for close the drawing window
-    delete_signal = pyqtSignal(object,) # Signal that the main_image mask got deleted
-    refresh_signal = pyqtSignal() # Signal that the main_image mask got deleted
-    color_change_signal = pyqtSignal(object,object)
+    update_signal = pyqtSignal(object, object)  # Signal for new main_image
+    close_signal = pyqtSignal(object, object)  # Signal to close the drawing window
+    delete_signal = pyqtSignal(object, )  # Signal that the main_image mask got deleted
+    refresh_signal = pyqtSignal()  # Signal that the main_image mask got deleted
+    color_change_signal = pyqtSignal(object, object)
 
     def __init__(self, window):
         super().__init__()
@@ -185,12 +210,13 @@ class Updater(QObject):
         """
         print("update signal")
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path = data
-        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,conn,mask_path)
+        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+                                    conn, mask_path)
         self.window.setVisible(True)
         self.window.raise_()
         self.window.activateWindow()
 
-    def handle_close(self,app,running):
+    def handle_close(self, app, running):
         """
         If the close signal is received, close the process.
         """
@@ -200,7 +226,7 @@ class Updater(QObject):
         app.quit()
         print("handle close finished")
 
-    def handle_delete(self,app):
+    def handle_delete(self, app):
         print("delete signal")
         self.window.hide()
         app.quit()
@@ -211,14 +237,14 @@ class Updater(QObject):
             self.window.canvas.store_mask()
             self.window.canvas.load_mask_to_scene()
 
-    def update_color(self,mask_color,outline_color):
+    def update_color(self, mask_color, outline_color):
         if not self.window.canvas_dummy:
             self.window.canvas.mask_color = mask_color
             self.window.canvas.outline_color = outline_color
             self.window.canvas.load_mask_to_scene()
 
 
-def open_qt_window(queue,conn):
+def open_qt_window(queue, conn):
     app = QApplication(sys.argv)
     running = [True]
     thread = None
@@ -230,6 +256,7 @@ def open_qt_window(queue,conn):
         def background_listener():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+
             async def queue_listener():
                 while running[0]:
                     data = await asyncio.to_thread(queue.get)
@@ -268,10 +295,11 @@ def open_qt_window(queue,conn):
     conn.send("close")
     sys.exit(0)
 
+
 class DrawingCanvas(QGraphicsView):
     """
     Class for displaying and interacting with images (background, mask).
-    Includes delete functionality for cells.
+    Includes delete functionality for cells and supports undo (restore) and redo of cell deletion.
 
     Attributes:
         csp: Object of CellSePi
@@ -280,11 +308,16 @@ class DrawingCanvas(QGraphicsView):
         mask_item: Graphics item for the mask
         background_item: Graphics item for the background image
         delete_mode: Boolean to track if delete mode is enabled
-        cell_history: List to keep track of deleted cells
+        cell_history: List to keep track of deleted cells for restoration (undo)
+        redo_history: List to keep track of restored cells for re-deletion (redo)
         check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
+    # Signals to indicate whether a restore or redo action is available.
+    restoreAvailabilityChanged = pyqtSignal(bool)
+    redoAvailabilityChanged = pyqtSignal(bool)
 
-    def __init__(self,mask_color,outline_color,bf_channel,mask_paths,image_id,adjusted_image_path,check_box,conn,mask_path,draw_mode = False,delete_mode = False):
+    def __init__(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
+                 conn, mask_path, draw_mode=False, delete_mode=False):
         super().__init__()
         self.mask_color = mask_color
         self.outline_color = outline_color
@@ -304,7 +337,8 @@ class DrawingCanvas(QGraphicsView):
         self.mask_item = None
         self.background_item = None
         self.mask_data = None
-        self.cell_history = []  # Track deleted cells for restoration
+        self.cell_history = []  # Track deleted cells for restoration (undo)
+        self.redo_history = []  # Track restored cells for re-deletion (redo)
         self.check_box = check_box
         self.current_path_points = []  # saves all points in the drawing
         self.conn = conn
@@ -317,20 +351,18 @@ class DrawingCanvas(QGraphicsView):
     def toggle_delete_mode(self):
         self.delete_mode = not self.delete_mode
 
-    def set_draw_mode(self,value: bool):
+    def set_draw_mode(self, value: bool):
         self.draw_mode = value
 
-    def set_delete_mode(self,value: bool):
+    def set_delete_mode(self, value: bool):
         self.delete_mode = value
 
     def is_point_within_image(self, point):
-
         """
-            Check if a point is within the boundaries of the image.
+        Check if a point is within the boundaries of the image.
         """
-
         if self.image_array is None:
-            return False  # Kein Bild geladen
+            return False  # No image loaded
         x, y = int(point.x()), int(point.y())
         return 0 <= x < self.image_array.shape[1] and 0 <= y < self.image_array.shape[0]
 
@@ -387,7 +419,7 @@ class DrawingCanvas(QGraphicsView):
         if self.draw_mode and self.drawing:
             self.drawing = False
 
-            # start last point connection
+            # Connect last point to start point
             if self.last_point and self.start_point:
                 line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
                                               self.start_point.x(), self.start_point.y())
@@ -417,14 +449,16 @@ class DrawingCanvas(QGraphicsView):
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
-        # Save current state of the cell for restoration
+        # Save current state of the cell for restoration (undo)
         mask_old = mask.copy()
         outline_old = outline.copy()
         self.cell_history.append((mask_old, outline_old, "complete mask"))
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
 
     def delete_cell(self, cell_id):
         """
         Delete the specified cell by updating the mask data.
+        Also does not clear stored redo history, enabling multiple redo levels.
         """
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
@@ -432,12 +466,12 @@ class DrawingCanvas(QGraphicsView):
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
-        # Save current state of the cell for restoration
+        # Save current state of the cell for restoration (undo)
         mask_old = mask.copy()
         outline_old = outline.copy()
         self.cell_history.append((mask_old, outline_old, cell_id))
 
-        # Update the mask and outline
+        # Update the mask and outline (delete the cell)
         cell_mask = (mask == cell_id).copy()
         cell_outline = (outline == cell_id).copy()
         mask[cell_mask] = 0
@@ -449,38 +483,59 @@ class DrawingCanvas(QGraphicsView):
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
+        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
 
-    #ToDO by Jenna: in dem Fall, dass keine Cellen in der cell_history sind, ist der Print unnötigt, denn
-    # der wird ja nie in der GUI ausgeführt. ALso entweder error banner in der GUI oder gar keinen print machen
-    # vielleicht hier auch eine beschränkung einbauen für das restoren. Im Moment ist es möglich die Zellen unendlich oft
-    # zu storen, selbst wenn cell_history leer ist: Du könntest den Restore button vielleicht ausgrauen, wenn keine Zellen mehr drinn sind
     def restore_cell(self):
         """
-        Restore the most recently deleted cell.
+        Restore the most recently deleted cell (undo the deletion).
+        Also stores the restored cell in a redo history so that the deletion can be re-applied.
         """
+        # ToDO by Jenna: in dem Fall, dass keine Cellen in der cell_history sind, ist der Print unnötigt, denn
+        # der wird ja nie in der GUI ausgeführt. ALso entweder error banner in der GUI oder gar keinen print machen
+        # vielleicht hier auch eine beschränkung einbauen für das restoren. Im Moment ist es möglich die Zellen unendlich oft
+        # zu storen, selbst wenn cell_history leer ist: Du könntest den Restore button vielleicht ausgrauen, wenn keine Zellen mehr drinn sind
         if not self.cell_history:
-            print("No cells to restore.")
+            # No cells to restore; update button state via signal and do nothing.
+            self.restoreAvailabilityChanged.emit(False)
             return
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
 
-        # Restore the most recent cell
+        # Restore the most recent cell (pop from undo stack)
         mask_old, outline_old, cell_id = self.cell_history.pop()
 
         mask = mask_old.copy()
         outline = outline_old.copy()
 
-        # Save the updated mask
+        # Save the updated (restored) mask
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         print(f"Restored cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
+        # Store the restored cell in redo history (so that deletion can be redone)
+        self.redo_history.append((mask_old, outline_old, cell_id))
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
+        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
+
+    def redo_delete(self):
+        """
+        Re-apply the deletion for the most recently restored cell (redo the deletion).
+        """
+        if not self.redo_history:
+            self.redoAvailabilityChanged.emit(False)
+            return
+        # Get the last restored cell info from the redo history
+        mask_old, outline_old, cell_id = self.redo_history.pop()
+        # Re-delete the cell by calling delete_cell
+        self.delete_cell(cell_id)
+        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
+
     def load_mask_to_scene(self):
         """
         Load the mask and display it on the scene.
         """
-
         if self.image_id not in self.mask_paths:
             self.mask_paths[self.image_id] = {}
 
@@ -494,7 +549,6 @@ class DrawingCanvas(QGraphicsView):
             self.mask_paths[self.image_id][self.bf_channel] = self.mask_path
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
-
 
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
 
@@ -542,4 +596,3 @@ class DrawingCanvas(QGraphicsView):
         outline = mask_data["outlines"]
 
         return mask, outline
-
