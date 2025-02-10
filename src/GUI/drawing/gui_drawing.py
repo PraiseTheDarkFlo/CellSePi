@@ -122,6 +122,8 @@ class MyQtWindow(QMainWindow):
         self.canvas = new_canvas
         self.canvas.update()
         self.main_layout.update()
+
+        self.setWindowTitle(f"Drawing & Mask Editing - {image_id}")
         QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #Use singleShot to delay the fitInView so that it can update
 
     def toggle_draw_mode(self):
