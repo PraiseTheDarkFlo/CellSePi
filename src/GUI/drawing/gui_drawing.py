@@ -35,7 +35,7 @@ class MyQtWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Drawing & Mask Editing")
+        self.setWindowTitle("Mask Editing")
         self.check_shifting = QCheckBox("Cell ID shifting")
         self.check_shifting.setStyleSheet(
             "font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
@@ -117,11 +117,13 @@ class MyQtWindow(QMainWindow):
             self.canvas.redo_delete()
 
     def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
-                        mask_path):
+                        mask_path,channel_id,channel_prefix):
         """
         Sets the current selected mask and image into the MyQtWindow, replacing the canvas with the current parameters.
         Also updates the window title to include the image_id.
         """
+        # Update the window title with the current image's ID and channel ID.
+        self.setWindowTitle(f"Mask Editing - {image_id}{channel_prefix}{channel_id}")
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                        self.check_shifting, conn, mask_path, False, False)
@@ -141,9 +143,6 @@ class MyQtWindow(QMainWindow):
         self.canvas = new_canvas
         self.canvas.update()
         self.main_layout.update()
-
-        # Update the window title with the current image's ID.
-        self.setWindowTitle(f"Drawing & Mask Editing - {image_id}")
 
         # Connect signals to update the state of the restore and redo buttons.
         self.canvas.restoreAvailabilityChanged.connect(lambda available: self.restore_button.setEnabled(available))
@@ -209,9 +208,9 @@ class Updater(QObject):
         If the update signal is received, update the window accordingly.
         """
         print("update signal")
-        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path = data
+        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data
         self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                    conn, mask_path)
+                                    conn, mask_path,channel_id,channel_prefix)
         self.window.setVisible(True)
         self.window.raise_()
         self.window.activateWindow()
