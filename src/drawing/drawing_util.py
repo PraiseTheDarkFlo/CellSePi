@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 from PyQt5.QtCore import QPointF
-from shapely.geometry.multipolygon import MultiPolygon
-from shapely.geometry.polygon import Polygon
-
 
 
 def mask_shifting(mask_data,deleted_mask_id:int):
@@ -88,27 +85,11 @@ def bresenham_line(start: QPointF, end: QPointF):
 def fill_polygon_from_outline(outlines, shape):
     polygon_mask = np.zeros(shape, dtype=np.uint8)
 
-    # Shapely-Polygone erstellen und zusammenführen
-    polygons = [Polygon(outline) for outline in outlines if len(outline) >= 3]
-
-    if not polygons:
-        return polygon_mask  # Falls keine gültigen Polygone vorhanden sind
-
-    merged_polygon = polygons[0]
-    for polygon in polygons[1:]:
-        merged_polygon = merged_polygon.union(polygon)  # Vereinigung
-
-    # Falls das Ergebnis eine MultiPolygon-Geometrie ist
-    if isinstance(merged_polygon, MultiPolygon):
-        for poly in merged_polygon.geoms:  # Durch jedes Teilpolygon iterieren
-            points = np.array(list(poly.exterior.coords), dtype=np.int32).reshape((-1, 1, 2))
-            cv2.fillPoly(polygon_mask, [points], 1)
-    else:
-        points = np.array(list(merged_polygon.exterior.coords), dtype=np.int32).reshape((-1, 1, 2))
+    for outline in outlines:
+        points = np.array(outline, dtype=np.int32).reshape((-1, 1, 2))
         cv2.fillPoly(polygon_mask, [points], 1)
 
     return polygon_mask
-
 
 
 def find_border_pixels(mask, outline, cell_id, threshold=1):
@@ -158,3 +139,4 @@ def find_border_pixels(mask, outline, cell_id, threshold=1):
                 border_pixels.append((y,x))  # x, y Koordinaten (Spalte, Zeile)
 
     return border_pixels
+

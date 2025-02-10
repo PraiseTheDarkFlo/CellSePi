@@ -646,13 +646,8 @@ class DrawingCanvas(QGraphicsView):
             for x in range(outline.shape[1]):
                 if outline_cpy[y, x] == free_id:  # Wenn es ein Outline-Punkt ist
                     outline_pixels.append((x, y))
-
-        polygon_mask = fill_polygon_from_outline(outline_pixels,mask.shape)
-        for x, y in polygon_mask:
-            if 0 <= y < mask.shape[0] and 0 <= x < mask.shape[
-                1]:  # Sicherstellen, dass der Index im gültigen Bereich ist
-                if mask[y, x] == 0 and outline[y, x] == 0:
-                    mask[y, x] = free_id  # Setze die Maske an der Position auf free_id
+        polygon_mask = fill_polygon_from_outline([outline_pixels], mask.shape)
+        mask[(polygon_mask == 1) &(mask == 0) & (outline == 0)] = free_id
         border_pixels = find_border_pixels(mask,outline,free_id)
         for y, x in border_pixels:
             if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
