@@ -159,6 +159,7 @@ class DirectoryCard(ft.Card):
             self.gui.progress_bar.value = 0
             self.gui.contrast_slider.disabled = True
             self.gui.brightness_slider.disabled = True
+            self.gui.csp.current_channel_prefix = self.gui.csp.config.get_channel_prefix()
             self.gui.contrast_slider.value = 1
             self.gui.brightness_slider.value = 1
             if not platform.system() == "Linux":
