@@ -7,8 +7,9 @@ from cgitb import enable
 from tabnanny import process_tokens
 from threading import Thread
 
+import cv2
 import numpy as np
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject, QTimer, QCoreApplication
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject, QTimer, QCoreApplication, QPointF
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
@@ -20,7 +21,8 @@ from matplotlib.pyplot import draw_if_interactive
 from ...CellSePi import CellSePi
 import copy
 
-from ...drawing.drawing_util import mask_shifting
+from ...drawing.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
+    find_border_pixels
 
 
 class MyQtWindow(QMainWindow):
@@ -339,7 +341,7 @@ class DrawingCanvas(QGraphicsView):
         self.cell_history = []  # Track deleted cells for restoration (undo)
         self.redo_history = []  # Track restored cells for re-deletion (redo)
         self.check_box = check_box
-        self.current_path_points = []  # saves all points in the drawing
+        self.points = []  # saves all points in the drawing
         self.conn = conn
         self.load_mask_to_scene()
         self.load_image_to_scene()
@@ -377,6 +379,8 @@ class DrawingCanvas(QGraphicsView):
 
                 if self.start_point is None:
                     self.start_point = current_point
+                    self.points = []
+                    self.points.append(current_point)
         elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
@@ -394,23 +398,19 @@ class DrawingCanvas(QGraphicsView):
             if self.is_point_within_image(current_point):
                 x, y = int(current_point.x()), int(current_point.y())
 
-                # drawing in cell
-                if self.image_array[y, x] != 0:
-                    self.drawing = False
-                else:
-                    # after cell continue drawing
-                    if not self.drawing:
-                        self.drawing = True
-                        self.last_point = current_point
-
-                    # draw a line
-                    line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
-                                                  current_point.x(), current_point.y())
-                    r, g, b = self.outline_color
-                    pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
-                    line_item.setPen(pen)
-                    self.scene.addItem(line_item)
+                # after cell continue drawing
+                if not self.drawing:
+                    self.drawing = True
                     self.last_point = current_point
+                # draw a line
+                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                              current_point.x(), current_point.y())
+                r, g, b = self.outline_color
+                pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+                line_item.setPen(pen)
+                self.scene.addItem(line_item)
+                self.last_point = current_point
+                self.points.append(current_point)
             else:
                 self.drawing = False
 
@@ -426,12 +426,14 @@ class DrawingCanvas(QGraphicsView):
                 pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
                 line_item.setPen(pen)
                 self.scene.addItem(line_item)
-
+                self.points.append(line_item)
+            
             # Reset start and last points
             self.start_point = None
             self.last_point = None
 
             self.update()
+            self.update_outlines_from_lineitems()
         else:
             super().mouseReleaseEvent(event)
 
@@ -595,3 +597,71 @@ class DrawingCanvas(QGraphicsView):
         outline = mask_data["outlines"]
 
         return mask, outline
+
+
+    def update_outlines_from_lineitems(self):
+        """
+        - Ermittelt alle Pixelkoordinaten aus den in der Szene vorhandenen QGraphicsLineItems.
+        - Setzt in der npy-Datei (im "outlines"-Array) an diesen Pixelpositionen den Wert 100.
+        - Entfernt anschließend alle QGraphicsLineItems aus der Szene.
+        """
+        # 1. Alle Pixel der QGraphicsLineItems sammeln:
+        line_pixels = set()  # Set vermeiden Duplikate
+        for item in self.scene.items():
+            if isinstance(item, QGraphicsLineItem):
+                line = item.line()  # QLineF-Objekt
+                # Pixelkoordinaten der Linie ermitteln:
+                pixels = bresenham_line(line.p1(), line.p2())
+                line_pixels.update(pixels)
+
+        # 2. npy-Datei laden und die "outlines" an den gefundenen Pixeln auf 100 setzen:
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
+        self.mask_data = np.load(mask_path, allow_pickle=True).item()
+
+        # "masks" und "outlines" laden
+        mask = self.mask_data["masks"]
+        outline = self.mask_data["outlines"]
+
+        # Iteriere über alle ermittelten Pixelkoordinaten
+        print("BEFEHL")
+        free_id = search_free_id(mask, outline)
+        mask_old = mask.copy()
+        outline_old = outline.copy()
+        self.cell_history.append((mask_old, outline_old, free_id))
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
+        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
+        print(free_id)
+        outline_cpy = np.zeros_like(outline)
+        for x, y in line_pixels:
+            # Prüfen, ob (x,y) innerhalb der Array-Grenzen liegt.
+            # Achtung: In numpy entspricht der erste Index der Zeile (y) und der zweite der Spalte (x).
+            if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
+                outline_cpy[y, x] = free_id
+
+                if outline[y, x] == 0 and mask[y, x] == 0:
+                    outline[y, x] = free_id
+        # npy-Datei mit den aktualisierten Daten speichern
+        outline_pixels = []
+        for y in range(outline.shape[0]):
+            for x in range(outline.shape[1]):
+                if outline_cpy[y, x] == free_id:  # Wenn es ein Outline-Punkt ist
+                    outline_pixels.append((x, y))
+
+        polygon_mask = fill_polygon_from_outline(outline_pixels,mask.shape)
+        for x, y in polygon_mask:
+            if 0 <= y < mask.shape[0] and 0 <= x < mask.shape[
+                1]:  # Sicherstellen, dass der Index im gültigen Bereich ist
+                if mask[y, x] == 0 and outline[y, x] == 0:
+                    mask[y, x] = free_id  # Setze die Maske an der Position auf free_id
+        border_pixels = find_border_pixels(mask,outline,free_id)
+        for y, x in border_pixels:
+            if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
+                mask[y, x] = 0
+                outline[y, x] = free_id
+        np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
+        self.load_mask_to_scene()
+        # 3. Alle QGraphicsLineItems aus der Szene entfernen
+        # Wir iterieren über eine Kopie der Liste, da wir Elemente entfernen:
+        for item in list(self.scene.items()):
+            if isinstance(item, QGraphicsLineItem):
+                self.scene.removeItem(item)
