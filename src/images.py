@@ -185,16 +185,19 @@ class BatchImageSegmentation(Notifier):
             new_filename = f"{name}{suffix}.npy"
             new_path = os.path.join(directory, new_filename)
 
+            default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
+
+            backup_path = None
+            if os.path.exists(default_suffix_path):
+                backup_path = default_suffix_path + '.backup'
+                os.rename(default_suffix_path, backup_path)
             # Save the segmentation results directly with the default name first
             io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
-            # Rename the file to the desired name
-            # TODO REVIEW by Flo: umbenennen hat halt nachteil fällt mir gerade ein,
-            #  dass wenn wir segs schon haben diese überschrieben werden ob wohl er anderen namen extra angelegt hat
-            #  maybe vorher schauen ob schon _seg da sind und diese so sichern das diese nicht überschrieben werden?
-            default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
             if os.path.exists(default_suffix_path):
                 os.rename(default_suffix_path, new_path)
+                if backup_path is not None:
+                    os.rename(backup_path, default_suffix_path)
 
             if image_id not in self.gui.csp.mask_paths:
                 self.gui.csp.mask_paths[image_id] = {}
@@ -308,16 +311,19 @@ class BatchImageSegmentation(Notifier):
         new_filename = f"{name}{suffix}.npy"
         new_path = os.path.join(directory, new_filename)
 
+        default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
+
+        backup_path = None
+        if os.path.exists(default_suffix_path):
+            backup_path = default_suffix_path + '.backup'
+            os.rename(default_suffix_path, backup_path)
         # Save the segmentation results directly with the default name first
         io.masks_flows_to_seg([image], [mask], [flow], [image_path])
 
-        # Rename the file to the desired name
-        # TODO REVIEW by Flo: umbennen hat halt nachteil fällt mir gerade ein,
-        #  dass wenn wir segs schon haben diese überschrieben werden ob wohl er anderen namen extra angelegt hat
-        #  maybe vorher schauen ob schon _seg da sind und diese so sichern das diese nicht überschrieben werden?
-        default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
         if os.path.exists(default_suffix_path):
             os.rename(default_suffix_path, new_path)
+            if backup_path is not None:
+                os.rename(backup_path, default_suffix_path)
 
         if image_id not in self.gui.csp.mask_paths:
             self.gui.csp.mask_paths[image_id] = {}
