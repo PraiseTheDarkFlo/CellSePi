@@ -102,6 +102,7 @@ class MyQtWindow(QMainWindow):
         central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
+        #screen layout
         screen = QApplication.primaryScreen()
         screen_geometry = screen.geometry()
         window_geometry = self.geometry()
@@ -118,6 +119,8 @@ class MyQtWindow(QMainWindow):
         if not self.canvas_dummy:
             self.canvas.redo_delete()
 
+    #TODO review by Jenna: nach unserem Standard fehlen hier die Parameter, die übergeben werden
+    # Hier würde ich auch noch weitere inline Kommentare hinzufügen
     def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
                         mask_path,channel_id,channel_prefix):
         """
@@ -150,7 +153,7 @@ class MyQtWindow(QMainWindow):
         self.canvas.restoreAvailabilityChanged.connect(lambda available: self.restore_button.setEnabled(available))
         self.canvas.redoAvailabilityChanged.connect(lambda available: self.redo_button.setEnabled(available))
 
-        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio))
+        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #TODO: hier dazu schreiben, dass das die Größe anpasst
 
     def toggle_draw_mode(self):
         """
@@ -244,7 +247,7 @@ class Updater(QObject):
             self.window.canvas.outline_color = outline_color
             self.window.canvas.load_mask_to_scene()
 
-
+#TODO reviewed by Jenna: Hier würde ich eine Erklärung einfügen, was die Queue für eine Bedeutung/Funktionalität hat
 def open_qt_window(queue, conn):
     app = QApplication(sys.argv)
     running = [True]

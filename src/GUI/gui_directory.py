@@ -185,14 +185,14 @@ class DirectoryCard(ft.Card):
             else:
                 self.formatted_path.color = None
             self.formatted_path.update()
-
+    """
     def select_directory(self,directory_path):
-        """
-        Gets the working directory and copies the images in there.
+        
+       # Gets the working directory and copies the images in there.
 
-        Args:
-            directory_path (str): the selected directory_path
-        """
+        #Args:
+         #   directory_path (str): the selected directory_path
+        
 
         is_lif = self.is_lif
         is_supported_tif = True
@@ -235,7 +235,7 @@ class DirectoryCard(ft.Card):
 
         self.gui.csp.working_directory = working_directory
         self.set_paths(is_supported_tif)
-
+"""
     def select_directory_parallel(self, directory_path):
         """
             Gets the working directory and copies the images in there.
