@@ -233,6 +233,7 @@ class GUI:
                     print(f"Empfangene Daten: {data}")
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
                         print("update Mask flet")
+                        #TODO: zwei mal aufruf sollte kein fehler sein irgendwas von mir @flo
                         #TODO: hier mask updaten in Flet
 
                     #TODO: hier diameter neu berechnen
