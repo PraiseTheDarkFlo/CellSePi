@@ -9,8 +9,16 @@ def on_image_click(img_id,channel_id,gui: GUI,from_auto = False):
     Method that handles what happens when the image is clicked or the main image need an update.
     """
     print("selected img:",img_id)
+    if not from_auto:
+        if gui.csp.image_id is not None and gui.csp.image_id in gui.directory.selected_images_visualise:
+            if gui.csp.channel_id is not None and gui.csp.channel_id in gui.directory.selected_images_visualise[gui.csp.image_id]:
+                gui.directory.selected_images_visualise[gui.csp.image_id][gui.csp.channel_id].visible = False
+                gui.directory.selected_images_visualise[gui.csp.image_id][gui.csp.channel_id].update()
     gui.csp.image_id = img_id
     gui.csp.channel_id = channel_id
+    gui.canvas.main_image_name.value = f"{img_id}{gui.csp.config.get_channel_prefix()}{channel_id}"
+    gui.directory.selected_images_visualise[img_id][channel_id].visible = True
+    gui.directory.selected_images_visualise[img_id][channel_id].update()
     handle_image_switch_mask_on(gui)
     if not from_auto:
         gui.contrast_slider.value = 1.0
@@ -51,10 +59,12 @@ class Canvas:
         self.main_image = ft.Container(ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
                                     fit=ft.ImageFit.SCALE_DOWN),alignment=ft.alignment.center)
 
+        self.main_image_name = ft.Text("",size=20,color=ft.Colors.GREY_700)
+
         self.canvas_card = self.create_canvas_card()
     def create_canvas_card(self):
         return ft.Card(
-            content=ft.Stack([self.main_image, self.container_mask]),
+            content=ft.Stack([self.main_image, self.container_mask,ft.Container(self.main_image_name,alignment=ft.alignment.bottom_left,padding=10,opacity=0.5)]),
             expand=True
         )
 

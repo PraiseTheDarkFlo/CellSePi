@@ -15,7 +15,6 @@ from ..avg_diameter import AverageDiameter
 from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
-
 def format_directory_path(dir_path, max_length=30):
     """
     Format the directory so that it can be shown in the card.
@@ -124,6 +123,7 @@ class DirectoryCard(ft.Card):
         self.is_supported_lif = True
         self.files_row.visible = self.is_lif
         self.directory_row.visible = not self.is_lif
+        self.selected_images_visualise = {}
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -160,6 +160,8 @@ class DirectoryCard(ft.Card):
             self.gui.contrast_slider.disabled = True
             self.gui.brightness_slider.disabled = True
             self.gui.csp.current_channel_prefix = self.gui.csp.config.get_channel_prefix()
+            self.gui.canvas.main_image_name.value = ""
+            self.gui.canvas.main_image_name.update()
             self.gui.contrast_slider.value = 1
             self.gui.brightness_slider.value = 1
             if not platform.system() == "Linux":
@@ -364,17 +366,29 @@ class DirectoryCard(ft.Card):
             self.gui.csp.linux = True
             src = self.gui.csp.linux_images
 
+        self.selected_images_visualise = {}
         # Display groups with side-by-side images for linux
         for image_id in src:
             cur_image_paths = src[image_id]
+            self.selected_images_visualise[image_id] = {}
+            for channel_id in cur_image_paths:
+                self.selected_images_visualise[image_id][channel_id] = ft.Container(
+                    width=150,
+                    height=150,
+                    border=ft.border.all(4, ft.colors.ORANGE_700),
+                    alignment=ft.alignment.center,
+                    visible=False,
+                    padding=5,
+                    margin=4
+                )
             group_row = ft.Row(
                 [
                     ft.Column(
                     [
                             ft.GestureDetector(
-                                content=get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),
+                                content=ft.Container(ft.Stack([get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),self.selected_images_visualise[image_id][channel_id]]),width=158,height=158),
                                 on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
-                                                                                                  self.gui)
+                                                                                                  self.gui),
                             ),
                             ft.Text(channel_id, size=10, text_align="center"),
                         ],
