@@ -108,19 +108,19 @@ def trace_contour(binary_mask):
             break
     return contour
 
-def fill_polygon_from_outline(vertices, mask_shape):
+def fill_polygon_from_outline(contour, mask_shape):
     """
-    Fills the given poly in vertices with scanLine technique.
+    Fills the given poly in contour with scanLine technique.
     """
     mask = np.zeros(mask_shape, dtype=np.uint8)
-    if not vertices:
+    if not contour:
         return mask
 
     edges = []
-    num_vertices = len(vertices)
+    num_vertices = len(contour)
     for i in range(num_vertices):
-        x0, y0 = vertices[i]
-        x1, y1 = vertices[(i + 1) % num_vertices]
+        x0, y0 = contour[i]
+        x1, y1 = contour[(i + 1) % num_vertices]
         if y0 == y1:
             continue  # Skip horizontal edges
         if y0 > y1:

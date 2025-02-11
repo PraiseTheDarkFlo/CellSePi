@@ -10,7 +10,7 @@ from threading import Thread
 import cv2
 import numpy as np
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QThread, QObject, QTimer, QCoreApplication, QPointF
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QCursor
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QGraphicsScene, \
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
 import sys
@@ -436,7 +436,7 @@ class DrawingCanvas(QGraphicsView):
             self.last_point = None
 
             self.update()
-            self.update_outlines_from_lineitems()
+            self.add_drawn_cell()
         else:
             super().mouseReleaseEvent(event)
 
@@ -602,66 +602,58 @@ class DrawingCanvas(QGraphicsView):
         return mask, outline
 
 
-    def update_outlines_from_lineitems(self):
+    def add_drawn_cell(self):
         """
-        - Ermittelt alle Pixelkoordinaten aus den in der Szene vorhandenen QGraphicsLineItems.
-        - Setzt in der npy-Datei (im "outlines"-Array) an diesen Pixelpositionen den Wert 100.
-        - Entfernt anschließend alle QGraphicsLineItems aus der Szene.
+        Adds the new drawn cell to the mask.npy based on current LineItems and updates the scene with the new mask.
         """
-        # 1. Alle Pixel der QGraphicsLineItems sammeln:
-        line_pixels = set()  # Set vermeiden Duplikate
+        #gets the pixels that build the lines of the drawn cell
+        line_pixels = set()
         for item in self.scene.items():
             if isinstance(item, QGraphicsLineItem):
-                line = item.line()  # QLineF-Objekt
-                # Pixelkoordinaten der Linie ermitteln:
-                pixels = bresenham_line(line.p1(), line.p2())
+                line = item.line()
+                pixels = bresenham_line(line.p1(), line.p2()) #Calculates the pixels along the line
                 line_pixels.update(pixels)
 
-        # 2. npy-Datei laden und die "outlines" an den gefundenen Pixeln auf 100 setzen:
+        #get the current mask and outline npy arrays
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
-
-        # "masks" und "outlines" laden
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
-        # Iteriere über alle ermittelten Pixelkoordinaten
-        print("BEFEHL")
-        free_id = search_free_id(mask, outline)
+        free_id = search_free_id(mask, outline) #search for the next free id in mask and outline
+        print(free_id)
+
+        #Backup for undo button
         mask_old = mask.copy()
         outline_old = outline.copy()
         self.cell_history.append((mask_old, outline_old, free_id))
         self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
         self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
-        print(free_id)
-        outline_cpy = np.zeros_like(outline)
-        for x, y in line_pixels:
-            # Prüfen, ob (x,y) innerhalb der Array-Grenzen liegt.
-            # Achtung: In numpy entspricht der erste Index der Zeile (y) und der zweite der Spalte (x).
-            if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
-                outline_cpy[y, x] = free_id
 
+        #add the outline of the new mask (only the parts which not overlap with already existing cells) to outline npy array and fill the complete outline to new_cell_outline to calculate inner pixels
+        new_cell_outline = np.zeros_like(outline, dtype=np.uint8)
+        for x, y in line_pixels:
+            if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
+                new_cell_outline[y, x] = 1
                 if outline[y, x] == 0 and mask[y, x] == 0:
                     outline[y, x] = free_id
-        outline_pixels = []
-        for y in range(outline.shape[0]):
-            for x in range(outline.shape[1]):
-                if outline_cpy[y, x] == free_id:
-                    outline_pixels.append((x, y))
-        binary_mask = np.zeros_like(outline_cpy, dtype=np.uint8)
-        for x, y in outline_pixels:
-            binary_mask[y, x] = 1
-        contour = trace_contour(binary_mask)
-        polygon_mask = fill_polygon_from_outline(contour, mask.shape)
-        mask[(polygon_mask == 1) &(mask == 0) & (outline == 0)] = free_id
-        border_pixels = find_border_pixels(mask,outline,free_id)
-        for y, x in border_pixels:
+
+        #Traces the outline of the new cell and fills the mask based on the outline
+        contour = trace_contour(new_cell_outline)
+        new_mask = fill_polygon_from_outline(contour, mask.shape) #gets the inner pixels of the new cell
+        mask[(new_mask == 1) &(mask == 0) & (outline == 0)] = free_id #adds them to the npy if they not overlap with the already existing cells
+
+        #search if inline pixels (mask) have no outline, if the pixel have no outline neighbor make them to outline and delete them from mask
+        new_border_pixels = find_border_pixels(mask,outline,free_id)
+        for y, x in new_border_pixels:
             if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
                 mask[y, x] = 0
                 outline[y, x] = free_id
+
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         self.load_mask_to_scene()
         self.conn.send("update_mask")
+        #Delete the LineItems (the lines that the user have drawn), because the cells now exists through the mask
         for item in list(self.scene.items()):
             if isinstance(item, QGraphicsLineItem):
                 self.scene.removeItem(item)
