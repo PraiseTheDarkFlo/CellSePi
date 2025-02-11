@@ -67,7 +67,7 @@ class BatchImageSegmentation(Notifier):
                     self.gui.page.update()
             if image_id == self.gui.csp.window_image_id:
                if segmentation_channel == self.gui.csp.window_bf_channel:
-                   self.gui.queue.put("delete_image")  # sends the info that the current image is deleted to the drawing window
+                   self.gui.queue.put("delete_mask")  # sends the info that the current image is deleted to the drawing window
             os.remove(path)
 
     def restore_backup(self):

@@ -119,29 +119,45 @@ class MyQtWindow(QMainWindow):
         if not self.canvas_dummy:
             self.canvas.redo_delete()
 
-    #TODO review by Jenna: nach unserem Standard fehlen hier die Parameter, die übergeben werden
-    # Hier würde ich auch noch weitere inline Kommentare hinzufügen
     def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
                         mask_path,channel_id,channel_prefix):
         """
         Sets the current selected mask and image into the MyQtWindow, replacing the canvas with the current parameters.
         Also updates the window title to include the image_id.
+
+        Arguments:
+            mask_color: The color to use for the mask
+            outline_color: The color to use for the outline
+            bf_channel: The current bf channel
+            mask_paths: The paths to each masks
+            image_id: The id of the current selected image
+            adjusted_image_path: The path to the adjusted image, which is the current image with the current adjustments like brightness and contrast adjustments
+            conn: The pipeline connection to the Flet window to communicate with the main window
+            mask_path: The path to the current selected mask
+            channel_id: The id of the current selected channel
+            channel_prefix: The prefix of the channel
         """
         # Update the window title with the current image's ID and channel ID.
         self.setWindowTitle(f"Mask Editing - {image_id}{channel_prefix}{channel_id}")
+
+        #if canvas is only a dummy create a new_canvas
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                        self.check_shifting, conn, mask_path, False, False)
         else:
+            #check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
                 self.canvas.adjusted_image_path = adjusted_image_path
                 self.canvas.load_image_to_scene()
-                return
+                return  #return because no new canvas, so no need for replacing the old canvas with the new and update the connections
             else:
+                #new mask and image so need for new_canvas
                 new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id,
                                            adjusted_image_path,
                                            self.check_shifting, conn, mask_path, self.canvas.draw_mode,
                                            self.canvas.delete_mode)
+
+        #replace the old canvas with the new one and update the window
         self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
@@ -153,7 +169,7 @@ class MyQtWindow(QMainWindow):
         self.canvas.restoreAvailabilityChanged.connect(lambda available: self.restore_button.setEnabled(available))
         self.canvas.redoAvailabilityChanged.connect(lambda available: self.redo_button.setEnabled(available))
 
-        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #TODO: hier dazu schreiben, dass das die Größe anpasst
+        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #sets the right aspect ratio to the canvas
 
     def toggle_draw_mode(self):
         """
@@ -231,24 +247,46 @@ class Updater(QObject):
         print("handle close finished")
 
     def handle_delete(self, app):
+        """
+        If the delete signal is received, closes the process, but lets it restart invisible.
+        """
         print("delete signal")
         self.window.hide()
         app.quit()
 
     def handle_refresh(self):
+        """
+        If the refresh signal is received, refreshes the mask in canvas from disc.
+        """
         print("refresh signal")
         if not self.window.canvas_dummy:
             self.window.canvas.store_mask()
             self.window.canvas.load_mask_to_scene()
 
     def update_color(self, mask_color, outline_color):
+        """
+        If the color change signal is received, update the color of mask and outline.
+        """
         if not self.window.canvas_dummy:
             self.window.canvas.mask_color = mask_color
             self.window.canvas.outline_color = outline_color
             self.window.canvas.load_mask_to_scene()
 
-#TODO reviewed by Jenna: Hier würde ich eine Erklärung einfügen, was die Queue für eine Bedeutung/Funktionalität hat
 def open_qt_window(queue, conn):
+    """
+    Opens the Qt window invisibly and updates it based on signals received through the queue (e.g., close, update, color change, refresh).
+
+    Arguments:
+        queue: The connection to the main application, which sends information to the Qt window.
+            - mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix: Makes the window visible or updates the canvas image if already visible.
+            - "close": Closes the Qt window.
+            - "delete_mask": Closes the Qt window, because the mask got deleted.
+            - "refresh_mask": Refreshes the current mask from disk.
+            - "color_change", mask_color, outline_color: Changes the mask and outline color.
+        conn: A communication pipeline to the main application for sending information to the main window.
+            - "update_mask": Updates the current mask from disk in the main window.
+            - "close": Closes the pipeline listener on the main window side.
+    """
     app = QApplication(sys.argv)
     running = [True]
     thread = None
@@ -267,7 +305,7 @@ def open_qt_window(queue, conn):
                     if data == "close":
                         updater.close_signal.emit(app, running)
                         break
-                    elif data == "delete_image":
+                    elif data == "delete_mask":
                         updater.delete_signal.emit(app)
                     elif data == "refresh_mask":
                         updater.refresh_signal.emit()

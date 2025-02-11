@@ -165,7 +165,7 @@ class DirectoryCard(ft.Card):
             if not platform.system() == "Linux":
                 self.gui.page.window.progress_bar = -1
             self.gui.page.update()
-            self.gui.queue.put("delete_image")
+            self.gui.queue.put("delete_mask")
             if self.is_lif:
                 path = e.files[0].path
             else:
