@@ -611,6 +611,7 @@ class DrawingCanvas(QGraphicsView):
         if self.mask_item:
             self.scene.removeItem(self.mask_item)
         self.mask_item = self.scene.addPixmap(pixmap)
+        self.mask_item.setTransformationMode(Qt.SmoothTransformation)
         self.mask_item.setZValue(1)
 
         self.scene.setSceneRect(0, 0, width, height)

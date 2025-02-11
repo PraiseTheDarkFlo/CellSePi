@@ -179,7 +179,7 @@ class GUI:
         self.csp.window_bf_channel = self.csp.config.get_bf_channel()
         self.csp.window_channel_id = self.csp.channel_id
 
-        image_path = self.csp.image_paths[self.csp.image_id][self.csp.channel_id]
+        image_path = self.csp.image_paths[self.csp.image_id][self.csp.window_bf_channel]
         directory, filename = os.path.split(image_path)
         name, _ = os.path.splitext(filename)
         mask_file_name = f"{name}{self.csp.config.get_mask_suffix()}.npy"
