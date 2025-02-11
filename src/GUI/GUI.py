@@ -233,6 +233,7 @@ class GUI:
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
                         print("update Mask flet")
                         #TODO: bzw. maske muss auch neu geladen werden wenn nicht aktiviert und nicht main image muss im hintergrund bild neu geladen werden also eigentlich aus dieser if raus
+                        #bzw zwei methoden eins für aktiv picture dass gleich neu gleaden wird und eine für wenn bild nicht aktiv muss trotzdem neu generiert werden.
                         #TODO: hier mask updaten in Flet
 
                     #TODO: hier diameter neu berechnen
