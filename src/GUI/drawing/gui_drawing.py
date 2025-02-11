@@ -22,7 +22,7 @@ from ...CellSePi import CellSePi
 import copy
 
 from ...drawing.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
-    find_border_pixels
+    find_border_pixels, trace_contour
 
 
 class MyQtWindow(QMainWindow):
@@ -640,13 +640,16 @@ class DrawingCanvas(QGraphicsView):
 
                 if outline[y, x] == 0 and mask[y, x] == 0:
                     outline[y, x] = free_id
-        # npy-Datei mit den aktualisierten Daten speichern
         outline_pixels = []
         for y in range(outline.shape[0]):
             for x in range(outline.shape[1]):
-                if outline_cpy[y, x] == free_id:  # Wenn es ein Outline-Punkt ist
+                if outline_cpy[y, x] == free_id:
                     outline_pixels.append((x, y))
-        polygon_mask = fill_polygon_from_outline([outline_pixels], mask.shape)
+        binary_mask = np.zeros_like(outline_cpy, dtype=np.uint8)
+        for x, y in outline_pixels:
+            binary_mask[y, x] = 1
+        contour = trace_contour(binary_mask)
+        polygon_mask = fill_polygon_from_outline(contour, mask.shape)
         mask[(polygon_mask == 1) &(mask == 0) & (outline == 0)] = free_id
         border_pixels = find_border_pixels(mask,outline,free_id)
         for y, x in border_pixels:
@@ -655,8 +658,7 @@ class DrawingCanvas(QGraphicsView):
                 outline[y, x] = free_id
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         self.load_mask_to_scene()
-        # 3. Alle QGraphicsLineItems aus der Szene entfernen
-        # Wir iterieren über eine Kopie der Liste, da wir Elemente entfernen:
+        self.conn.send("update_mask")
         for item in list(self.scene.items()):
             if isinstance(item, QGraphicsLineItem):
                 self.scene.removeItem(item)

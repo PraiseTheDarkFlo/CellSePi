@@ -82,15 +82,85 @@ def bresenham_line(start: QPointF, end: QPointF):
     return pixels
 
 
-def fill_polygon_from_outline(outlines, shape):
-    polygon_mask = np.zeros(shape, dtype=np.uint8)
+def trace_contour(binary_mask):
+    y_indices, x_indices = np.where(binary_mask)
+    start_idx = np.lexsort((x_indices, y_indices))[0]
+    start_x, start_y = x_indices[start_idx], y_indices[start_idx]
 
-    for outline in outlines:
-        points = np.array(outline, dtype=np.int32).reshape((-1, 1, 2))
-        cv2.fillPoly(polygon_mask, [points], 1)
+    directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+    contour = []
+    current = (start_x, start_y)
+    prev = (start_x - 1, start_y)
 
-    return polygon_mask
+    while True:
+        contour.append(current)
+        dir_idx = directions.index((prev[0] - current[0], prev[1] - current[1]))
+        for i in range(8):
+            next_dir = (dir_idx + 1 + i) % 8
+            dx, dy = directions[next_dir]
+            nx, ny = current[0] + dx, current[1] + dy
+            if 0 <= ny < binary_mask.shape[0] and 0 <= nx < binary_mask.shape[1]:
+                if binary_mask[ny, nx]:
+                    prev = current
+                    current = (nx, ny)
+                    break
+        if current == (start_x, start_y):
+            break
+    return contour
 
+def fill_polygon_from_outline(vertices, mask_shape):
+    """
+    Fills the given poly in vertices with scanLine technique.
+    """
+    mask = np.zeros(mask_shape, dtype=np.uint8)
+    if not vertices:
+        return mask
+
+    edges = []
+    num_vertices = len(vertices)
+    for i in range(num_vertices):
+        x0, y0 = vertices[i]
+        x1, y1 = vertices[(i + 1) % num_vertices]
+        if y0 == y1:
+            continue  # Skip horizontal edges
+        if y0 > y1:
+            x0, y0, x1, y1 = x1, y1, x0, y0  # Ensure y0 < y1
+        slope = (x1 - x0) / (y1 - y0) if (y1 - y0) != 0 else 0
+        edges.append((y0, y1, x0, slope))
+
+    if not edges:
+        return mask
+
+    global_edge_table = sorted(edges, key=lambda e: (e[0], e[2]))
+    scan_line = min(e[0] for e in global_edge_table)
+    active_edges = []
+
+    while global_edge_table or active_edges:
+        # Add edges starting at the current scan line
+        while global_edge_table and global_edge_table[0][0] == scan_line:
+            e = global_edge_table.pop(0)
+            active_edges.append([e[1], e[2], e[3]])
+
+        active_edges.sort(key=lambda e: e[1])
+
+        # Fill between pairs of edges
+        for i in range(0, len(active_edges), 2):
+            if i + 1 >= len(active_edges):
+                break
+            e1 = active_edges[i]
+            e2 = active_edges[i + 1]
+            x_start = int(np.ceil(e1[1]))
+            x_end = int(np.floor(e2[1]))
+            for x in range(x_start, x_end + 1):
+                if 0 <= x < mask_shape[1] and 0 <= scan_line < mask_shape[0]:
+                    mask[scan_line, x] = 1
+
+        scan_line += 1
+        active_edges = [e for e in active_edges if e[0] > scan_line]
+        for e in active_edges:
+            e[1] += e[2]
+
+    return mask
 
 def find_border_pixels(mask, outline, cell_id, threshold=1):
     """
