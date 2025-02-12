@@ -160,8 +160,6 @@ class DirectoryCard(ft.Card):
             self.gui.contrast_slider.disabled = True
             self.gui.brightness_slider.disabled = True
             self.gui.csp.current_channel_prefix = self.gui.csp.config.get_channel_prefix()
-            self.gui.canvas.main_image_name.value = ""
-            self.gui.canvas.main_image_name.update()
             self.gui.contrast_slider.value = 1
             self.gui.brightness_slider.value = 1
             if not platform.system() == "Linux":
