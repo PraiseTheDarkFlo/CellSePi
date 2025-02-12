@@ -18,7 +18,7 @@ import sys
 from distributed.utils_test import throws
 from matplotlib.pyplot import draw_if_interactive
 
-from ...CellSePi import CellSePi
+from src.CellSePi import CellSePi
 import copy
 
 from ...drawing.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
@@ -361,6 +361,7 @@ class DrawingCanvas(QGraphicsView):
     def __init__(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
                  conn, mask_path, draw_mode=False, delete_mode=False):
         super().__init__()
+
         self.mask_color = mask_color
         self.outline_color = outline_color
         self.bf_channel = bf_channel
@@ -386,6 +387,8 @@ class DrawingCanvas(QGraphicsView):
         self.conn = conn
         self.load_mask_to_scene()
         self.load_image_to_scene()
+
+        self.mask_update_queue = asyncio.Queue()
 
     def toggle_draw_mode(self):
         self.draw_mode = not self.draw_mode
@@ -502,7 +505,9 @@ class DrawingCanvas(QGraphicsView):
         Delete the specified cell by updating the mask data.
         Also does not clear stored redo history, enabling multiple redo levels.
         """
+
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
+        print(f"While deleting image:{self.image_id} and bfc:{self.bf_channel} in path:{mask_path}")
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
 
         mask = self.mask_data["masks"]
@@ -522,11 +527,14 @@ class DrawingCanvas(QGraphicsView):
             mask_shifting(self.mask_data, cell_id)
         # Save the updated mask
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
+        print(f"path beim  deleten: {mask_path}")
+
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
         self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
         self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
+
 
     def restore_cell(self):
         """

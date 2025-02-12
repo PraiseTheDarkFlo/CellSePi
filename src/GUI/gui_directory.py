@@ -185,57 +185,7 @@ class DirectoryCard(ft.Card):
             else:
                 self.formatted_path.color = None
             self.formatted_path.update()
-    """
-    def select_directory(self,directory_path):
-        
-       # Gets the working directory and copies the images in there.
 
-        #Args:
-         #   directory_path (str): the selected directory_path
-        
-
-        is_lif = self.is_lif
-        is_supported_tif = True
-        self.is_supported_lif = True
-        path = pathlib.Path(directory_path)
-        # Lif Case
-        if is_lif:
-            self.output_dir = False
-            working_directory = path.parent / "output/"
-            os.makedirs(working_directory, exist_ok=True)
-            if path.suffix.lower() == ".lif":
-                # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
-                extract_from_lif_file(lif_path=path, target_dir=working_directory,channel_prefix=self.gui.csp.config.get_channel_prefix())
-            else:
-                self.is_supported_lif = False
-
-        # Tiff Case
-        else:
-            if path.name == "output":
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
-                self.gui.page.snack_bar.open = True
-                self.output_dir = True
-                self.gui.page.update()
-                self.gui.csp.image_paths = {}
-                self.gui.csp.linux_images = {}
-                self.gui.csp.mask_paths = {}
-                self.gui.ready_to_start = False
-                self.gui.progress_ring.visible = False
-                return
-            self.output_dir = False
-            # Copy .tif, .tiff and .npy files into subdirectory
-            working_directory = path / "output/"
-            os.makedirs(working_directory, exist_ok=True)
-            copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
-
-            #converting the 16 bit images in 8 bit
-            for path in working_directory.iterdir():
-                converted = self.convert_tiffs_to_8_bit(path)
-                is_supported_tif = is_supported_tif and converted
-
-        self.gui.csp.working_directory = working_directory
-        self.set_paths(is_supported_tif)
-"""
     def select_directory_parallel(self, directory_path):
         """
             Gets the working directory and copies the images in there.
@@ -355,7 +305,9 @@ class DirectoryCard(ft.Card):
         """
         Load images to gallery in order and with names.
         """
+
         self.page.run_task(self.check_masks)
+
         self.gui.page.update()
 
         src = self.gui.csp.image_paths
@@ -388,7 +340,7 @@ class DirectoryCard(ft.Card):
                                 on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
                                                                                                   self.gui),
                             ),
-                            ft.Text(channel_id, size=10, text_align="center"),
+                            ft.Text(channel_id, size=10, text_align=ft.TextAlign.CENTER),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,

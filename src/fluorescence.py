@@ -1,4 +1,4 @@
-from . import images
+import images
 import threading
 import flet as ft
 from src.notifier import Notifier
