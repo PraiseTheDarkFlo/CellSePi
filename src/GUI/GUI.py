@@ -18,7 +18,7 @@ from src.mask import Mask
 from .gui_mask import error_banner,handle_image_switch_mask_on, handle_mask_update
 from ..avg_diameter import AverageDiameter
 from ..image_tuning import ImageTuning, AutoImageTuning
-#from .gui_test_environment import Testing
+from .gui_test_environment import Testing
 
 
 
@@ -53,7 +53,7 @@ class GUI:
         self.page.title = "CellSePi"
         self.canvas = Canvas()
         self.op = Options(self)
-        #self.test_environment=Testing(self)
+        self.test_environment=Testing(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -131,7 +131,7 @@ class GUI:
                                 ],
                                 expand=True,
                             ),
-                            ft.Column([self.op,]),#self.test_environment]),
+                            ft.Column([self.op,self.test_environment]),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,
