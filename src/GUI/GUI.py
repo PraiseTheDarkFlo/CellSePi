@@ -15,9 +15,10 @@ from .gui_config import GUIConfig
 from .gui_directory import DirectoryCard, copy_to_clipboard
 from src.CellSePi import CellSePi
 from src.mask import Mask
-from .gui_mask import error_banner,handle_image_switch_mask_on
+from .gui_mask import error_banner,handle_image_switch_mask_on, handle_mask_update
 from ..avg_diameter import AverageDiameter
 from ..image_tuning import ImageTuning, AutoImageTuning
+from .gui_test_environment import Testing
 
 
 
@@ -52,6 +53,7 @@ class GUI:
         self.page.title = "CellSePi"
         self.canvas = Canvas()
         self.op = Options(self)
+        self.test_environment=Testing(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -128,7 +130,8 @@ class GUI:
                                     ),
                                 ],
                                 expand=True,
-                            ), self.op,
+                            ),
+                            ft.Column([self.op,self.test_environment]),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,
@@ -236,8 +239,13 @@ class GUI:
                 if data == "close":
                     break
                 else:
+                    #if data is not closed and the window remains open: the edited image gets updated in the flet canvas
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
                         print("update Mask flet")
+                        #self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]= r"C:\Users\Jenna\Studium\FS5\data\data\output\Series003c2_seg.npy"
+                        handle_mask_update(self)
+
+                        self.page.update()
                         #TODO: bzw. maske muss auch neu geladen werden wenn nicht aktiviert und nicht main image muss im hintergrund bild neu geladen werden also eigentlich aus dieser if raus
                         #bzw zwei methoden eins für aktiv picture dass gleich neu gleaden wird und eine für wenn bild nicht aktiv muss trotzdem neu generiert werden, also maybe dann speicher reseten oder so?
                         #TODO: hier mask updaten in Flet

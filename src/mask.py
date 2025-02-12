@@ -2,13 +2,14 @@
 import os.path
 
 from src.CellSePi import CellSePi
-import flet as ft
-import flet.canvas as fc
+
 import numpy as np
-import pathlib
-import platform
+from pathlib import Path
+
 from PIL import Image
 from collections import defaultdict
+from io import BytesIO
+import base64
 
 
 class Mask:
@@ -32,27 +33,20 @@ class Mask:
         """
         print ("Display Mask")
         #iterate over the processed data to load the mask images for the current image
-        if self.csp.image_id in self.csp.mask_paths:
-
-            # if operating system is Windows set the pathLib to Windows path
-            current_path = pathlib.PosixPath
-            if platform.system() == "Windows":
-                pathlib.PosixPath=pathlib.WindowsPath
+        image_id = self.csp.image_id
+        bfc= self.csp.config.get_bf_channel()
+        if image_id in self.csp.mask_paths:
 
             #load the npy file and convert it to directory
-            mask_data = np.load(self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()], allow_pickle=True).item()
+            mask_data = np.load(Path(self.csp.mask_paths[image_id ][bfc]), allow_pickle=True).item()
 
             #extract the mask data and the outline of the cell
             mask= mask_data["masks"]
             outline = mask_data["outlines"]
             self.convert_npy_to_canvas(mask,outline)
 
-            #convert the Path back to normal
-            pathlib.PosixPath=current_path
-
-
         else:
-            print(f"{self.csp.image_id} is not in mask paths")
+            print(f"{image_id } is not in mask paths")
 
 
     def convert_npy_to_canvas(self,mask, outline):
@@ -63,6 +57,8 @@ class Mask:
             mask= the mask data stored in the numpy directory
             outline= the outline data stored in the numpy directory
         """
+        buffer= BytesIO()
+
 
         image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r,g,b = self.csp.config.get_mask_color()
@@ -72,16 +68,18 @@ class Mask:
         im= Image.fromarray(image_mask).convert("RGBA")
         im.resize(size=(700,500))
 
+        #saves the image as a image(base64)
+        im.save(buffer, format="PNG")
+        buffer.seek(0)
+        image_base_64= base64.b64encode(buffer.getvalue()).decode('utf-8')
+
         #create the output path independent of operating system
         brightfield_channel=self.csp.config.get_bf_channel()
-        suffix=self.csp.config.get_channel_prefix()
-        directory = os.path.dirname(self.csp.mask_paths[self.csp.image_id][brightfield_channel])
-        file_path= os.sep.join([directory, f"mask_{self.csp.image_id}{suffix}{brightfield_channel}{self.csp.config.get_mask_suffix()}.png"])
-        im.save(file_path,"png")
-        print (f"image is saved in {file_path}")
+        image_id=self.csp.image_id
 
         #saves the created output image.
-        self.mask_outputs[self.csp.image_id][brightfield_channel]=file_path
+        self.mask_outputs[image_id][brightfield_channel]=image_base_64
+
 
 
 
