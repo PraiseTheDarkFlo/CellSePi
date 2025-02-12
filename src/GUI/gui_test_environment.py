@@ -45,7 +45,7 @@ class Testing(ft.Container):
         self.pre_trained=None
         self.diameter=self.gui.csp.config.get_diameter()
         self.directory= r"...\CellSePi\models"
-        self.weight=1e-4
+        self.weight=1e-4 #standard value for the weight
 
         self.color = ft.colors.BLUE_400
 
@@ -190,10 +190,10 @@ class Testing(ft.Container):
 
 
         progress_bar_text = ft.Text("Waiting for Input")
-        model_text= ft.Text("Choose Model")
-        model_title = ft.ListTile(
+        text= ft.Text("Start Training")
+        title = ft.ListTile(
             leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
-            title=model_text,
+            title=text,
         )
         pick_model_row = ft.Row(
             [
@@ -204,26 +204,17 @@ class Testing(ft.Container):
         )
         test_container = ft.Container(
             content=ft.Column(
-                [model_title,
+                [title,
                  pick_model_row,
                  ]
             )
         )
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        model_directory = os.path.join(project_root, "models")
-        model_chooser = ft.Container(
-            content=ft.IconButton(
-                icon=ft.icons.UPLOAD_FILE,
-                tooltip="Choose Model",
-                on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
-                                                                initial_directory=model_directory),
-            ), alignment=ft.alignment.bottom_right,
-        )
+
         progress_card = ft.Card(
             content=ft.Container(
                 content=ft.Stack(
-                    [test_container,
-                     model_chooser
+                    [test_container
+
                      ]
                 ),
                 padding=10
@@ -231,28 +222,6 @@ class Testing(ft.Container):
         )
 
 
-        def pick_model_result(e: ft.FilePickerResultEvent):
-            """
-            The result of the file selection is handled.
-
-            Arguments:
-                e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
-            """
-            if e.files is None:
-                print("no model selected")
-            elif e.files[0].path is not None:
-                if self.gui.ready_to_start:
-                    progress_bar_text.value = "Ready to Start"
-                    start_button.disabled = False
-                model_text.value = e.files[0].name
-                model_text.color = None
-                self.gui.csp.model_path = e.files[0].path
-                self.gui.page.update()
-            else:
-                print("no model selected")
-
-        pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
-        self.gui.page.overlay.extend([pick_model_dialog])
 
         return progress_card
 
