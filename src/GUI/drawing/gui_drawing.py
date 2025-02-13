@@ -596,6 +596,7 @@ class DrawingCanvas(QGraphicsView):
                 "outlines": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8)
             }
             np.save(self.mask_path, empty_mask)
+            self.conn.send(f"new_mask.{self.image_id}")
             self.mask_paths[self.image_id][self.bf_channel] = self.mask_path
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]

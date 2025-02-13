@@ -101,6 +101,10 @@ class BatchImageSegmentation(Notifier):
         for image_id, segmentation_channel in channels_to_delete:
             del self.gui.csp.mask_paths[image_id][segmentation_channel]
 
+        for image_id, channel in channels_to_delete:
+            del self.gui.csp.mask_paths[image_id]
+
+
     # the following methods handle the different actions and handle accordingly
     def cancel_action(self):
         self.cancel_now = True
@@ -213,6 +217,7 @@ class BatchImageSegmentation(Notifier):
             current_image = {"image_id": image_id, "path": image_path}
             self._call_update_listeners(progress, current_image)
             self.num_seg_images = self.num_seg_images + 1
+            self.gui.directory.update_mask_check(image_id)
 
         self._call_completion_listeners()
         # reset variables
@@ -344,6 +349,7 @@ class BatchImageSegmentation(Notifier):
         current_image = {"image_id": iN, "path": image_path}
         self._call_update_listeners(progress, current_image)
         self.num_seg_images = self.num_seg_images + 1
+        self.gui.directory.update_mask_check(image_id)
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()

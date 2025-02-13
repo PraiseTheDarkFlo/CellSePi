@@ -124,6 +124,8 @@ class DirectoryCard(ft.Card):
         self.files_row.visible = self.is_lif
         self.directory_row.visible = not self.is_lif
         self.selected_images_visualise = {}
+        self.icon_check = {}
+        self.icon_x = {}
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -352,22 +354,28 @@ class DirectoryCard(ft.Card):
                 spacing=10,
                 scroll=ft.ScrollMode.AUTO,
             )
-            self.image_gallery.controls.append(
-                ft.Column(
-                    [
-                        ft.Text(f"{image_id}", weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
-                        group_row
-                    ],
-                    spacing=10,
-                    alignment=ft.MainAxisAlignment.CENTER
-                )
-            )
-
+            self.icon_check[image_id] = ft.Icon(ft.Icons.CHECK, color=ft.Colors.GREEN, size=17, visible=False,
+                                                tooltip="Mask is available")
+            self.icon_x[image_id] = ft.Icon(ft.Icons.CLOSE, size=17, visible=True, tooltip="Mask is not available")
+            self.update_mask_check(image_id)
+            self.image_gallery.controls.append(ft.Column([ft.Row(
+            [ft.Text(f"{image_id}", weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER), self.icon_check[image_id], self.icon_x[image_id]], spacing=2),
+                                                      group_row], spacing=10, alignment=ft.MainAxisAlignment.CENTER))
 
         self.gui.progress_ring.visible = False
         self.gui.progress_ring.update()
         self.image_gallery.update()
         self.update_results_text()
+
+    def update_mask_check(self, image_id):
+        if self.gui.csp.mask_paths is not None and image_id in self.gui.csp.mask_paths:
+            self.icon_check[image_id].visible = True
+            self.icon_x[image_id].visible = False
+        else:
+            self.icon_check[image_id].visible = False
+            self.icon_x[image_id].visible = True
+        self.image_gallery.update()
+
 
     def create_dir_row(self):
         """

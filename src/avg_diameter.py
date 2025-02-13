@@ -61,6 +61,3 @@ class AverageDiameter:
         return round(average_diameter, 2)
 
 
-
-
-

@@ -88,12 +88,12 @@ class GUI:
                 ),on_click=lambda e: self.auto_image_tuning.pressed(),tooltip="Auto brightness and contrast")
         self.brightness_icon = ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness")
         self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
-        self.diameter_text = ft.Text("125.0", size=14, weight=ft.FontWeight.BOLD,tooltip="Copy to clipboard")
+        self.diameter_text = ft.Text("0", size=14, weight=ft.FontWeight.BOLD,tooltip="Copy to clipboard")
         self.diameter_display = ft.Container(
             content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), ft.GestureDetector(content=self.diameter_text,on_tap=lambda e: copy_to_clipboard(page=self.page,value=str(self.diameter_text.value),name="Average diameter"),on_enter=lambda e:self.on_enter_diameter(),on_exit=lambda e:self.on_exit_diameter()),]),
             border_radius=12,
             padding=8,
-            visible=False,
+            visible=True,
         )
         if self.csp.config.get_auto_button():
             self.auto_image_tuning.pressed()
@@ -236,8 +236,15 @@ class GUI:
             while self.pipe_listener_running:
                 data = await asyncio.to_thread(self.parent_conn.recv)
                 print(f"Empfangene Daten: {data}")
+                split_data = data.split(".")
                 if data == "close":
                     break
+                elif split_data[0] == "new_mask":
+                    if self.csp.window_image_id not in self.csp.mask_paths:
+                        self.csp.mask_paths[self.csp.window_image_id] = {}
+                    self.csp.mask_paths[self.csp.window_image_id][self.csp.window_bf_channel] = self.csp.window_mask_path
+                    self.directory.update_mask_check(split_data[1])
+                    print("in pipeline", split_data[1])
                 else:
                     #if data is not closed and the window remains open: the edited image gets updated in the flet canvas
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
@@ -251,6 +258,8 @@ class GUI:
                         #TODO: hier mask updaten in Flet
 
                     #TODO: hier diameter neu berechnen
+                    self.diameter_text.value = AverageDiameter.get_avg_diameter()
+                    self.diameter_display.visible = True
         try:
             loop.run_until_complete(pipe_listener())
         finally:
