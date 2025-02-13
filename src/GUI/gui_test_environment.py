@@ -77,11 +77,13 @@ class Testing(ft.Container):
     def go_to_test_environment(self,e):
         self.text.value= "Exit Testing"
         container= self.add_parameter_container()
-        card= self.create_testing_card()
+        card = self.create_testing_card()
+
         #delete the content of the page and reset the reference to the page(reference get sometimes lost)
         page = self.gui.page
         self.gui.page.clean()
         self.gui.page = page
+
 
         self.gui.page.add(
             ft.Column(
@@ -93,8 +95,8 @@ class Testing(ft.Container):
                                 [
                                     container,
                                     card,
-                                    self.test_loss,
-                                    self.train_loss,
+                                    #self.test_loss,
+                                    #self.train_loss,
                                 ],
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
@@ -190,7 +192,7 @@ class Testing(ft.Container):
             icon=ft.icons.PLAY_CIRCLE,
             tooltip="Start the testing epochs",
             disabled=False,
-            on_click=self.start_training
+            on_click=None
         )
         # progress bar, which is updated throughout the training periods
 
