@@ -14,6 +14,8 @@ from cProfile import label
 from . import GUI
 import flet as ft
 import os
+from cellpose import models, train, io
+from cellpose.io import imread
 
 class Testing(ft.Container):
 
@@ -67,6 +69,8 @@ class Testing(ft.Container):
                                            read_only=True)
 
         self.progress_bar = ft.ProgressBar(value=0, width=180)
+        self.train_loss= None
+        self.test_loss = None
 
 
 
@@ -89,6 +93,8 @@ class Testing(ft.Container):
                                 [
                                     container,
                                     card,
+                                    self.test_loss,
+                                    self.train_loss,
                                 ],
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
@@ -229,5 +235,31 @@ class Testing(ft.Container):
 
     def start_training(self):
         print("start")
+        model = models.Cellpose(gpu=False, model_type=self.model)
+        imgs = [imread(f) for f in self.gui.csp.image_paths]
+        #dont know if this is what is necessary: just something i found
+        io.logger_setup()
+
+        output = io.load_train_test_data(self.directory, self.directory, image_filter="_img",
+                                         mask_filter="_masks", look_one_level_down=False)
+        images, labels, image_names, test_images, test_labels, image_names_test = output
+
+        # e.g. retrain a Cellpose model
+        model = models.CellposeModel(model_type=self.model)
+
+
+        model_path, train_losses, test_losses = train.train_seg(model.net,
+                                                                train_data=images, train_labels=labels,
+                                                                channels=[1, 2], normalize=True,
+                                                                test_data=test_images, test_labels=test_labels,
+                                                                weight_decay=self.weight, SGD=True, learning_rate=self.learning_rate,
+                                                                n_epochs=self.epochs, model_name="CP_new")
+
+        self.test_loss= ft.Text(f"Test_Loss: -{train_losses}", size= 20)
+        self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
+        self.gui.page.update()
+
+
+
 
 

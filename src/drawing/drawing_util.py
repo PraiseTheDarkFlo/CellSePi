@@ -3,6 +3,7 @@ import numpy as np
 from PyQt5.QtCore import QPointF
 
 
+#TODO review by Jenna: wo wird der Error angezeigt ? ICh würde nur englische Variablen und Kommentare verwenden, anstatt deutsche
 def mask_shifting(mask_data,deleted_mask_id:int):
     """
     Shifts the mask when a mask got deleted to restore an order without gaps.
@@ -81,7 +82,7 @@ def bresenham_line(start: QPointF, end: QPointF):
 
     return pixels
 
-
+#TODO review by JEnna: hier fehlen Kommentare
 def trace_contour(binary_mask):
     y_indices, x_indices = np.where(binary_mask)
     start_idx = np.lexsort((x_indices, y_indices))[0]
@@ -162,6 +163,7 @@ def fill_polygon_from_outline(contour, mask_shape):
 
     return mask
 
+#TODO review by Jenna: auch hier englische Kommentare. Wofür Threshold mit übergeben ? Kommentarstyle anpassen
 def find_border_pixels(mask, outline, cell_id, threshold=1):
     """
     Findet Randpixel in einer gegebenen Maskenmatrix unter Berücksichtigung der Outline
