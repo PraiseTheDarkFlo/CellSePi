@@ -417,14 +417,12 @@ class DrawingCanvas(QGraphicsView):
         """
         if self.draw_mode:
             if event.button() == Qt.LeftButton:
-                self.drawing = True
                 current_point = self.mapToScene(event.pos())
+                self.drawing = True
                 self.last_point = current_point
 
                 if self.start_point is None:
                     self.start_point = current_point
-                    self.points = []
-                    self.points.append(current_point)
         elif self.delete_mode:
             pos = event.pos()
             scene_pos = self.mapToScene(pos)
@@ -438,25 +436,29 @@ class DrawingCanvas(QGraphicsView):
         if self.draw_mode:
             current_point = self.mapToScene(event.pos())
 
-            # drawing in picture
+            # Check if the point is within the image boundaries
             if self.is_point_within_image(current_point):
                 x, y = int(current_point.x()), int(current_point.y())
-
-                # after cell continue drawing
-                if not self.drawing:
-                    self.drawing = True
-                    self.last_point = current_point
-                # draw a line
-                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
-                                              current_point.x(), current_point.y())
-                r, g, b = self.outline_color
-                pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
-                line_item.setPen(pen)
-                self.scene.addItem(line_item)
-                self.last_point = current_point
-                self.points.append(current_point)
             else:
-                self.drawing = False
+                #if mouse out of image
+                x, y = self.clamp_to_image_bounds(current_point)
+
+            line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(), x, y)
+            r, g, b = self.outline_color
+            pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+            line_item.setPen(pen)
+            self.scene.addItem(line_item)
+            self.last_point = QPointF(x, y)
+
+    def clamp_to_image_bounds(self, point):
+        """
+        If mouse goes out of image, the line stays in the image bounds.
+        """
+        x, y = int(point.x()), int(point.y())
+        x = max(0, min(x, self.image_array.shape[1] - 1))
+        y = max(0, min(y, self.image_array.shape[0] - 1))
+
+        return x, y
 
     def mouseReleaseEvent(self, event):
         if self.draw_mode and self.drawing:
@@ -470,7 +472,6 @@ class DrawingCanvas(QGraphicsView):
                 pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
                 line_item.setPen(pen)
                 self.scene.addItem(line_item)
-                self.points.append(line_item)
             
             # Reset start and last points
             self.start_point = None

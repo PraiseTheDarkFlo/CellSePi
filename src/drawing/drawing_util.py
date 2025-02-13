@@ -26,38 +26,32 @@ def mask_shifting(mask_data,deleted_mask_id:int):
 
 def search_free_id(mask,outline):
     """
-    Sucht in einem NumPy-Array von Ganzzahlen (z.B. [1,1,2,2,3,4,5,5,7,7])
-    nach der ersten fehlenden Zahl (also hier 6).
-    Falls keine Lücke vorhanden ist, wird der größte Wert + 1 zurückgegeben.
+    Search in a NumPy array of integers (e.g., [1,1,2,2,3,4,5,5,7,7]) for the first missing number (in this case, 6).
+    If no gap is found, return the highest value + 1.
     """
     print("XXXX")
     combined = np.concatenate((mask.ravel(),outline.ravel()))
     print("NAME")
     unique_vals = np.unique(combined)
 
-    # Falls das Array leer ist, kann man z.B. 1 zurückgeben
     if unique_vals.size == 0:
         return 1
 
-    # Differenzen zwischen aufeinanderfolgenden Werten berechnen
     diffs = np.diff(unique_vals)
 
-    # Suchen, ob es eine Lücke gibt (Differenz > 1)
-    luecke_index = np.where(diffs > 1)[0]
+    gap_index = np.where(diffs > 1)[0]
 
-    if luecke_index.size > 0:
-        fehlender_wert = unique_vals[luecke_index[0]] + 1
+    if gap_index.size > 0:
+        missed_value = unique_vals[gap_index[0]] + 1
     else:
-        fehlender_wert = unique_vals[-1] + 1
+        missed_value = unique_vals[-1] + 1
 
-    return fehlender_wert
+    return missed_value
 
 def bresenham_line(start: QPointF, end: QPointF):
     """
-    Berechnet alle Pixelkoordinaten entlang einer Linie von start bis end
-    mithilfe des Bresenham-Algorithmus.
+    Calculates all pixel coordinates along a line from start to end using the Bresenham algorithm.
     """
-    # Start- und Endkoordinaten auf ganze Zahlen runden
     x0, y0 = int(round(start.x())), int(round(start.y()))
     x1, y1 = int(round(end.x())), int(round(end.y()))
     pixels = []
@@ -166,49 +160,40 @@ def fill_polygon_from_outline(contour, mask_shape):
 #TODO review by Jenna: auch hier englische Kommentare. Wofür Threshold mit übergeben ? Kommentarstyle anpassen
 def find_border_pixels(mask, outline, cell_id, threshold=1):
     """
-    Findet Randpixel in einer gegebenen Maskenmatrix unter Berücksichtigung der Outline
-    und sucht nur nach Pixeln, die mit der angegebenen cell_id übereinstimmen.
-
-    Randpixel sind solche, deren benachbarte Pixel eine andere ID haben oder die im Outline
-    als Rand markiert sind.
-
-    :param mask: Eine 2D-Maske, die die ID jedes Pixels in der Fläche repräsentiert.
-    :param outline: Eine 2D-Maske, die die Randpixel markiert (normalerweise mit 100).
-    :param cell_id: Die ID der Zelle, nach deren Randpixeln gesucht werden soll.
-    :param threshold: Ein Schwellenwert, um sicherzustellen, dass nur gültige Randpixel erfasst werden.
-    :return: Eine Liste von Randpixel-Koordinaten (x, y).
+    Finds edge pixels in a given mask matrix, considering the outline and only searching for pixels that match the specified cell_id.
+    Edge pixels are those whose neighboring pixels have a different ID or are marked as edges in the outline.
+    Attributes:
+        mask: A 2D mask representing the ID of each pixel in the area.
+        outline: A 2D mask marking the edge pixels (typically with a value of 100).
+        cell_id: The ID of the cell whose edge pixels should be found.
+        threshold: A threshold to ensure that only valid edge pixels are captured.
     """
     border_pixels = []
 
     rows, cols = mask.shape
     for y in range(rows):
         for x in range(cols):
-            # ID des aktuellen Pixels prüfen
+            # ID of current pixel
             current_id = mask[y, x]
 
-            # Wenn die ID des aktuellen Pixels nicht der gesuchten cell_id entspricht, überspringe es
             if current_id != cell_id:
                 continue
 
-            # Nachbarpositionen: oben, unten, links, rechts
+            # neighboring positions
             neighbors = [
-                (y - 1, x), (y + 1, x),  # oben, unten
-                (y, x - 1), (y, x + 1)  # links, rechts
+                (y - 1, x), (y + 1, x),  # up, down
+                (y, x - 1), (y, x + 1)  # left, right
             ]
 
             is_border_pixel = False
 
-            # Überprüfe die Nachbarn auf unterschiedliche IDs oder Rand im Outline
             for ny, nx in neighbors:
-                if 0 <= ny < rows and 0 <= nx < cols:  # Sicherstellen, dass der Nachbar im gültigen Bereich liegt
-                    # Prüfen, ob der Nachbar eine andere ID hat oder im Outline als Rand markiert ist
+                if 0 <= ny < rows and 0 <= nx < cols:
                     if mask[ny, nx] != current_id and outline[ny, nx] != current_id:
                         is_border_pixel = True
-                        break  # Sobald ein Nachbar gefunden wurde, der ungleich ist oder im Outline als Rand markiert ist, ist es ein Randpixel
-
-            # Wenn es ein Randpixel ist, füge es der Liste hinzu
+                        break
             if is_border_pixel:
-                border_pixels.append((y,x))  # x, y Koordinaten (Spalte, Zeile)
+                border_pixels.append((y,x))
 
     return border_pixels
 
