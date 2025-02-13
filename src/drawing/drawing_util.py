@@ -157,8 +157,7 @@ def fill_polygon_from_outline(contour, mask_shape):
 
     return mask
 
-#TODO review by Jenna: auch hier englische Kommentare. Wofür Threshold mit übergeben ? Kommentarstyle anpassen
-def find_border_pixels(mask, outline, cell_id, threshold=1):
+def find_border_pixels(mask, outline, cell_id,):
     """
     Finds edge pixels in a given mask matrix, considering the outline and only searching for pixels that match the specified cell_id.
     Edge pixels are those whose neighboring pixels have a different ID or are marked as edges in the outline.
@@ -166,7 +165,6 @@ def find_border_pixels(mask, outline, cell_id, threshold=1):
         mask: A 2D mask representing the ID of each pixel in the area.
         outline: A 2D mask marking the edge pixels (typically with a value of 100).
         cell_id: The ID of the cell whose edge pixels should be found.
-        threshold: A threshold to ensure that only valid edge pixels are captured.
     """
     border_pixels = []
 
