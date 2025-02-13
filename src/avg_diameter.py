@@ -44,6 +44,10 @@ class AverageDiameter:
         image_paths = self.csp.image_paths
         segmentation_channel = self.csp.config.get_bf_channel()
         all_diameters = []
+        valid_image_id = [
+            key for key in mask_paths.keys()
+            if isinstance(mask_paths[key], dict) and segmentation_channel in mask_paths[key]
+        ]
 
         def process_image(image_id):
             mask_path = mask_paths[image_id][segmentation_channel]
@@ -52,7 +56,7 @@ class AverageDiameter:
             return calculate_mask_diameters(mask)
 
         with ThreadPoolExecutor() as executor:
-            results = executor.map(process_image, image_paths)
+            results = executor.map(process_image, valid_image_id)
 
         for diameters in results:
             all_diameters.extend(diameters)

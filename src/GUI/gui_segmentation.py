@@ -127,6 +127,8 @@ class GUISegmentation():
             cancel_button.icon_color = ft.Colors.RED
             self.gui.open_button.visible = False
             self.gui.directory.disable_path_choosing()
+            self.gui.diameter_text.value = 0.00
+            self.gui.diameter_display.opacity = 1
             self.gui.page.update()
             self.segmentation.run() # this will throw an error if something other than a model was chosen
             """except:
@@ -155,6 +157,7 @@ class GUISegmentation():
             cancel_button.visible = False
             self.segmentation_cancelling = True
             self.segmentation.to_be_cancelled()
+            self.gui.diameter_display.opacity = 0.5
             if self.segmentation_currently_paused:
                 resume_button.visible = False
                 extracted_percentage = re.search(r'\d+', progress_bar_text.value)
@@ -172,7 +175,6 @@ class GUISegmentation():
             """
             The running segmentation is paused (the progress of the segmentation so far is stored).
             """
-            #TODO was wollen wir während des pausieren erlauben? neues Modell zuweisen, canceln?
             pause_button.visible = False
             resume_button.visible = True
             resume_button.disabled = True
@@ -223,8 +225,7 @@ class GUISegmentation():
             start_button.disabled = False
             model_title.disabled = False
             model_chooser.disabled = False
-            self.gui.diameter_text.value = AverageDiameter(self.gui.csp).get_avg_diameter()
-            self.gui.diameter_display.visible = True
+            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
             self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
             self.gui.page.update()
@@ -246,6 +247,8 @@ class GUISegmentation():
             self.gui.csp.segmentation_running = False
             model_title.disabled = False
             model_chooser.disabled = False
+            self.gui.diameter_display.opacity = 0.5
+            self.gui.diameter_text.value = 0.00
             for image_id in self.gui.csp.image_paths:
                 self.gui.directory.update_mask_check(image_id)
             self.gui.page.update()
@@ -290,6 +293,7 @@ class GUISegmentation():
                 progress_bar_text.value = "Pausing: " + str(progress)
             elif self.segmentation_cancelling:
                 progress_bar_text.value = "Cancelling: " + str(progress)
+                self.gui.diameter_display.opacity = 0.5
             else:
                 progress_bar_text.value = progress
             extracted_num = re.search(r'\d+', progress)

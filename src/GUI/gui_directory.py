@@ -187,6 +187,9 @@ class DirectoryCard(ft.Card):
             else:
                 self.formatted_path.color = None
             self.formatted_path.update()
+            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+            self.gui.diameter_display.opacity = 1
+            self.gui.diameter_display.update()
 
     def select_directory_parallel(self, directory_path):
         """
@@ -368,6 +371,11 @@ class DirectoryCard(ft.Card):
         self.update_results_text()
 
     def update_mask_check(self, image_id):
+        """
+        Updates the symbol next to series number of image to a check or x, depending on if the corresponding image is available.
+        Args:
+            image_id: the id of the image to check mask availability
+        """
         if self.gui.csp.mask_paths is not None and image_id in self.gui.csp.mask_paths:
             self.icon_check[image_id].visible = True
             self.icon_x[image_id].visible = False
@@ -519,20 +527,9 @@ class DirectoryCard(ft.Card):
             if all_mask_present and self.gui.csp.image_paths is not None and len(self.gui.csp.image_paths) != 0 :
                 fluorescence_button.visible = True
                 fluorescence_button.update()
-                self.gui.diameter_display.visible = False
-                self.gui.diameter_display.update()
-                avg_diameter = await loop.run_in_executor(
-                    None,
-                    lambda: AverageDiameter(self.gui.csp).get_avg_diameter()
-                )
-                self.gui.diameter_text.value = avg_diameter
-                self.gui.diameter_display.visible = True
             else:
                 fluorescence_button.visible = False
                 fluorescence_button.update()
-                self.gui.diameter_display.visible = False
-
-            self.gui.diameter_display.update()
 
     def benchmark_seq_and_par(self, path):
         """

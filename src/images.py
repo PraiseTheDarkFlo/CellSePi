@@ -218,6 +218,7 @@ class BatchImageSegmentation(Notifier):
             self._call_update_listeners(progress, current_image)
             self.num_seg_images = self.num_seg_images + 1
             self.gui.directory.update_mask_check(image_id)
+            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
 
         self._call_completion_listeners()
         # reset variables
@@ -350,6 +351,8 @@ class BatchImageSegmentation(Notifier):
         self._call_update_listeners(progress, current_image)
         self.num_seg_images = self.num_seg_images + 1
         self.gui.directory.update_mask_check(image_id)
+        self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
