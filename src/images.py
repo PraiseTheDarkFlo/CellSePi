@@ -35,6 +35,8 @@ class BatchImageSegmentation(Notifier):
         self.pause_now = False
         self.resume_now = False
         self.executor = None
+        self.progress_lock = threading.Lock()
+        self.progress = 0
 
     def backup_masks(self):
         """
@@ -156,69 +158,75 @@ class BatchImageSegmentation(Notifier):
 
         start_index = self.num_seg_images
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
-            if self.cancel_now:
-                self.cancel_now = False
-                self.restore_backup()
-                self.num_seg_images = 0
-                return
-            elif self.pause_now:
-                self.pause_now = False
-                return
-            elif self.resume_now:
-                self.resume_now = False
-                self.segmentation.is_resuming()
+            if segmentation_channel in image_paths[image_id]:
+                if self.cancel_now:
+                    self.cancel_now = False
+                    self.restore_backup()
+                    self.num_seg_images = 0
+                    return
+                elif self.pause_now:
+                    self.pause_now = False
+                    return
+                elif self.resume_now:
+                    self.resume_now = False
+                    self.segmentation.is_resuming()
 
-            image_path = image_paths[image_id][segmentation_channel]
-            image = imread(image_path)
+                image_path = image_paths[image_id][segmentation_channel]
+                image = imread(image_path)
 
-            # Normalization
-            image = image.astype(np.float32)
-            min_val = np.min(image)
-            max_val = np.max(image)
-            if (max_val - min_val) > 0:
-                image = (image - min_val) / (max_val - min_val)
+                # Normalization
+                image = image.astype(np.float32)
+                min_val = np.min(image)
+                max_val = np.max(image)
+                if (max_val - min_val) > 0:
+                    image = (image - min_val) / (max_val - min_val)
+                else:
+                    image = np.zeros_like(image)
+
+                res = model.eval(image, diameter=diameter, channels=[0, 0])
+                mask, flow, style = res[:3]
+
+                # Generate the output filename directly using the suffix attribute
+                directory, filename = os.path.split(image_path)
+                name, _ = os.path.splitext(filename)
+                new_filename = f"{name}{suffix}.npy"
+                new_path = os.path.join(directory, new_filename)
+
+                default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
+
+                backup_path = None
+                if default_suffix_path != new_path:
+                    if os.path.exists(default_suffix_path):
+                        backup_path = default_suffix_path + '.backup'
+                        if os.path.exists(backup_path):
+                            os.remove(backup_path)
+                        os.rename(default_suffix_path, backup_path)
+                # Save the segmentation results directly with the default name first
+                io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+                if default_suffix_path != new_path:
+                    if os.path.exists(default_suffix_path):
+                        if os.path.exists(new_path):
+                            os.remove(new_path)
+                        os.rename(default_suffix_path, new_path)
+                        if backup_path is not None:
+                            os.rename(backup_path, default_suffix_path)
+
+                if image_id not in self.gui.csp.mask_paths:
+                    self.gui.csp.mask_paths[image_id] = {}
+
+                self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
+
+                progress = str(round((iN + 1) / n_images * 100)) + " %"
+                current_image = {"image_id": image_id, "path": image_path}
+                self._call_update_listeners(progress, current_image)
+                self.num_seg_images = self.num_seg_images + 1
+                self.gui.directory.update_mask_check(image_id)
+                self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
             else:
-                image = np.zeros_like(image)
-
-            res = model.eval(image, diameter=diameter, channels=[0, 0])
-            mask, flow, style = res[:3]
-
-            # Generate the output filename directly using the suffix attribute
-            directory, filename = os.path.split(image_path)
-            name, _ = os.path.splitext(filename)
-            new_filename = f"{name}{suffix}.npy"
-            new_path = os.path.join(directory, new_filename)
-
-            default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
-
-            backup_path = None
-            if default_suffix_path != new_path:
-                if os.path.exists(default_suffix_path):
-                    backup_path = default_suffix_path + '.backup'
-                    if os.path.exists(backup_path):
-                        os.remove(backup_path)
-                    os.rename(default_suffix_path, backup_path)
-            # Save the segmentation results directly with the default name first
-            io.masks_flows_to_seg([image], [mask], [flow], [image_path])
-            if default_suffix_path != new_path:
-                if os.path.exists(default_suffix_path):
-                    if os.path.exists(new_path):
-                        os.remove(new_path)
-                    os.rename(default_suffix_path, new_path)
-                    if backup_path is not None:
-                        os.rename(backup_path, default_suffix_path)
-
-            if image_id not in self.gui.csp.mask_paths:
-                self.gui.csp.mask_paths[image_id] = {}
-
-            self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
-
-            progress = str(round((iN + 1) / n_images * 100)) + " %"
-            current_image = {"image_id": image_id, "path": image_path}
-            self._call_update_listeners(progress, current_image)
-            self.num_seg_images = self.num_seg_images + 1
-            self.gui.directory.update_mask_check(image_id)
-            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+                progress = str(round((iN + 1) / n_images * 100)) + " %"
+                current_image = {"image_id": image_id, "path": image_path}
+                self._call_update_listeners(progress, current_image)
+                self.num_seg_images = self.num_seg_images + 1
 
         self._call_completion_listeners()
         # reset variables
@@ -258,9 +266,8 @@ class BatchImageSegmentation(Notifier):
         io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
-        print("run_parallel start")
         start_index = self.num_seg_images
-        self.executor = ThreadPoolExecutor(max_workers=8)
+        self.executor = ThreadPoolExecutor()
         futures = []
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             futures.append(self.executor.submit(
@@ -269,7 +276,6 @@ class BatchImageSegmentation(Notifier):
             ))
         for future in futures:
             future.result()
-        print("run_parallel end")
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -292,7 +298,6 @@ class BatchImageSegmentation(Notifier):
             model: cellpose model to be used
         """
         n_images = len(image_paths)
-        print("image_segmentation start", iN)
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -318,7 +323,6 @@ class BatchImageSegmentation(Notifier):
 
         res = model.eval(image, diameter=diameter, channels=[0, 0])
         mask, flow, style = res[:3]
-        print("UNTIL HERE", iN)
         # Generate the output filename directly using the suffix attribute
         directory, filename = os.path.split(image_path)
         name, _ = os.path.splitext(filename)
@@ -326,7 +330,6 @@ class BatchImageSegmentation(Notifier):
         new_path = os.path.join(directory, new_filename)
 
         default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
-        print("image segmentation before new path name", iN)
         backup_path = None
         if default_suffix_path != new_path:
             if os.path.exists(default_suffix_path):
@@ -343,15 +346,17 @@ class BatchImageSegmentation(Notifier):
                 os.rename(default_suffix_path, new_path)
                 if backup_path is not None:
                     os.rename(backup_path, default_suffix_path)
-        print("image segmentation after new path name", iN)
         if image_id not in self.gui.csp.mask_paths:
             self.gui.csp.mask_paths[image_id] = {}
 
         self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
 
-        progress = str(round((iN + 1) / n_images * 100)) + " %"
-        current_image = {"image_id": iN, "path": image_path}
-        self._call_update_listeners(progress, current_image)
+        with self.progress_lock:
+            self.progress += 1
+            percent = round(self.progress / n_images * 100)
+            progress = str(percent) + "%"
+            current_image = {"image_id": iN, "path": image_path}
+            self._call_update_listeners(progress, current_image)
         self.num_seg_images = self.num_seg_images + 1
         self.gui.directory.update_mask_check(image_id)
         self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
