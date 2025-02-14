@@ -78,6 +78,9 @@ class MyQtWindow(QMainWindow):
                 color: gray;
                 border: 1px solid darkgray;
             }
+            QPushButton:enabled {
+                color: #000000
+            }
         """)
         self.restore_button.setEnabled(False)
         tools_layout.addWidget(self.restore_button)
@@ -89,6 +92,9 @@ class MyQtWindow(QMainWindow):
                 background-color: lightgray;
                 color: gray;
                 border: 1px solid darkgray;
+            }
+            QPushButton:enabled {
+                color: #000000
             }
         """)
         self.redo_button.setEnabled(False)
