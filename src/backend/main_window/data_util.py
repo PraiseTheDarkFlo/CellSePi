@@ -254,6 +254,8 @@ def transform_image_path(image_path, output_path):
             img8 = Image.fromarray(array8)
             img8.save(output_path, format="TIFF")
             return True
+        elif img.mode in ["L", "RGB", "P", "RGBA"]:
+            return True
         else:
             return False
 
