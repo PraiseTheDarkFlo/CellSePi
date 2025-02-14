@@ -81,13 +81,14 @@ class MyQtWindow(QMainWindow):
 
         tools_layout.addWidget(self.check_shifting, alignment=Qt.AlignCenter)
 
-        self.restore_button = QPushButton("Restore Deleted Cell")
+        # Renamed buttons to Undo and Redo
+        self.restore_button = QPushButton("Undo")
         self.restore_button.setStyleSheet(
             "font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.restore_button.clicked.connect(self.restore_cell)
         tools_layout.addWidget(self.restore_button)
 
-        self.redo_button = QPushButton("Redo Delete")
+        self.redo_button = QPushButton("Redo")
         self.redo_button.setStyleSheet(
             "font-size: 16px; color: #000000; padding: 10px 20px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.redo_button.clicked.connect(self.redo_delete)
@@ -102,7 +103,7 @@ class MyQtWindow(QMainWindow):
         central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
-        #screen layout
+        # screen layout
         screen = QApplication.primaryScreen()
         screen_geometry = screen.geometry()
         window_geometry = self.geometry()
@@ -120,7 +121,7 @@ class MyQtWindow(QMainWindow):
             self.canvas.redo_delete()
 
     def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
-                        mask_path,channel_id,channel_prefix):
+                        mask_path, channel_id, channel_prefix):
         """
         Sets the current selected mask and image into the MyQtWindow, replacing the canvas with the current parameters.
         Also updates the window title to include the image_id.
@@ -140,24 +141,24 @@ class MyQtWindow(QMainWindow):
         # Update the window title with the current image's ID and channel ID.
         self.setWindowTitle(f"Mask Editing - {image_id}{channel_prefix}{channel_id}")
 
-        #if canvas is only a dummy create a new_canvas
+        # if canvas is only a dummy create a new_canvas
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                        self.check_shifting, conn, mask_path, False, False)
         else:
-            #check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
+            # check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
                 self.canvas.adjusted_image_path = adjusted_image_path
                 self.canvas.load_image_to_scene()
-                return  #return because no new canvas, so no need for replacing the old canvas with the new and update the connections
+                return  # return because no new canvas, so no need for replacing the old canvas with the new and update the connections
             else:
-                #new mask and image so need for new_canvas
+                # new mask and image so need for new_canvas
                 new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id,
                                            adjusted_image_path,
                                            self.check_shifting, conn, mask_path, self.canvas.draw_mode,
                                            self.canvas.delete_mode)
 
-        #replace the old canvas with the new one and update the window
+        # replace the old canvas with the new one and update the window
         self.canvas_dummy = False
         self.main_layout.replaceWidget(self.canvas, new_canvas)
         self.canvas.deleteLater()
@@ -169,7 +170,8 @@ class MyQtWindow(QMainWindow):
         self.canvas.restoreAvailabilityChanged.connect(lambda available: self.restore_button.setEnabled(available))
         self.canvas.redoAvailabilityChanged.connect(lambda available: self.redo_button.setEnabled(available))
 
-        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)) #sets the right aspect ratio to the canvas
+        QTimer.singleShot(0, lambda: self.canvas.fitInView(self.canvas.sceneRect(),
+                                                           Qt.KeepAspectRatio))  # sets the right aspect ratio to the canvas
 
     def toggle_draw_mode(self):
         """
@@ -231,7 +233,7 @@ class Updater(QObject):
         print("update signal")
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data
         self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                    conn, mask_path,channel_id,channel_prefix)
+                                    conn, mask_path, channel_id, channel_prefix)
         self.window.setVisible(True)
         self.window.raise_()
         self.window.activateWindow()
@@ -271,6 +273,7 @@ class Updater(QObject):
             self.window.canvas.mask_color = mask_color
             self.window.canvas.outline_color = outline_color
             self.window.canvas.load_mask_to_scene()
+
 
 def open_qt_window(queue, conn):
     """
@@ -350,8 +353,8 @@ class DrawingCanvas(QGraphicsView):
         mask_item: Graphics item for the mask
         background_item: Graphics item for the background image
         delete_mode: Boolean to track if delete mode is enabled
-        cell_history: List to keep track of deleted cells for restoration (undo)
-        redo_history: List to keep track of restored cells for re-deletion (redo)
+        cell_history: List to keep track of state transitions for undo (each entry is a tuple: (old_state, new_state))
+        redo_history: List to keep track of state transitions for redo (each entry is a tuple: (old_state, new_state))
         check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
     # Signals to indicate whether a restore or redo action is available.
@@ -380,8 +383,8 @@ class DrawingCanvas(QGraphicsView):
         self.mask_item = None
         self.background_item = None
         self.mask_data = None
-        self.cell_history = []  # Track deleted cells for restoration (undo)
-        self.redo_history = []  # Track restored cells for re-deletion (redo)
+        self.cell_history = []  # Each entry: (old_state, new_state)
+        self.redo_history = []  # Each entry: (old_state, new_state)
         self.check_box = check_box
         self.points = []  # saves all points in the drawing
         self.conn = conn
@@ -440,7 +443,7 @@ class DrawingCanvas(QGraphicsView):
             if self.is_point_within_image(current_point):
                 x, y = int(current_point.x()), int(current_point.y())
             else:
-                #if mouse out of image
+                # if mouse out of image
                 x, y = self.clamp_to_image_bounds(current_point)
 
             line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(), x, y)
@@ -472,7 +475,7 @@ class DrawingCanvas(QGraphicsView):
                 pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
                 line_item.setPen(pen)
                 self.scene.addItem(line_item)
-            
+
             # Reset start and last points
             self.start_point = None
             self.last_point = None
@@ -498,7 +501,7 @@ class DrawingCanvas(QGraphicsView):
         # Save current state of the cell for restoration (undo)
         mask_old = mask.copy()
         outline_old = outline.copy()
-        self.cell_history.append((mask_old, outline_old, "complete mask"))
+        self.cell_history.append(((mask_old, outline_old), (mask_old, outline_old)))
         self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
 
     def delete_cell(self, cell_id):
@@ -506,7 +509,6 @@ class DrawingCanvas(QGraphicsView):
         Delete the specified cell by updating the mask data.
         Also does not clear stored redo history, enabling multiple redo levels.
         """
-
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
         print(f"While deleting image:{self.image_id} and bfc:{self.bf_channel} in path:{mask_path}")
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
@@ -514,10 +516,8 @@ class DrawingCanvas(QGraphicsView):
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
-        # Save current state of the cell for restoration (undo)
-        mask_old = mask.copy()
-        outline_old = outline.copy()
-        self.cell_history.append((mask_old, outline_old, cell_id))
+        # Save current complete state before deletion
+        old_state = (mask.copy(), outline.copy())
 
         # Update the mask and outline (delete the cell)
         cell_mask = (mask == cell_id).copy()
@@ -526,61 +526,64 @@ class DrawingCanvas(QGraphicsView):
         outline[cell_outline] = 0
         if self.check_box.isChecked():
             mask_shifting(self.mask_data, cell_id)
-        # Save the updated mask
+        # Save new state after deletion
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
-        print(f"path beim  deleten: {mask_path}")
+        new_state = (mask.copy(), outline.copy())
 
         print(f"Deleted cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
+
+        # Save the state transition in undo history
+        self.cell_history.append((old_state, new_state))
         self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
         self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
 
-
     def restore_cell(self):
         """
-        Restore the most recently deleted cell (undo the deletion).
-        Also stores the restored cell in a redo history so that the deletion can be re-applied.
+        Restore the most recent state (undo the deletion or drawing).
+        Also stores the undone action in a redo history so that the change can be re-applied.
         """
-        # ToDO by Jenna: in dem Fall, dass keine Cellen in der cell_history sind, ist der Print unnötigt, denn
-        # der wird ja nie in der GUI ausgeführt. ALso entweder error banner in der GUI oder gar keinen print machen
-        # vielleicht hier auch eine beschränkung einbauen für das restoren. Im Moment ist es möglich die Zellen unendlich oft
-        # zu storen, selbst wenn cell_history leer ist: Du könntest den Restore button vielleicht ausgrauen, wenn keine Zellen mehr drinn sind
         if not self.cell_history:
-            # No cells to restore; update button state via signal and do nothing.
+            # No state to restore; update button state via signal and do nothing.
             self.restoreAvailabilityChanged.emit(False)
             return
 
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
+        # Retrieve the last state transition from undo history
+        old_state, new_state = self.cell_history.pop()
 
-        # Restore the most recent cell (pop from undo stack)
-        mask_old, outline_old, cell_id = self.cell_history.pop()
-
-        mask = mask_old.copy()
-        outline = outline_old.copy()
-
-        # Save the updated (restored) mask
-        np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
-        print(f"Restored cell ID {cell_id}. Reloading mask...")
+        # Restore the old state (undo)
+        np.save(mask_path, {"masks": old_state[0], "outlines": old_state[1]}, allow_pickle=True)
+        print("Undo performed. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
-        # Store the restored cell in redo history (so that deletion can be redone)
-        self.redo_history.append((mask_old, outline_old, cell_id))
+        # Save the undone action in redo history
+        self.redo_history.append((old_state, new_state))
         self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
         self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
 
     def redo_delete(self):
         """
-        Re-apply the deletion for the most recently restored cell (redo the deletion).
+        Re-apply the deletion (redo the undone deletion or drawing).
         """
         if not self.redo_history:
             self.redoAvailabilityChanged.emit(False)
             return
-        # Get the last restored cell info from the redo history
-        mask_old, outline_old, cell_id = self.redo_history.pop()
-        # Re-delete the cell by calling delete_cell
-        self.delete_cell(cell_id)
+        mask_path = self.mask_paths[self.image_id][self.bf_channel]
+        # Retrieve the state transition from redo history
+        old_state, new_state = self.redo_history.pop()
+
+        # Redo: restore the new state
+        np.save(mask_path, {"masks": new_state[0], "outlines": new_state[1]}, allow_pickle=True)
+        print("Redo performed. Reloading mask...")
+        self.load_mask_to_scene()
+        self.conn.send("update_mask")
+
+        # After redoing, push it back to undo history
+        self.cell_history.append((old_state, new_state))
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
         self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
 
     def load_mask_to_scene(self):
@@ -650,36 +653,31 @@ class DrawingCanvas(QGraphicsView):
 
         return mask, outline
 
-
     def add_drawn_cell(self):
         """
         Adds the new drawn cell to the mask.npy based on current LineItems and updates the scene with the new mask.
         """
-        #gets the pixels that build the lines of the drawn cell
+        # gets the pixels that build the lines of the drawn cell
         line_pixels = set()
         for item in self.scene.items():
             if isinstance(item, QGraphicsLineItem):
                 line = item.line()
-                pixels = bresenham_line(line.p1(), line.p2()) #Calculates the pixels along the line
+                pixels = bresenham_line(line.p1(), line.p2())  # Calculates the pixels along the line
                 line_pixels.update(pixels)
 
-        #get the current mask and outline npy arrays
+        # get the current mask and outline npy arrays
         mask_path = self.mask_paths[self.image_id][self.bf_channel]
         self.mask_data = np.load(mask_path, allow_pickle=True).item()
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
-        free_id = search_free_id(mask, outline) #search for the next free id in mask and outline
+        # Save current state before drawing for undo
+        old_state = (mask.copy(), outline.copy())
+
+        free_id = search_free_id(mask, outline)  # search for the next free id in mask and outline
         print(free_id)
 
-        #Backup for undo button
-        mask_old = mask.copy()
-        outline_old = outline.copy()
-        self.cell_history.append((mask_old, outline_old, free_id))
-        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
-        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
-
-        #add the outline of the new mask (only the parts which not overlap with already existing cells) to outline npy array and fill the complete outline to new_cell_outline to calculate inner pixels
+        # add the outline of the new mask (only the parts which not overlap with already existing cells) to outline npy array and fill the complete outline to new_cell_outline to calculate inner pixels
         new_cell_outline = np.zeros_like(outline, dtype=np.uint8)
         for x, y in line_pixels:
             if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
@@ -687,22 +685,29 @@ class DrawingCanvas(QGraphicsView):
                 if outline[y, x] == 0 and mask[y, x] == 0:
                     outline[y, x] = free_id
 
-        #Traces the outline of the new cell and fills the mask based on the outline
+        # Traces the outline of the new cell and fills the mask based on the outline
         contour = trace_contour(new_cell_outline)
-        new_mask = fill_polygon_from_outline(contour, mask.shape) #gets the inner pixels of the new cell
-        mask[(new_mask == 1) &(mask == 0) & (outline == 0)] = free_id #adds them to the npy if they not overlap with the already existing cells
+        new_mask = fill_polygon_from_outline(contour, mask.shape)  # gets the inner pixels of the new cell
+        mask[(new_mask == 1) & (mask == 0) & (
+                    outline == 0)] = free_id  # adds them to the npy if they not overlap with the already existing cells
 
-        #search if inline pixels (mask) have no outline, if the pixel have no outline neighbor make them to outline and delete them from mask
-        new_border_pixels = find_border_pixels(mask,outline,free_id)
+        # search if inline pixels (mask) have no outline, if the pixel have no outline neighbor make them to outline and delete them from mask
+        new_border_pixels = find_border_pixels(mask, outline, free_id)
         for y, x in new_border_pixels:
             if 0 <= x < outline.shape[1] and 0 <= y < outline.shape[0]:
                 mask[y, x] = 0
                 outline[y, x] = free_id
 
+        # Save new state after drawing
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
+        new_state = (mask.copy(), outline.copy())
         self.load_mask_to_scene()
         self.conn.send("update_mask")
-        #Delete the LineItems (the lines that the user have drawn), because the cells now exists through the mask
+        # Save the state transition in undo history
+        self.cell_history.append((old_state, new_state))
+        self.restoreAvailabilityChanged.emit(len(self.cell_history) > 0)
+        self.redoAvailabilityChanged.emit(len(self.redo_history) > 0)
+        # Delete the LineItems (the lines that the user have drawn), because the cell now exists through the mask
         for item in list(self.scene.items()):
             if isinstance(item, QGraphicsLineItem):
                 self.scene.removeItem(item)
