@@ -22,7 +22,7 @@ class Testing(ft.Container):
     def __init__(self,gui:GUI):
         super().__init__()
         self.gui = gui
-        self.text=ft.Text("Go To Testing")
+        self.text=ft.Text("Go To Training")
         self.button_event= ft.PopupMenuItem(
                 content = ft.Row(
             [
@@ -75,7 +75,7 @@ class Testing(ft.Container):
 
 
     def go_to_test_environment(self,e):
-        self.text.value= "Exit Testing"
+        self.text.value= "Exit Training"
         container= self.add_parameter_container()
         card = self.create_testing_card()
 
@@ -168,11 +168,11 @@ class Testing(ft.Container):
 
 
     def change_environment(self,e):
-        if self.text.value == "Go To Testing":
+        if self.text.value == "Go To Training":
             self.go_to_test_environment(e)
 
         else:
-            self.text.value= "Go To Testing"
+            self.text.value= "Go To Training"
             page = self.gui.page
             self.gui.page.clean()
             self.gui.page = page
@@ -190,9 +190,9 @@ class Testing(ft.Container):
         start_button = ft.ElevatedButton(
             text="Start",
             icon=ft.icons.PLAY_CIRCLE,
-            tooltip="Start the testing epochs",
+            tooltip="Start the training epochs",
             disabled=False,
-            on_click=None
+            on_click=self.start_training,
         )
         # progress bar, which is updated throughout the training periods
 
@@ -235,15 +235,21 @@ class Testing(ft.Container):
 
 
 
-    def start_training(self):
+    def start_training(self,e):
         print("start")
         model = models.Cellpose(gpu=False, model_type=self.model)
-        imgs = [imread(f) for f in self.gui.csp.image_paths]
+        imgs = self.gui.directory.image_gallery
         #dont know if this is what is necessary: just something i found
         io.logger_setup()
 
-        output = io.load_train_test_data(self.directory, self.directory, image_filter="_img",
-                                         mask_filter="_masks", look_one_level_down=False)
+
+        output = io.load_train_test_data(test_dir=self.gui.directory.directory_path,
+                                         train_dir= self.gui.directory.directory_path,
+                                         image_filter="",
+                                         mask_filter="_seg.npy",
+                                         look_one_level_down=False)
+
+
         images, labels, image_names, test_images, test_labels, image_names_test = output
 
         # e.g. retrain a Cellpose model
@@ -251,15 +257,24 @@ class Testing(ft.Container):
 
 
         model_path, train_losses, test_losses = train.train_seg(model.net,
-                                                                train_data=images, train_labels=labels,
-                                                                channels=[1, 2], normalize=True,
-                                                                test_data=test_images, test_labels=test_labels,
-                                                                weight_decay=self.weight, SGD=True, learning_rate=self.learning_rate,
-                                                                n_epochs=self.epochs, model_name="CP_new")
+                                                                train_data=imgs,
+                                                                train_labels=labels,
+                                                                channels=[1, 2],
+                                                                normalize=True,
+                                                                test_data=test_images,
+                                                                test_labels=test_labels,
+                                                                weight_decay=self.weight,
+                                                                SGD=True, #optimizing algo
+                                                                learning_rate=self.learning_rate,
+                                                                n_epochs=self.epochs,
+                                                                batch_size=self.batch_size,
+                                                                model_name="CP_new",
+                                                                save_path=self.directory
+                                                                )
 
-        self.test_loss= ft.Text(f"Test_Loss: -{train_losses}", size= 20)
-        self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
-        self.gui.page.update()
+       # self.test_loss= ft.Text(f"Test_Loss: -{train_losses}", size= 20)
+       # self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
+       # self.gui.page.update()
 
 
 
