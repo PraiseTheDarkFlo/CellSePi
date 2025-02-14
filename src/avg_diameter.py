@@ -61,7 +61,9 @@ class AverageDiameter:
         for diameters in results:
             all_diameters.extend(diameters)
 
-        average_diameter = np.mean(all_diameters)
-        return round(average_diameter, 2)
+        if len(all_diameters) == 0:
+            return 0.00
+
+        return round(np.mean(all_diameters), 2)
 
 

@@ -258,6 +258,7 @@ class BatchImageSegmentation(Notifier):
         io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
+        print("run_parallel start")
         start_index = self.num_seg_images
         self.executor = ThreadPoolExecutor(max_workers=8)
         futures = []
@@ -266,7 +267,9 @@ class BatchImageSegmentation(Notifier):
                 self.image_segmentation,
                 iN, image_id, image_paths, segmentation_channel, diameter, suffix, model
             ))
-
+        for future in futures:
+            future.result()
+        print("run_parallel end")
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -289,6 +292,7 @@ class BatchImageSegmentation(Notifier):
             model: cellpose model to be used
         """
         n_images = len(image_paths)
+        print("image_segmentation start", iN)
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -303,7 +307,6 @@ class BatchImageSegmentation(Notifier):
 
         image_path = image_paths[image_id][segmentation_channel]
         image = imread(image_path)
-
         # Normalization
         image = image.astype(np.float32)
         min_val = np.min(image)
@@ -315,7 +318,7 @@ class BatchImageSegmentation(Notifier):
 
         res = model.eval(image, diameter=diameter, channels=[0, 0])
         mask, flow, style = res[:3]
-
+        print("UNTIL HERE", iN)
         # Generate the output filename directly using the suffix attribute
         directory, filename = os.path.split(image_path)
         name, _ = os.path.splitext(filename)
@@ -323,7 +326,7 @@ class BatchImageSegmentation(Notifier):
         new_path = os.path.join(directory, new_filename)
 
         default_suffix_path = os.path.splitext(image_path)[0] + '_seg.npy'
-
+        print("image segmentation before new path name", iN)
         backup_path = None
         if default_suffix_path != new_path:
             if os.path.exists(default_suffix_path):
@@ -340,7 +343,7 @@ class BatchImageSegmentation(Notifier):
                 os.rename(default_suffix_path, new_path)
                 if backup_path is not None:
                     os.rename(backup_path, default_suffix_path)
-
+        print("image segmentation after new path name", iN)
         if image_id not in self.gui.csp.mask_paths:
             self.gui.csp.mask_paths[image_id] = {}
 
