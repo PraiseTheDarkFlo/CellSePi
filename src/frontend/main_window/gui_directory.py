@@ -387,8 +387,9 @@ class DirectoryCard(ft.Card):
         """
         Updates the symbol next to series number of image for every image_id in mask_paths.
         """
-        for image_id in self.gui.csp.image_paths:
-            self.update_mask_check(image_id)
+        if self.gui.csp.image_paths is not None:
+            for image_id in self.gui.csp.image_paths:
+                self.update_mask_check(image_id)
 
     def create_dir_row(self):
         """
