@@ -3,12 +3,12 @@ import asyncio
 import flet as ft
 from src.frontend.main_window.gui_mask import handle_image_switch_mask_on
 
-def on_image_click(img_id,channel_id,gui,from_auto = False):
+def update_main_image(img_id,channel_id,gui,on_click = True):
     """
     Method that handles what happens when the image is clicked or the main image need an update.
     """
     print("selected img:",img_id)
-    if not from_auto:
+    if on_click:
         if gui.csp.image_id is not None and gui.csp.image_id in gui.directory.selected_images_visualise:
             if gui.csp.channel_id is not None and gui.csp.channel_id in gui.directory.selected_images_visualise[gui.csp.image_id]:
                 gui.directory.selected_images_visualise[gui.csp.image_id][gui.csp.channel_id].visible = False
@@ -18,7 +18,7 @@ def on_image_click(img_id,channel_id,gui,from_auto = False):
     gui.directory.selected_images_visualise[img_id][channel_id].visible = True
     gui.directory.selected_images_visualise[img_id][channel_id].update()
     handle_image_switch_mask_on(gui)
-    if not from_auto:
+    if on_click:
         gui.contrast_slider.value = 1.0
         gui.brightness_slider.value = 1.0
     gui.contrast_slider.update()
@@ -33,15 +33,15 @@ def on_image_click(img_id,channel_id,gui,from_auto = False):
         gui.brightness_slider.disabled = False
         gui.page.update()
         if gui.csp.linux:
-            if from_auto:
-                asyncio.run(gui.image_tuning.update_main_image_async(False,True))
+            if on_click:
+                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(False, True))
             else:
-                asyncio.run(gui.image_tuning.update_main_image_async(True,True))
+                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(True, True))
         else:
-            if from_auto:
-                asyncio.run(gui.image_tuning.update_main_image_async(False))
+            if on_click:
+                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(False))
             else:
-                asyncio.run(gui.image_tuning.update_main_image_async(True))
+                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(True))
     else:
         gui.auto_image_tuning.update_main_image_auto()
 

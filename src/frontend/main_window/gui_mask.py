@@ -61,7 +61,6 @@ def reset_mask(gui,image_id,bf_channel):
 
 def insert_mask(gui, image,bfc):
     mask = gui.mask.mask_outputs[image][bfc]
-    print(mask)
     gui.canvas.container_mask.content.src_base64= mask
     gui.canvas.container_mask.update()
     gui.canvas.container_mask.visible = True

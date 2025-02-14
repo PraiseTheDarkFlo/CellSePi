@@ -6,7 +6,7 @@ import flet as ft
 import cv2
 from PIL import Image, ImageEnhance
 from matplotlib import pyplot as plt
-from src.frontend.main_window.gui_canvas import on_image_click
+from src.frontend.main_window.gui_canvas import update_main_image
 
 
 class ImageTuning:
@@ -21,21 +21,21 @@ class ImageTuning:
         self.gui = gui
         self.running_tasks = set()
         self.cached_image = None
-    async def update_main_image_async(self, click=False,linux = False):
+    async def update_brightness_and_contrast_async(self, on_click=False,linux = False):
         """
         Updates the main image brightness and contrast with the current selected values with the sliders.
 
         If a new image was clicked all old tasked got cancel so the new image has prio over the old one.
 
         Args:
-            click (bool): if a new main image is clicked or not.
+            on_click (bool): if a new main image is clicked or not.
             linux (bool): if the program is running on Linux.
         """
-        if linux and click:
+        if linux and on_click:
             self.cancel_all_tasks()
             self.gui.canvas.main_image.content.src_base64 = self.gui.csp.linux_images[self.gui.csp.image_id][self.gui.csp.channel_id]
             self.gui.canvas.main_image.update()
-        elif click:
+        elif on_click:
             self.cancel_all_tasks()
             self.gui.canvas.main_image.content.src_base64 = None
             self.gui.canvas.main_image.content.src = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
@@ -147,7 +147,7 @@ class AutoImageTuning:
             self.gui.contrast_icon.color = None
             self.gui.page.update()
             if self.gui.csp.image_id is not None:
-                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui,True)
+                update_main_image(self.gui.csp.image_id, self.gui.csp.channel_id, self.gui, False)
         else:
             self.active = True
             self.gui.csp.config.set_auto_button(True)
@@ -159,7 +159,7 @@ class AutoImageTuning:
             self.gui.contrast_icon.color = ft.Colors.GREY_700
             self.gui.page.update()
             if self.gui.csp.image_id is not None:
-                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui,True)
+                update_main_image(self.gui.csp.image_id, self.gui.csp.channel_id, self.gui, False)
 
     def update_main_image_auto(self):
         print("auto_brightness_contrast")

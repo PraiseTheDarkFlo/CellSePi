@@ -72,11 +72,11 @@ class GUI:
         )
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
-            on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
+            on_change=lambda e: asyncio.run(self.image_tuning.update_brightness_and_contrast_async())
         )
         self.contrast_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
-            on_change=lambda e: asyncio.run(self.image_tuning.update_main_image_async())
+            on_change=lambda e: asyncio.run(self.image_tuning.update_brightness_and_contrast_async())
         )
         self.auto_image_tuning = AutoImageTuning(self)
         self.auto_brightness_contrast = ft.IconButton(icon=ft.Icons.AUTO_FIX_HIGH,icon_color=ft.Colors.GREY_700,style=ft.ButtonStyle(

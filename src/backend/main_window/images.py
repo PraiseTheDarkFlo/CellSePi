@@ -51,7 +51,7 @@ class BatchImageSegmentation(Notifier):
                     if os.path.exists(path):
                         self.masks_backup[image_id] = {}
                         self.prev_masks_exist = True
-                        mask = np.load(path, allow_pickle=True)
+                        mask = np.load(path,allow_pickle=True)
                         self.masks_backup[image_id][segmentation_channel] = mask
 
         if self.prev_masks_exist:
@@ -149,7 +149,7 @@ class BatchImageSegmentation(Notifier):
             self.segmentation.is_resuming()
 
         self._call_start_listeners()
-        image_paths = self.gui.csp.image_paths  # TODO REVIEW FLO: Diese values musst du beim ersten run sichern wie bei backup
+        image_paths = self.gui.csp.image_paths
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
         suffix = self.suffix
@@ -230,7 +230,7 @@ class BatchImageSegmentation(Notifier):
                 self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
             else:
                 progress = str(round((iN + 1) / n_images * 100)) + " %"
-                current_image = {"image_id": image_id, "path": image_path}
+                current_image = {"image_id": image_id, "path": None}
                 self._call_update_listeners(progress, current_image)
                 self.num_seg_images = self.num_seg_images + 1
 
@@ -316,8 +316,8 @@ class BatchImageSegmentation(Notifier):
             self.resume_now = False
             self.segmentation.is_resuming()
 
-        image_path = image_paths[image_id][segmentation_channel]
         if segmentation_channel in image_paths[image_id]:
+            image_path = image_paths[image_id][segmentation_channel]
             image = imread(image_path)
             # Normalization
             image = image.astype(np.float32)
@@ -362,7 +362,7 @@ class BatchImageSegmentation(Notifier):
                 self.progress += 1
                 percent = round(self.progress / n_images * 100)
                 progress = str(percent) + "%"
-                current_image = {"image_id": iN, "path": image_path}
+                current_image = {"image_id": image_id, "path": image_path}
                 self._call_update_listeners(progress, current_image)
             self.num_seg_images = self.num_seg_images + 1
             self.gui.directory.update_mask_check(image_id)
@@ -372,7 +372,7 @@ class BatchImageSegmentation(Notifier):
                 self.progress += 1
                 percent = round(self.progress / n_images * 100)
                 progress = str(percent) + "%"
-                current_image = {"image_id": iN, "path": image_path}
+                current_image = {"image_id": image_id, "path": None}
                 self._call_update_listeners(progress, current_image)
             self.num_seg_images = self.num_seg_images + 1
 
@@ -434,7 +434,7 @@ class BatchImageReadout(Notifier):
             print(mask_paths)
             mask_path = mask_paths[image_id][segmentation_channel]
             print("mask path in images", mask_path)
-            mask_data = np.load(mask_path, allow_pickle=True).item()
+            mask_data = np.load(mask_path,allow_pickle=True).item()
             mask = mask_data["masks"]
 
             cell_ids = np.unique(mask)

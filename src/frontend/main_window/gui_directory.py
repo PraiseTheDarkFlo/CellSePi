@@ -8,9 +8,8 @@ from json.encoder import INFINITY
 from time import time
 import flet as ft
 
-from src.frontend.main_window.gui_canvas import on_image_click
+from src.frontend.main_window.gui_canvas import update_main_image
 from src.frontend.main_window.gui_fluorescence import fluorescence_button
-from src.backend.main_window.avg_diameter import AverageDiameter
 from src.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
@@ -342,8 +341,8 @@ class DirectoryCard(ft.Card):
                     [
                             ft.GestureDetector(
                                 content=ft.Container(ft.Stack([get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),self.selected_images_visualise[image_id][channel_id]]),width=156,height=156),
-                                on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
-                                                                                                  self.gui),
+                                on_tap=lambda e, img_id=image_id, c_id=channel_id: update_main_image(img_id, c_id,
+                                                                                                     self.gui),
                             ),
                             ft.Text(channel_id, size=10, text_align=ft.TextAlign.CENTER),
                         ],
@@ -376,7 +375,7 @@ class DirectoryCard(ft.Card):
         Args:
             image_id: the id of the image to check mask availability
         """
-        if self.gui.csp.mask_paths is not None and image_id in self.gui.csp.mask_paths:
+        if self.gui.csp.mask_paths is not None and image_id in self.gui.csp.mask_paths and self.gui.csp.config.get_bf_channel() in self.gui.csp.mask_paths[image_id]:
             self.icon_check[image_id].visible = True
             self.icon_x[image_id].visible = False
         else:
@@ -384,6 +383,12 @@ class DirectoryCard(ft.Card):
             self.icon_x[image_id].visible = True
         self.image_gallery.update()
 
+    def update_all_masks_check(self):
+        """
+        Updates the symbol next to series number of image for every image_id in mask_paths.
+        """
+        for image_id in self.gui.csp.image_paths:
+            self.update_mask_check(image_id)
 
     def create_dir_row(self):
         """

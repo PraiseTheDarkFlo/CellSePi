@@ -1,5 +1,5 @@
 import flet as ft
-from src.frontend.main_window.gui_canvas import on_image_click
+from src.frontend.main_window.gui_canvas import update_main_image
 from src.backend.main_window.config_file import ConfigFile, create_default_config
 
 
@@ -318,9 +318,10 @@ class GUIConfig:
             self.config_class.update_profile(self.config_class.get_selected_profile_name(),
                                              bf_channel=e.control.value)
             self.txt_bf_ref.current.color = None
+            self.gui.directory.update_all_masks_check()
             self.page.update()
             if self.gui.csp.image_id is not None:
-                on_image_click(self.gui.csp.image_id,self.gui.csp.channel_id,self.gui)
+                update_main_image(self.gui.csp.image_id, self.gui.csp.channel_id, self.gui, False)
             if not self.gui.csp.readout_running and not self.gui.csp.segmentation_running:
                 self.gui.page.run_task(self.gui.directory.check_masks)
         except ValueError:
