@@ -54,8 +54,9 @@ class MyQtWindow(QMainWindow):
         tools_layout.addWidget(title)
 
         #Add buttons to the tools box
-        self.draw_toggle_button = QPushButton("Drawing : OFF")
+        self.draw_toggle_button = QPushButton("Drawing: ON")
         self.draw_toggle_button.setCheckable(True)
+        self.draw_toggle_button.setChecked(True)
         self.draw_toggle_button.setStyleSheet(
             "font-size: 16px; color:#000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.draw_toggle_button.clicked.connect(self.toggle_draw_mode)
@@ -79,6 +80,7 @@ class MyQtWindow(QMainWindow):
                 border: 1px solid darkgray;
             }
             QPushButton:enabled {
+                border: 1px solid darkgray;
                 color: #000000
             }
         """)
@@ -94,6 +96,7 @@ class MyQtWindow(QMainWindow):
                 border: 1px solid darkgray;
             }
             QPushButton:enabled {
+                border: 1px solid darkgray;
                 color: #000000
             }
         """)
@@ -150,7 +153,7 @@ class MyQtWindow(QMainWindow):
         #if canvas is only a dummy create a new_canvas
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                       self.check_shifting, conn, mask_path, False, False)
+                                       self.check_shifting, conn, mask_path, True, False)
         else:
             #check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
@@ -366,7 +369,7 @@ class DrawingCanvas(QGraphicsView):
     redoAvailabilityChanged = pyqtSignal(bool)
 
     def __init__(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
-                 conn, mask_path, draw_mode=False, delete_mode=False):
+                 conn, mask_path, draw_mode=True, delete_mode=False):
         super().__init__()
 
         self.mask_color = mask_color
