@@ -34,6 +34,8 @@ class GUI:
         self.parent_conn, self.child_conn = parent_conn, child_conn
         self.cancel_event = None
         self.closing_event = False
+        self.training_event = None
+        self.readout_event = None
         self.pipe_listener_running = True
         self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
         self.thread.start()
@@ -125,9 +127,7 @@ class GUI:
                             ft.Column(
                         [
                                     self.training_environment.add_parameter_container(),
-                            self.training_environment.create_training_card(),
-                                    # self.training_environment.test_loss,
-                                    # self.train_environment.loss,
+                                    self.training_environment.create_training_card()
                                 ],
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
@@ -220,7 +220,12 @@ class GUI:
                 self.cancel_event = multiprocessing.Event()
                 self.cancel_segmentation()
                 self.cancel_event.wait()
-                print("cancel wait")
+            if self.csp.training_running:
+                self.training_event = multiprocessing.Event()
+                self.training_event.wait()
+            if self.csp.readout_running:
+                self.readout_event = multiprocessing.Event()
+                self.readout_event.wait()
             self.pipe_listener_running = False
             self.queue.put("close")
             print("test before drawing")
@@ -233,8 +238,6 @@ class GUI:
                 self.thread.join()
             self.child_conn.close()
             self.parent_conn.close()
-            # TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
-            # TODO: block here some where until every thing is no longer running
             self.page.window.prevent_close = False
             self.page.window.on_event = None
             self.page.update()

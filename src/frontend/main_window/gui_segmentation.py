@@ -351,6 +351,8 @@ class GUISegmentation():
             model_title.disabled = False
             model_chooser.disabled = False
             self.gui.page.update()
+            if self.gui.readout_event is not None:
+                self.gui.readout_event.set()
 
 
         fl_button.on_click = fluorescence_readout

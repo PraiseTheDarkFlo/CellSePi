@@ -193,6 +193,7 @@ class Training(ft.Container):
 
     def start_training(self,e):
         print("start")
+        self.gui.csp.training_running = True
         model = models.Cellpose(gpu=False, model_type=self.model)
         imgs = self.gui.directory.image_gallery
         #dont know if this is what is necessary: just something i found
@@ -231,8 +232,6 @@ class Training(ft.Container):
        # self.test_loss= ft.Text(f"Test_Loss: -{train_losses}", size= 20)
        # self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
        # self.gui.page.update()
-
-
-
-
+        if self.gui.training_event is not None:
+            self.gui.training_event.set()
 
