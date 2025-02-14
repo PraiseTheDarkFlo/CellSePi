@@ -245,8 +245,8 @@ class GUISegmentation():
             self.gui.csp.segmentation_running = False
             model_title.disabled = False
             model_chooser.disabled = False
-            self.gui.diameter_display.opacity = 0.5
-            self.gui.diameter_text.value = 0.00
+            self.gui.diameter_display.opacity = 1
+            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
             for image_id in self.gui.csp.image_paths:
                 self.gui.directory.update_mask_check(image_id)
             self.gui.page.update()

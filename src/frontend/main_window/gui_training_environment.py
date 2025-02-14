@@ -13,7 +13,7 @@ import flet as ft
 from cellpose import models, train, io
 from cellpose.io import imread
 
-class Testing(ft.Container):
+class Training(ft.Container):
 
     def __init__(self,gui):
         super().__init__()
@@ -28,12 +28,12 @@ class Testing(ft.Container):
         ),
         on_click = lambda e: self.change_environment(e),
         )
-        self.button_test_environment_menu=ft.PopupMenuButton(
+        self.button_training_environment_menu=ft.PopupMenuButton(
             items= [self.button_event],
             content=ft.Icon(ft.icons.MODEL_TRAINING),
             on_open=lambda _: self.text.update(),
         )
-        self.content = self.button_test_environment_menu
+        self.content = self.button_training_environment_menu
         self.padding = 10
         self.alignment = ft.alignment.top_right
 
@@ -42,7 +42,8 @@ class Testing(ft.Container):
         self.epochs=None
         self.learning_rate=None
         self.pre_trained=None
-        self.diameter=self.gui.csp.config.get_diameter()
+        self.diameter_default = True
+        self.diameter=self.gui.average_diameter.get_avg_diameter()
         self.directory= r"...\CellSePi\models"
         self.weight=1e-4 #standard value for the weight
 
@@ -70,9 +71,12 @@ class Testing(ft.Container):
         self.test_loss = None
 
 
-    def go_to_test_environment(self,e):
+    def go_to_training_environment(self,e):
         #delete the content of the page and reset the reference to the page(reference get sometimes lost)
-        self.gui.ref_test_environment.current.visible = True
+        if self.diameter_default:
+            self.diameter=self.gui.average_diameter.get_avg_diameter()
+            self.field_diameter.value= self.diameter
+        self.gui.ref_training_environment.current.visible = True
         self.gui.ref_seg_environment.current.visible = False
         self.gui.page.update()
         self.text.value = "Exit Training"
@@ -112,6 +116,7 @@ class Testing(ft.Container):
             self.weight= updated_value
             self.field_weights=updated_value
         else:
+            self.diameter_default = False
             self.diameter = updated_value
             self.field_diameter.value= updated_value
 
@@ -121,21 +126,21 @@ class Testing(ft.Container):
 
     def change_environment(self,e):
         if self.text.value == "Go To Training":
-            self.go_to_test_environment(e)
+            self.go_to_training_environment(e)
 
         else:
-            self.gui.ref_test_environment.current.visible = False
+            self.gui.ref_training_environment.current.visible = False
             self.gui.ref_seg_environment.current.visible = True
             self.gui.page.update()
             self.text.value= "Go To Training"
 
-    def create_testing_card(self):
+    def create_training_card(self):
         """
         This method creates a card for the GUI, which contains the progress bar and several buttons for
-         controlling the run of the testing.
+         controlling the run of the training.
 
         Returns:
-            testing_card (ft.Card): the card containing all the elements needed to run the testing
+            training_card (ft.Card): the card containing all the elements needed to run the training
         """
 
         start_button = ft.ElevatedButton(

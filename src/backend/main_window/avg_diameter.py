@@ -38,29 +38,30 @@ class AverageDiameter:
         Returns: The average diameter of all cells rounded to 2 decimal places.
         """
         mask_paths = self.csp.mask_paths
-        image_paths = self.csp.image_paths
-        segmentation_channel = self.csp.config.get_bf_channel()
-        all_diameters = []
-        valid_image_id = [
-            key for key in mask_paths.keys()
-            if isinstance(mask_paths[key], dict) and segmentation_channel in mask_paths[key]
-        ]
+        if mask_paths is not None:
+            image_paths = self.csp.image_paths
+            segmentation_channel = self.csp.config.get_bf_channel()
+            all_diameters = []
+            valid_image_id = [
+                key for key in mask_paths.keys()
+                if isinstance(mask_paths[key], dict) and segmentation_channel in mask_paths[key]
+            ]
 
-        def process_image(image_id):
-            mask_path = mask_paths[image_id][segmentation_channel]
-            mask_data = np.load(mask_path, allow_pickle=True).item()
-            mask = mask_data["masks"]
-            return calculate_mask_diameters(mask)
+            def process_image(image_id):
+                mask_path = mask_paths[image_id][segmentation_channel]
+                mask_data = np.load(mask_path, allow_pickle=True).item()
+                mask = mask_data["masks"]
+                return calculate_mask_diameters(mask)
 
-        with ThreadPoolExecutor() as executor:
-            results = executor.map(process_image, valid_image_id)
+            with ThreadPoolExecutor() as executor:
+                results = executor.map(process_image, valid_image_id)
 
-        for diameters in results:
-            all_diameters.extend(diameters)
+            for diameters in results:
+                all_diameters.extend(diameters)
 
-        if len(all_diameters) == 0:
-            return 0.00
+            if len(all_diameters) == 0:
+                return 0.00
 
-        return round(np.mean(all_diameters), 2)
+            return round(np.mean(all_diameters), 2)
 
 

@@ -15,7 +15,7 @@ from src.backend.main_window.cellsepi import CellSePi
 from src.backend.main_window.mask import Mask
 from src.frontend.main_window.gui_mask import error_banner, handle_image_switch_mask_on, handle_mask_update, reset_mask
 from src.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
-from src.frontend.main_window.gui_test_environment import Testing
+from src.frontend.main_window.gui_training_environment import Training
 
 
 class GUI:
@@ -49,7 +49,6 @@ class GUI:
         self.page.title = "CellSePi"
         self.canvas = Canvas()
         self.op = Options(self)
-        self.test_environment=Testing(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -92,8 +91,9 @@ class GUI:
             opacity=0.5,
             visible=True,
         )
+        self.training_environment=Training(self)
         self.ref_seg_environment = ft.Ref[ft.Column]()
-        self.ref_test_environment = ft.Ref[ft.Column]()
+        self.ref_training_environment = ft.Ref[ft.Column]()
         if self.csp.config.get_auto_button():
             self.auto_image_tuning.pressed()
 
@@ -124,14 +124,14 @@ class GUI:
                             ),
                             ft.Column(
                         [
-                                    self.test_environment.add_parameter_container(),
-                                    self.test_environment.create_testing_card(),
-                                    # self.test_environment.test_loss,
+                                    self.training_environment.add_parameter_container(),
+                            self.training_environment.create_training_card(),
+                                    # self.training_environment.test_loss,
                                     # self.train_environment.loss,
                                 ],
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
-                                visible=False,ref=self.ref_test_environment
+                                visible=False,ref=self.ref_training_environment
                             ),
 
                             #RIGHT COLUMN that handles gallery and directory_card
@@ -145,7 +145,7 @@ class GUI:
                                 ],
                                 expand=True,
                             ),
-                            ft.Column([self.op,self.test_environment]),
+                            ft.Column([self.op, self.training_environment]),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,

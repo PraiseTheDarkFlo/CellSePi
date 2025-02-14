@@ -470,7 +470,7 @@ class ConfigFile:
     #only for test_config
     def clear_config(self):
         """
-        Only for Testing
+        Only for Training
         ___________________________
         Makes a backup of the current config
         and deletes the original config.
@@ -483,7 +483,7 @@ class ConfigFile:
 
     def restore_config(self):
         """
-        Only for Testing
+        Only for Training
         ___________________________
         Copy's the backup back into the config.json file and
         refreshes the ConfigFile class with the "new" values.

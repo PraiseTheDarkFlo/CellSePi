@@ -184,12 +184,14 @@ class DirectoryCard(ft.Card):
             self.formatted_path.value = format_directory_path(self.directory_path)
             if self.output_dir or not self.is_supported_lif:
                 self.formatted_path.color = ft.Colors.RED
+                self.gui.diameter_text.value = 0.0
+                self.gui.diameter_display.update()
             else:
+                self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+                self.gui.diameter_display.opacity = 1
+                self.gui.diameter_display.update()
                 self.formatted_path.color = None
             self.formatted_path.update()
-            self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
-            self.gui.diameter_display.opacity = 1
-            self.gui.diameter_display.update()
 
     def select_directory_parallel(self, directory_path):
         """
