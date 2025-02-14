@@ -3,15 +3,14 @@ import platform
 import re
 import subprocess
 import sys
-
 import flet as ft
-from flet_core import PagePlatform
 
-from . import GUI
-from ..avg_diameter import AverageDiameter
-from ..fluorescence import Fluorescence
-from .gui_fluorescence import fluorescence_button
-from ..segmentation import Segmentation
+from src.backend.main_window.avg_diameter import AverageDiameter
+from src.backend.main_window.fluorescence import Fluorescence
+from src.frontend.main_window.gui_fluorescence import fluorescence_button
+from src.backend.main_window.segmentation import Segmentation
+from src.frontend.main_window.gui_mask import handle_mask_update, reset_mask
+
 
 class GUISegmentation():
     """
@@ -145,7 +144,8 @@ class GUISegmentation():
                 self.gui.csp.segmentation_running = False
                 progress_bar_text.value = "Select new Model"
                 self.gui.csp.model_path = None
-                self.gui.page.update()"""
+                self.gui.page.update()
+            """
 
         def cancel_segmentation(): # called when the cancel button is clicked
             """
@@ -300,12 +300,15 @@ class GUISegmentation():
                 if not platform.system() == "Linux":
                     self.gui.page.window.progress_bar = progress_bar.value
             print("Update: ", progress)
-            bfc = self.gui.csp.config.get_bf_channel()
             if current_image is not None:
                 if current_image["image_id"] == self.gui.csp.window_image_id:
                     if self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.window_bf_channel:
                         print("test")
                         self.gui.queue.put("refresh_mask")
+                if current_image["image_id"] == self.gui.csp.image_id and self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.config.get_bf_channel():
+                    handle_mask_update(self.gui)
+                else:
+                    reset_mask(self.gui, current_image["image_id"], self.segmentation.batch_image_segmentation.segmentation_channel)
             self.gui.page.update()
 
         # listeners for getting different information from the state of the segmentation process
@@ -375,7 +378,7 @@ class GUISegmentation():
                             )
                         )
 
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        project_root =os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         model_directory = os.path.join(project_root, "models")
 
         model_chooser = ft.Container(

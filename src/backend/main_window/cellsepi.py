@@ -1,4 +1,4 @@
-from src.config_file import ConfigFile
+from src.backend.main_window.config_file import ConfigFile
 
 
 class CellSePi:
@@ -18,6 +18,7 @@ class CellSePi:
         self.window_image_id = None
         self.window_bf_channel = None
         self.window_channel_id = None
+        self.window_mask_path = None
         self.current_channel_prefix = None
         self.window_mask_path = None
 

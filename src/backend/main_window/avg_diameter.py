@@ -1,8 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-import os
-
 import numpy as np
-from cellpose.io import imread
 
 
 def calculate_mask_diameters(mask):

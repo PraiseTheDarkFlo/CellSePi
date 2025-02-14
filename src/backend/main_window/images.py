@@ -1,17 +1,18 @@
+import multiprocessing
 import os
-import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
 
 import torch
 import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-from src.data_util import load_image_to_numpy
-import pandas as pd
+from src.backend.main_window.data_util import load_image_to_numpy
+from src.backend.main_window.notifier import Notifier
+from src.frontend.main_window.gui_mask import reset_mask, handle_mask_update
 
-from src.notifier import Notifier
 
 class BatchImageSegmentation(Notifier):
     """
@@ -66,6 +67,7 @@ class BatchImageSegmentation(Notifier):
                 if self.segmentation_channel == segmentation_channel:
                     self.gui.switch_mask.value = False  # sets the mask switch to False because there is no longer a mask
                     self.gui.canvas.container_mask.visible = False  # and sets the mask picture invisible because it is no longer valid
+                    reset_mask(self.gui, image_id,segmentation_channel)
                     self.gui.page.update()
             if image_id == self.gui.csp.window_image_id:
                if segmentation_channel == self.gui.csp.window_bf_channel:
@@ -90,6 +92,10 @@ class BatchImageSegmentation(Notifier):
                                 if segmentation_channel == self.gui.csp.window_bf_channel:
                                     print("test")
                                     self.gui.queue.put("refresh_mask")  # refreshes if the backup is the current selected image and the mask is the same channel
+                            if image_id == self.gui.csp.image_id and segmentation_channel == self.gui.csp.config.get_bf_channel(): #refreshes or delete the current generated mask
+                                handle_mask_update(self.gui)
+                            else:
+                                reset_mask(self.gui, image_id,segmentation_channel)
                     else:
                         if segmentation_channel in self.gui.csp.mask_paths[image_id]:
                             path = self.gui.csp.mask_paths[image_id][segmentation_channel]
@@ -267,7 +273,7 @@ class BatchImageSegmentation(Notifier):
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
 
         start_index = self.num_seg_images
-        self.executor = ThreadPoolExecutor()
+        self.executor = ThreadPoolExecutor(max_workers=4)
         futures = []
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             futures.append(self.executor.submit(

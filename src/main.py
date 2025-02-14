@@ -1,7 +1,6 @@
 import multiprocessing
-
 import flet as ft
-from src.GUI.GUI import GUI
+from src.frontend.main_window.gui import GUI
 
 if __name__ == '__main__':
     async def main(page: ft.Page):

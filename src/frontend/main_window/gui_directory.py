@@ -2,17 +2,16 @@ import asyncio
 import os
 import pathlib
 import platform
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from json.encoder import INFINITY
 from time import time
 import flet as ft
-from PIL import Image
 
-from . import GUI
-from .gui_canvas import on_image_click
-from .gui_fluorescence import fluorescence_button
-from ..avg_diameter import AverageDiameter
-from ..data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
+from src.frontend.main_window.gui_canvas import on_image_click
+from src.frontend.main_window.gui_fluorescence import fluorescence_button
+from src.backend.main_window.avg_diameter import AverageDiameter
+from src.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
 def format_directory_path(dir_path, max_length=30):
@@ -78,7 +77,7 @@ class DirectoryCard(ft.Card):
     """
     Handles the directory card with all event handlers.
     """
-    def __init__(self, gui: GUI):
+    def __init__(self, gui):
         super().__init__()
         self.gui = gui
         self.count_results_txt = ft.Text(value="Results: 0")
@@ -162,8 +161,10 @@ class DirectoryCard(ft.Card):
             self.gui.contrast_slider.disabled = True
             self.gui.brightness_slider.disabled = True
             self.gui.csp.current_channel_prefix = self.gui.csp.config.get_channel_prefix()
+            self.gui.mask.mask_outputs = defaultdict(dict)
             self.gui.contrast_slider.value = 1
             self.gui.brightness_slider.value = 1
+            self.gui.diameter_display.opacity = 0.5
             if not platform.system() == "Linux":
                 self.gui.page.window.progress_bar = -1
             self.gui.page.update()
@@ -328,20 +329,19 @@ class DirectoryCard(ft.Card):
             self.selected_images_visualise[image_id] = {}
             for channel_id in cur_image_paths:
                 self.selected_images_visualise[image_id][channel_id] = ft.Container(
-                    width=150,
-                    height=150,
+                    width=154,
+                    height=154,
                     border=ft.border.all(4, ft.colors.ORANGE_700),
                     alignment=ft.alignment.center,
                     visible=False,
-                    padding=5,
-                    margin=4
+                    padding=5
                 )
             group_row = ft.Row(
                 [
                     ft.Column(
                     [
                             ft.GestureDetector(
-                                content=ft.Container(ft.Stack([get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),self.selected_images_visualise[image_id][channel_id]]),width=158,height=158),
+                                content=ft.Container(ft.Stack([get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),self.selected_images_visualise[image_id][channel_id]]),width=156,height=156),
                                 on_tap=lambda e, img_id=image_id, c_id=channel_id: on_image_click(img_id, c_id,
                                                                                                   self.gui),
                             ),

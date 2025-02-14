@@ -1,26 +1,21 @@
 import asyncio
-import atexit
 import multiprocessing
 import os
 import threading
-
 import flet as ft
-from flet_core import BoxShape
 
-from .gui_options import Options
-from .gui_segmentation import GUISegmentation
-from .drawing.gui_drawing import open_qt_window
-from .gui_canvas import Canvas
-from .gui_config import GUIConfig
-from .gui_directory import DirectoryCard, copy_to_clipboard
-from src.CellSePi import CellSePi
-from src.mask import Mask
-from .gui_mask import error_banner,handle_image_switch_mask_on, handle_mask_update
-from ..avg_diameter import AverageDiameter
-from ..image_tuning import ImageTuning, AutoImageTuning
-from .gui_test_environment import Testing
-
-
+from src.backend.main_window.avg_diameter import AverageDiameter
+from src.frontend.main_window.gui_segmentation import GUISegmentation
+from src.frontend.main_window.gui_options import Options
+from src.frontend.drawing_window.gui_drawing import open_qt_window
+from src.frontend.main_window.gui_canvas import Canvas
+from src.frontend.main_window.gui_config import GUIConfig
+from src.frontend.main_window.gui_directory import DirectoryCard, copy_to_clipboard
+from src.backend.main_window.cellsepi import CellSePi
+from src.backend.main_window.mask import Mask
+from src.frontend.main_window.gui_mask import error_banner, handle_image_switch_mask_on, handle_mask_update, reset_mask
+from src.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
+from src.frontend.main_window.gui_test_environment import Testing
 
 
 class GUI:
@@ -97,6 +92,8 @@ class GUI:
             opacity=0.5,
             visible=True,
         )
+        self.ref_seg_environment = ft.Ref[ft.Column]()
+        self.ref_test_environment = ft.Ref[ft.Column]()
         if self.csp.config.get_auto_button():
             self.auto_image_tuning.pressed()
 
@@ -107,21 +104,36 @@ class GUI:
         self.page.add(
             ft.Column(
                 [
-                    ft.Row(
-                        [
+                    ft.Row([
                             #LEFT COLUMN that handles all elements on the left side(canvas,switch_mask,segmentation)
                             ft.Column(
-                                [
+                        [
                                     self.canvas.canvas_card,
                                     ft.Row([self.switch_mask, self.drawing_button]),
-                                    ft.Row([self.gui_config,ft.Column([ft.Card(content=ft.Container(content=ft.Column([ft.Row([self.brightness_icon,ft.Container(self.brightness_slider,padding=-15)]),ft.Row([self.contrast_icon,ft.Container(self.contrast_slider,padding=-15)])]),padding=10)),
-                                                                       ft.Row([ft.Card(content=self.auto_brightness_contrast), ft.Card(content=self.diameter_display)])])
+                                    ft.Row([self.gui_config, ft.Column([ft.Card(content=ft.Container(content=ft.Column(
+                                        [ft.Row([self.brightness_icon, ft.Container(self.brightness_slider, padding=-15)]),
+                                         ft.Row([self.contrast_icon, ft.Container(self.contrast_slider, padding=-15)])]), padding=10)),
+                                                                        ft.Row([ft.Card(content=self.auto_brightness_contrast),
+                                                                                ft.Card(content=self.diameter_display)])])
                                             ]),
                                     self.segmentation_card
                                 ],
                                 expand=True,
                                 alignment=ft.MainAxisAlignment.START,
+                                visible=True,ref=self.ref_seg_environment
                             ),
+                            ft.Column(
+                        [
+                                    self.test_environment.add_parameter_container(),
+                                    self.test_environment.create_testing_card(),
+                                    # self.test_environment.test_loss,
+                                    # self.train_environment.loss,
+                                ],
+                                expand=True,
+                                alignment=ft.MainAxisAlignment.START,
+                                visible=False,ref=self.ref_test_environment
+                            ),
+
                             #RIGHT COLUMN that handles gallery and directory_card
                             ft.Column(
                                 [
@@ -189,7 +201,7 @@ class GUI:
             directory, filename = os.path.split(image_path)
             name, _ = os.path.splitext(filename)
             mask_file_name = f"{name}{self.csp.config.get_mask_suffix()}.npy"
-            self.csp.window_mask_path = os.path.join(directory, mask_file_name)
+            self.csp.window_mask_path= os.path.join(directory, mask_file_name)
             self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(), self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, self.csp.window_mask_path,self.csp.window_channel_id,self.csp.current_channel_prefix))
         else:
             self.page.snack_bar = ft.SnackBar(
@@ -223,6 +235,9 @@ class GUI:
             self.parent_conn.close()
             # TODO: close everything that have threads e.g. cellpose and diameter calc or image_tuning(but image tuning is fast not necessary to end i think)
             # TODO: block here some where until every thing is no longer running
+            self.page.window.prevent_close = False
+            self.page.window.on_event = None
+            self.page.update()
             self.page.window.destroy()
             print("closing window finished")
 
@@ -248,20 +263,14 @@ class GUI:
                     self.directory.update_mask_check(split_data[1])
                     print("in pipeline", split_data[1])
                 else:
-                    #if data is not closed and the window remains open: the edited image gets updated in the flet canvas
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
-                        print("update Mask flet")
-                        #self.csp.mask_paths[self.csp.image_id][self.csp.config.get_bf_channel()]= r"C:\Users\Jenna\Studium\FS5\data\data\output\Series003c2_seg.npy"
                         handle_mask_update(self)
-
                         self.page.update()
-                        #TODO: bzw. maske muss auch neu geladen werden wenn nicht aktiviert und nicht main image muss im hintergrund bild neu geladen werden also eigentlich aus dieser if raus
-                        #bzw zwei methoden eins für aktiv picture dass gleich neu gleaden wird und eine für wenn bild nicht aktiv muss trotzdem neu generiert werden, also maybe dann speicher reseten oder so?
-                        #TODO: hier mask updaten in Flet
-
-                    #TODO: hier diameter neu berechnen
+                    else:
+                        reset_mask(self,self.csp.window_image_id,self.csp.window_bf_channel)
                     self.diameter_text.value = self.average_diameter.get_avg_diameter()
                     self.diameter_display.visible = True
+                    self.diameter_display.update()
         try:
             loop.run_until_complete(pipe_listener())
         finally:

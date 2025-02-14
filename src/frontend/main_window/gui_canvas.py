@@ -1,10 +1,9 @@
 import asyncio
 
 import flet as ft
-from . import GUI
-from .gui_mask import handle_image_switch_mask_on
+from src.frontend.main_window.gui_mask import handle_image_switch_mask_on
 
-def on_image_click(img_id,channel_id,gui: GUI,from_auto = False):
+def on_image_click(img_id,channel_id,gui,from_auto = False):
     """
     Method that handles what happens when the image is clicked or the main image need an update.
     """

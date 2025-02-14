@@ -1,8 +1,9 @@
-import images
 import threading
-import flet as ft
-from src.notifier import Notifier
-from .GUI.gui_fluorescence import error_banner,fluorescence_button
+
+from src.backend.main_window.images import BatchImageReadout
+from src.backend.main_window.cellsepi import CellSePi
+from src.backend.main_window.notifier import Notifier
+from src.frontend.main_window.gui_fluorescence import error_banner,fluorescence_button
 
 class Fluorescence(Notifier):
     """
@@ -12,10 +13,10 @@ class Fluorescence(Notifier):
         csp= current CellSePi object
         gui= current gui object
     """
-    def __init__(self, CellSePi,GUI):
+    def __init__(self,csp: CellSePi,gui):
         super().__init__()
-        self.csp= CellSePi
-        self.gui=GUI
+        self.csp= csp
+        self.gui=gui
 
 
     def readout_fluorescence(self):
@@ -54,7 +55,7 @@ class Fluorescence(Notifier):
 
             #creates the readout image and fills the mask_path
             print(self.csp.mask_paths)
-            batch_image_readout = images.BatchImageReadout(image_paths=self.csp.image_paths,
+            batch_image_readout = BatchImageReadout(image_paths=self.csp.image_paths,
                                                           mask_paths=self.csp.mask_paths,
                                                           segmentation_channel=brightfield_channel,
                                                           channel_prefix=prefix,

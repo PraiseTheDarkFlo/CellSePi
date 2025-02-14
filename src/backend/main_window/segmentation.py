@@ -1,5 +1,5 @@
-from src.images import BatchImageSegmentation
-from src.notifier import Notifier
+from src.backend.main_window.images import BatchImageSegmentation
+from src.backend.main_window.notifier import Notifier
 
 
 class Segmentation(Notifier):

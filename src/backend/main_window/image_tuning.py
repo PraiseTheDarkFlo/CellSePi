@@ -2,15 +2,11 @@ import asyncio
 import base64
 import os
 from io import BytesIO
-
+import flet as ft
 import cv2
 from PIL import Image, ImageEnhance
 from matplotlib import pyplot as plt
-
-from src.GUI import GUI
-import flet as ft
-
-from src.GUI.gui_canvas import on_image_click
+from src.frontend.main_window.gui_canvas import on_image_click
 
 
 class ImageTuning:
@@ -21,7 +17,7 @@ class ImageTuning:
         running_tasks: contains all task that are currently running.
         cached_image: contains the image that is current be cached.
     """
-    def __init__(self,gui: GUI):
+    def __init__(self,gui):
         self.gui = gui
         self.running_tasks = set()
         self.cached_image = None
@@ -135,7 +131,7 @@ class ImageTuning:
             image.save(self.gui.csp.adjusted_image_path, format="PNG")
 
 class AutoImageTuning:
-    def __init__(self, gui: GUI):
+    def __init__(self, gui):
         self.gui = gui
         self.active = False
 

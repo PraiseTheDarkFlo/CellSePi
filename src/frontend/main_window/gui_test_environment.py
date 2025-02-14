@@ -9,17 +9,13 @@
 #Schichten im Modell
 #directory
 #
-from cProfile import label
-
-from . import GUI
 import flet as ft
-import os
 from cellpose import models, train, io
 from cellpose.io import imread
 
 class Testing(ft.Container):
 
-    def __init__(self,gui:GUI):
+    def __init__(self,gui):
         super().__init__()
         self.gui = gui
         self.text=ft.Text("Go To Training")
@@ -35,6 +31,7 @@ class Testing(ft.Container):
         self.button_test_environment_menu=ft.PopupMenuButton(
             items= [self.button_event],
             content=ft.Icon(ft.icons.MODEL_TRAINING),
+            on_open=lambda _: self.text.update(),
         )
         self.content = self.button_test_environment_menu
         self.padding = 10
@@ -73,57 +70,12 @@ class Testing(ft.Container):
         self.test_loss = None
 
 
-
     def go_to_test_environment(self,e):
-        self.text.value= "Exit Training"
-        container= self.add_parameter_container()
-        card = self.create_testing_card()
-
         #delete the content of the page and reset the reference to the page(reference get sometimes lost)
-        page = self.gui.page
-        self.gui.page.clean()
-        self.gui.page = page
-
-
-        self.gui.page.add(
-            ft.Column(
-                [
-                    ft.Row(
-                        [
-                            # LEFT COLUMN that handles all elements on the left side(canvas,switch_mask,segmentation)
-                            ft.Column(
-                                [
-                                    container,
-                                    card,
-                                    #self.test_loss,
-                                    #self.train_loss,
-                                ],
-                                expand=True,
-                                alignment=ft.MainAxisAlignment.START,
-                            ),
-                            # RIGHT COLUMN that handles gallery and directory_card
-                            ft.Column(
-                                [
-                                    self.gui.directory,
-                                    ft.Card(
-                                        content=ft.Stack(
-                                            [ft.Container(self.gui.progress_ring, alignment=ft.alignment.center),
-                                             ft.Container(self.gui.directory.image_gallery, padding=20)]),
-                                        expand=True
-                                    ),
-                                ],
-                                expand=True,
-                            ),
-                            ft.Column([self.gui.op, self.gui.test_environment]),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        expand=True,
-                    ),
-                ],
-                expand=True
-            )
-        )
+        self.gui.ref_test_environment.current.visible = True
+        self.gui.ref_seg_environment.current.visible = False
         self.gui.page.update()
+        self.text.value = "Exit Training"
 
     def add_parameter_container(self):
 
@@ -172,11 +124,10 @@ class Testing(ft.Container):
             self.go_to_test_environment(e)
 
         else:
+            self.gui.ref_test_environment.current.visible = False
+            self.gui.ref_seg_environment.current.visible = True
+            self.gui.page.update()
             self.text.value= "Go To Training"
-            page = self.gui.page
-            self.gui.page.clean()
-            self.gui.page = page
-            self.gui.build()
 
     def create_testing_card(self):
         """

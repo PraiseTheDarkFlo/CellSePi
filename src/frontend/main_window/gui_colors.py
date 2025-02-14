@@ -1,10 +1,10 @@
+from collections import defaultdict
+
 import flet as ft
 from flet_contrib.color_picker import ColorPicker
-
-from src.CellSePi import CellSePi
 from enum import Enum
 
-from src.GUI import GUI
+from src.frontend.main_window.gui_mask import handle_mask_update
 
 
 def hex_to_rgb(hex_color):
@@ -35,7 +35,7 @@ class ColorTypes(Enum):
     Outline = 2
 
 class ColorSelection:
-    def __init__(self,gui: GUI):
+    def __init__(self,gui):
         self.config = gui.csp.config
         self.gui = gui
         color_mask = rgb_to_hex(self.config.get_mask_color())
@@ -78,10 +78,14 @@ class ColorSelection:
         if self.color_type == ColorTypes.Mask:
             self.color_icon_mask.icon_color = self.color_picker.color
             self.config.set_mask_color(hex_to_rgb(self.color_picker.color))
+            self.gui.mask.mask_outputs = defaultdict(dict)
+            handle_mask_update(self.gui)
             self.gui.queue.put(("color_change", self.config.get_mask_color(), self.config.get_outline_color()))
         else:
             self.color_icon_outline.icon_color = self.color_picker.color
             self.config.set_outline_color(hex_to_rgb(self.color_picker.color))
+            self.gui.mask.mask_outputs = defaultdict(dict)
+            handle_mask_update(self.gui)
             self.gui.queue.put(("color_change", self.config.get_mask_color(), self.config.get_outline_color()))
         e.control.page.close(self.dialog)
         e.control.page.update()

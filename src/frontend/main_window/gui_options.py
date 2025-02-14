@@ -1,15 +1,13 @@
 import flet as ft
 
-from src.CellSePi import CellSePi
-from src.GUI import GUI
-from src.GUI.gui_colors import ColorSelection
+from src.frontend.main_window.gui_colors import ColorSelection
 
 
 class Options(ft.Container):
     """
     Class which handles the options in the right up corner in the GUI.
     """
-    def __init__(self, gui: GUI):
+    def __init__(self, gui):
         super().__init__()
         self.page = gui.page
         self.gui = gui
@@ -73,6 +71,7 @@ class Options(ft.Container):
                 content=ft.Row([self.dark_light_icon, self.dark_light_text]),
                 on_click=self.theme_changed,
             ),
+
             #ft.PopupMenuItem(
             #    content=ft.Row([self.color_selection.color_icon_mask, ft.Text("Mask Color")]),
             #    on_click=self.color_selection.open_color_picker_mask,

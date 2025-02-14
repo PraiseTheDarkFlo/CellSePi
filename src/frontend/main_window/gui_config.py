@@ -1,7 +1,6 @@
 import flet as ft
-from . import GUI
-from .gui_canvas import on_image_click
-from ..config_file import ConfigFile, create_default_config
+from src.frontend.main_window.gui_canvas import on_image_click
+from src.backend.main_window.config_file import ConfigFile, create_default_config
 
 
 class GUIConfig:
@@ -19,7 +18,7 @@ class GUIConfig:
         txt_cp_ref (Ref): Reference to the channel prefix text field.
         txt_d_ref (Ref): Reference to the diameter text field.
     """
-    def __init__(self,gui: GUI):
+    def __init__(self,gui):
         """
         Initializes the GUIConfig instance.
 

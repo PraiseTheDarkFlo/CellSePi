@@ -1,9 +1,6 @@
-import cv2
 import numpy as np
 from PyQt5.QtCore import QPointF
 
-
-#TODO review by Jenna: wo wird der Error angezeigt ? ICh würde nur englische Variablen und Kommentare verwenden, anstatt deutsche
 def mask_shifting(mask_data,deleted_mask_id:int):
     """
     Shifts the mask when a mask got deleted to restore an order without gaps.

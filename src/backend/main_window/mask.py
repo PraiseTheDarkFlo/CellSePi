@@ -1,15 +1,12 @@
 #the mask is uploaded in the canvas
-import os.path
-
-from src.CellSePi import CellSePi
-
-import numpy as np
+import base64
+from io import BytesIO
 from pathlib import Path
 
+from src.backend.main_window.cellsepi import CellSePi
+import numpy as np
 from PIL import Image
 from collections import defaultdict
-from io import BytesIO
-import base64
 
 
 class Mask:
@@ -22,8 +19,8 @@ class Mask:
         mask_outputs= stores the already converted mask outputs, consists
                       of image_id and the path
     """
-    def __init__(self,CellSePi):
-        self.csp= CellSePi
+    def __init__(self,csp:CellSePi):
+        self.csp= csp
         # the path to the already generated masks are stored in here
         self.mask_outputs = defaultdict(dict)# [image_id,path zu .png]
 
@@ -38,7 +35,7 @@ class Mask:
         if image_id in self.csp.mask_paths:
 
             #load the npy file and convert it to directory
-            mask_data = np.load(Path(self.csp.mask_paths[image_id ][bfc]), allow_pickle=True).item()
+            mask_data = np.load(Path(self.csp.mask_paths[image_id][bfc]), allow_pickle=True).item()
 
             #extract the mask data and the outline of the cell
             mask= mask_data["masks"]

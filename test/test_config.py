@@ -2,14 +2,14 @@ import ast
 
 import pytest
 
-from src import config_file
+from src.backend.main_window.config_file import ConfigFile
 
-from src.config_file import create_default_config, DeletionForbidden
+from src.backend.main_window.config_file import create_default_config, DeletionForbidden
 
 
 @pytest.fixture
 def config():
-    cfg = config_file.ConfigFile()
+    cfg = ConfigFile()
     cfg.clear_config()
     yield cfg
     cfg.restore_config()

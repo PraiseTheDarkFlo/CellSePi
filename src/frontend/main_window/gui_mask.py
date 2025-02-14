@@ -1,5 +1,3 @@
-
-from . import GUI
 import flet as ft
 
 def error_banner(gui,message):
@@ -50,13 +48,15 @@ def handle_mask_update(gui):
     image= gui.csp.image_id
     bfc=gui.csp.config.get_bf_channel()
 
-    if gui.switch_mask.value and image in gui.mask.mask_outputs:
+    if gui.switch_mask.value:
         gui.mask.load_mask_into_canvas()
         insert_mask(gui,image,bfc)
-
     else:
         return
 
+def reset_mask(gui,image_id,bf_channel):
+    if image_id in gui.mask.mask_outputs and bf_channel in gui.mask.mask_outputs[image_id]:
+        del gui.mask.mask_outputs[image_id][bf_channel]
 
 
 def insert_mask(gui, image,bfc):
