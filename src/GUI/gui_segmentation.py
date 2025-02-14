@@ -127,8 +127,6 @@ class GUISegmentation():
             cancel_button.icon_color = ft.Colors.RED
             self.gui.open_button.visible = False
             self.gui.directory.disable_path_choosing()
-            self.gui.diameter_text.value = 0.00
-            self.gui.diameter_display.opacity = 1
             self.gui.page.update()
             self.segmentation.run() # this will throw an error if something other than a model was chosen
             """except:
