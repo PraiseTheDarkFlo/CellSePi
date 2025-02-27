@@ -441,21 +441,36 @@ class DrawingCanvas(QGraphicsView):
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        """
+        What happens, if you move the clicked mouse
+        """
         if self.draw_mode:
             current_point = self.mapToScene(event.pos())
 
-            #Check if the point is within the image boundaries
             if self.is_point_within_image(current_point):
                 x, y = int(current_point.x()), int(current_point.y())
+
             else:
-                #if mouse out of image
                 x, y = self.clamp_to_image_bounds(current_point)
 
-            line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(), x, y)
-            r, g, b = self.outline_color
-            pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
-            line_item.setPen(pen)
-            self.scene.addItem(line_item)
+                if self.last_point and self.is_point_within_image(self.last_point):
+                    boundary_point = QPointF(x, y)
+                    line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
+                                                  boundary_point.x(), boundary_point.y())
+                    r, g, b = self.outline_color
+                    pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+                    line_item.setPen(pen)
+                    self.scene.addItem(line_item)
+                    self.last_point = boundary_point
+                    return
+
+            if self.last_point:
+                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(), x, y)
+                r, g, b = self.outline_color
+                pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
+                line_item.setPen(pen)
+                self.scene.addItem(line_item)
+
             self.last_point = QPointF(x, y)
 
     def clamp_to_image_bounds(self, point):
@@ -469,19 +484,23 @@ class DrawingCanvas(QGraphicsView):
         return x, y
 
     def mouseReleaseEvent(self, event):
+        """
+        If you release the left click.
+        """
         if self.draw_mode and self.drawing:
             self.drawing = False
 
-            #Connect last point to start point
-            if self.last_point and self.start_point:
-                line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
-                                              self.start_point.x(), self.start_point.y())
+            # connect last and first point in pic
+            if self.start_point and self.last_point:
+                first_inside = self.clamp_to_image_bounds(self.start_point)
+                last_inside = self.clamp_to_image_bounds(self.last_point)
+
+                line_item = QGraphicsLineItem(first_inside[0], first_inside[1],
+                                              last_inside[0], last_inside[1])
                 r, g, b = self.outline_color
                 pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
                 line_item.setPen(pen)
                 self.scene.addItem(line_item)
-            
-            #Reset start and last points
             self.start_point = None
             self.last_point = None
 
