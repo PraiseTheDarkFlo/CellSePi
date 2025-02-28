@@ -1,3 +1,4 @@
+
 #the following parameter need to be included/adaptable :
 # modeltype: 'cyto','nuclei' or user difiend
 #batch size
@@ -11,25 +12,28 @@
 #
 import flet as ft
 from cellpose import models, train, io
-from cellpose.io import imread
+
+import os
+import time
+
 
 class Training(ft.Container):
 
-    def __init__(self,gui):
+    def __init__(self, gui):
         super().__init__()
         self.gui = gui
-        self.text=ft.Text("Go To Training")
-        self.button_event= ft.PopupMenuItem(
-                content = ft.Row(
-            [
-                ft.Icon(ft.Icons.EXIT_TO_APP),
-                self.text,
-            ]
-        ),
-        on_click = lambda e: self.change_environment(e),
+        self.text = ft.Text("Go To Training")
+        self.button_event = ft.PopupMenuItem(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.EXIT_TO_APP),
+                    self.text,
+                ]
+            ),
+            on_click=lambda e: self.change_environment(e),
         )
-        self.button_training_environment_menu=ft.PopupMenuButton(
-            items= [self.button_event],
+        self.button_training_environment_menu = ft.PopupMenuButton(
+            items=[self.button_event],
             content=ft.Icon(ft.icons.MODEL_TRAINING),
             on_open=lambda _: self.text.update(),
         )
@@ -37,102 +41,114 @@ class Training(ft.Container):
         self.padding = 10
         self.alignment = ft.alignment.top_right
 
-        self.model=None
-        self.batch_size=None
-        self.epochs=None
-        self.learning_rate=None
-        self.pre_trained=None
+        self.model = None
+        self.batch_size = None
+        self.epochs = None
+        self.learning_rate = None
+        self.pre_trained = None
         self.diameter_default = True
-        self.diameter=self.gui.average_diameter.get_avg_diameter()
-        self.directory= r"...\CellSePi\models"
-        self.weight=1e-4 #standard value for the weight
+        self.diameter = self.gui.average_diameter.get_avg_diameter()
+        self.directory = r"...\CellSePi\models"
+        self.weight = 1e-4  # standard value for the weight
 
         self.color = ft.colors.BLUE_400
 
-        self.field_model=ft.TextField(label="modeltype", value=self.model, border_color=self.color,
-                     on_change=lambda e: self.changed_input("modeltype",e))
-        self.field_batch=ft.TextField(label="batch_size", value=self.batch_size, border_color=self.color,
-                     on_change=lambda e: self.changed_input("batch_size",e) )
-        self.field_epoch=ft.TextField(label="epochs", value=self.epochs, border_color=self.color,
-                     on_change=lambda e: self.changed_input("epochs",e))
-        self.field_lr=ft.TextField(label="learning_rate", value=self.learning_rate, border_color=self.color,
-                     on_change=lambda e: self.changed_input("learning_rate",e))
-        self.field_trained=ft.TextField(label="pre_trained", value=self.pre_trained, border_color=self.color,
-                     on_change=lambda e: self.changed_input("pre_trained",e))
-        self.field_diameter=ft.TextField(label="diameter", value=self.diameter, border_color=self.color,
-                     on_change=lambda e: self.changed_input("diameter",e))
+        # Changed from TextField to Dropdown for model type selection
+        self.field_model = ft.Dropdown(
+            label="Model Type",
+            value="nucleus",
+            options=[
+                ft.dropdown.Option("nucleus"),
+                ft.dropdown.Option("cyto"),
+                ft.dropdown.Option("custom")
+            ],
+            on_change=lambda e: self.changed_input("modeltype", e)
+        )
+        # New field for custom model input, visible only if "custom" is selected
+        self.field_custom_model = ft.TextField(label="Custom Model", value="", border_color=self.color, visible=False,
+                                               on_change=lambda e: self.changed_input("custom_model", e))
+
+        self.field_batch = ft.TextField(label="batch_size", value=self.batch_size, border_color=self.color,
+                                        on_change=lambda e: self.changed_input("batch_size", e))
+        self.field_epoch = ft.TextField(label="epochs", value=self.epochs, border_color=self.color,
+                                        on_change=lambda e: self.changed_input("epochs", e))
+        self.field_lr = ft.TextField(label="learning_rate", value=self.learning_rate, border_color=self.color,
+                                     on_change=lambda e: self.changed_input("learning_rate", e))
+        self.field_trained = ft.TextField(label="pre_trained", value=self.pre_trained, border_color=self.color,
+                                          on_change=lambda e: self.changed_input("pre_trained", e))
+        self.field_diameter = ft.TextField(label="diameter", value=self.diameter, border_color=self.color,
+                                           on_change=lambda e: self.changed_input("diameter", e))
         self.field_weights = ft.TextField(label="weight", value=self.weight, border_color=self.color,
-                                        on_change=lambda e: self.changed_input("weight", e))
+                                          on_change=lambda e: self.changed_input("weight", e))
         self.field_directory = ft.TextField(label="directory", value=self.directory, border_color=self.color,
-                                           read_only=True)
+                                            read_only=True)
 
         self.progress_bar = ft.ProgressBar(value=0, width=180)
-        self.train_loss= None
+        self.train_loss = None
         self.test_loss = None
 
-
-    def go_to_training_environment(self,e):
-        #delete the content of the page and reset the reference to the page(reference get sometimes lost)
+    def go_to_training_environment(self, e):
+        # delete the content of the page and reset the reference to the page (reference get sometimes lost)
         if self.diameter_default:
-            self.diameter=self.gui.average_diameter.get_avg_diameter()
-            self.field_diameter.value= self.diameter
+            self.diameter = self.gui.average_diameter.get_avg_diameter()
+            self.field_diameter.value = self.diameter
         self.gui.ref_training_environment.current.visible = True
         self.gui.ref_seg_environment.current.visible = False
         self.gui.page.update()
         self.text.value = "Exit Training"
 
     def add_parameter_container(self):
-
         return ft.Container(
             ft.Column(
-                [ self.field_model, self.field_batch, self.field_epoch,self.field_weights, self.field_lr, self.field_trained,self.field_diameter, self.field_directory
+                [self.field_model, self.field_custom_model, self.field_batch, self.field_epoch, self.field_weights,
+                 self.field_lr, self.field_trained, self.field_diameter, self.field_directory
+                 ]
+            ), padding=10,
+        )
 
-            ]
-        ), padding= 10,
-
-    )
-
-
-
-    def changed_input(self,field, e):
-        updated_value= e.control.value
+    def changed_input(self, field, e):
+        updated_value = e.control.value
 
         if field == "modeltype":
-            self.model=updated_value
-            self.field_model.value =updated_value
+            self.model = updated_value
+            self.field_model.value = updated_value
+            if updated_value == "custom":
+                self.field_custom_model.visible = True
+            else:
+                self.field_custom_model.visible = False
+        elif field == "custom_model":
+            self.model = updated_value
+            self.field_custom_model.value = updated_value
         elif field == "batch_size":
             self.batch_size = updated_value
-            self.field_batch.value= updated_value
+            self.field_batch.value = updated_value
         elif field == "epochs":
             self.epochs = updated_value
-            self.field_epoch= updated_value
+            self.field_epoch.value = updated_value
         elif field == "learning_rate":
             self.learning_rate = updated_value
-            self.field_lr= updated_value
+            self.field_lr.value = updated_value
         elif field == "pre_trained":
             self.pre_trained = updated_value
-            self.field_trained.value= updated_value
+            self.field_trained.value = updated_value
         elif field == "weight":
-            self.weight= updated_value
-            self.field_weights=updated_value
+            self.weight = updated_value
+            self.field_weights.value = updated_value
         else:
             self.diameter_default = False
             self.diameter = updated_value
-            self.field_diameter.value= updated_value
+            self.field_diameter.value = updated_value
 
         self.gui.page.update()
 
-
-
-    def change_environment(self,e):
+    def change_environment(self, e):
         if self.text.value == "Go To Training":
             self.go_to_training_environment(e)
-
         else:
             self.gui.ref_training_environment.current.visible = False
             self.gui.ref_seg_environment.current.visible = True
             self.gui.page.update()
-            self.text.value= "Go To Training"
+            self.text.value = "Go To Training"
 
     def create_training_card(self):
         """
@@ -142,7 +158,6 @@ class Training(ft.Container):
         Returns:
             training_card (ft.Card): the card containing all the elements needed to run the training
         """
-
         start_button = ft.ElevatedButton(
             text="Start",
             icon=ft.icons.PLAY_CIRCLE,
@@ -151,10 +166,8 @@ class Training(ft.Container):
             on_click=self.start_training,
         )
         # progress bar, which is updated throughout the training periods
-
-
         progress_bar_text = ft.Text("Waiting for Input")
-        text= ft.Text("Start Training")
+        text = ft.Text("Start Training")
         title = ft.ListTile(
             leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
             title=text,
@@ -177,61 +190,93 @@ class Training(ft.Container):
         progress_card = ft.Card(
             content=ft.Container(
                 content=ft.Stack(
-                    [test_container
-
-                     ]
+                    [test_container]
                 ),
                 padding=10
             ),
         )
 
-
-
         return progress_card
 
-
-
-    def start_training(self,e):
+    def start_training(self, e):
         print("start")
         self.gui.csp.training_running = True
-        model = models.Cellpose(gpu=False, model_type=self.model)
-        imgs = self.gui.directory.image_gallery
-        #dont know if this is what is necessary: just something i found
+        if self.model == "custom" and self.field_custom_model.value:
+            model_type = self.field_custom_model.value
+        else:
+            model_type = self.model
+        # Use the selected model type to load the Cellpose model
+        model = models.Cellpose(gpu=False, model_type=model_type)
         io.logger_setup()
 
+        # Ensure the save directory exists
+        os.makedirs(self.directory, exist_ok=True)
 
-        output = io.load_train_test_data(test_dir=self.gui.directory.directory_path,
-                                         train_dir= self.gui.directory.directory_path,
-                                         image_filter="",
-                                         mask_filter="_seg.npy",
-                                         look_one_level_down=False)
+        # Check if the directory contains files before proceeding
+        dir_path = self.gui.directory.directory_path.value
+        if not os.listdir(dir_path):
+            print(f"ERROR: no files found in {dir_path}")
+            return
 
+        output = io.load_train_test_data(
+            test_dir=self.gui.directory.directory_path.value,
+            train_dir=self.gui.directory.directory_path.value,
+            image_filter="",
+            mask_filter="_seg.npy",
+            look_one_level_down=False
+        )
 
         images, labels, image_names, test_images, test_labels, image_names_test = output
+        if not images or not labels:
+            print("ERROR: No training images or labels found. Aborting training.")
+            return
+        train_data = images
 
-        # e.g. retrain a Cellpose model
-        model = models.CellposeModel(model_type=self.model)
+        # Convert learning rate, epochs, and batch size to numeric types
+        try:
+            lr = float(self.field_lr.value)
+        except (ValueError, TypeError):
+            lr = 0.001  # default learning rate
 
+        try:
+            n_epochs = int(self.field_epoch.value)
+        except (ValueError, TypeError):
+            n_epochs = 100  # default epochs
 
+        try:
+            bs = int(self.field_batch.value)
+        except (ValueError, TypeError):
+            bs = 16  # default batch size
+
+        # Start timer
+        start_time = time.time()
+
+        model = models.CellposeModel(model_type=model_type)
         model_path, train_losses, test_losses = train.train_seg(model.net,
-                                                                train_data=imgs,
+                                                                train_data=train_data,
                                                                 train_labels=labels,
                                                                 channels=[1, 2],
                                                                 normalize=True,
                                                                 test_data=test_images,
                                                                 test_labels=test_labels,
                                                                 weight_decay=self.weight,
-                                                                SGD=True, #optimizing algo
-                                                                learning_rate=self.learning_rate,
-                                                                n_epochs=self.epochs,
-                                                                batch_size=self.batch_size,
+                                                                SGD=True,  # optimizing algo
+                                                                learning_rate=lr,
+                                                                n_epochs=n_epochs,
+                                                                batch_size=bs,
                                                                 model_name="CP_new",
                                                                 save_path=self.directory
                                                                 )
+        # End timer and calculate duration
+        end_time = time.time()
+        elapsed = end_time - start_time
+        print(f"Training completed in {elapsed:.2f} seconds")
+        # Optionally, update the GUI to indicate training completion:
+        self.text.value = f"Training Completed in {elapsed:.2f} sec"
+        self.gui.page.update()
 
-       # self.test_loss= ft.Text(f"Test_Loss: -{train_losses}", size= 20)
-       # self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
-       # self.gui.page.update()
+        # self.test_loss = ft.Text(f"Test_Loss: -{train_losses}", size=20)
+        # self.test_loss = ft.Text(f"Training_Loss: -{test_losses}", size=20)
+        # self.gui.page.update()
         if self.gui.training_event is not None:
             self.gui.training_event.set()
-
