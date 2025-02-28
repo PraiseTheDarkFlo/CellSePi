@@ -426,6 +426,10 @@ class DrawingCanvas(QGraphicsView):
         if self.draw_mode:
             if event.button() == Qt.LeftButton:
                 current_point = self.mapToScene(event.pos())
+                if not self.is_point_within_image(current_point):
+                    x,y = self.clamp_to_image_bounds(current_point)
+                    current_point = QPointF(x, y)
+
                 self.drawing = True
                 self.last_point = current_point
 
@@ -449,20 +453,8 @@ class DrawingCanvas(QGraphicsView):
 
             if self.is_point_within_image(current_point):
                 x, y = int(current_point.x()), int(current_point.y())
-
             else:
                 x, y = self.clamp_to_image_bounds(current_point)
-
-                if self.last_point and self.is_point_within_image(self.last_point):
-                    boundary_point = QPointF(x, y)
-                    line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(),
-                                                  boundary_point.x(), boundary_point.y())
-                    r, g, b = self.outline_color
-                    pen = QPen(QColor(r, g, b), 2, Qt.SolidLine)
-                    line_item.setPen(pen)
-                    self.scene.addItem(line_item)
-                    self.last_point = boundary_point
-                    return
 
             if self.last_point:
                 line_item = QGraphicsLineItem(self.last_point.x(), self.last_point.y(), x, y)
