@@ -71,13 +71,12 @@ class Options(ft.Container):
                 content=ft.Row([self.dark_light_icon, self.dark_light_text]),
                 on_click=self.theme_changed,
             ),
-
-            #ft.PopupMenuItem(
-            #    content=ft.Row([self.color_selection.color_icon_mask, ft.Text("Mask Color")]),
-            #    on_click=self.color_selection.open_color_picker_mask,
-            #),
-            #ft.PopupMenuItem(
-            #    content=ft.Row([self.color_selection.color_icon_outline, ft.Text("Outline Color")]),
-            #    on_click=self.color_selection.open_color_picker_outline,
-            #)
+            ft.PopupMenuItem(
+                content=ft.Row([self.color_selection.color_icon_mask, ft.Text("Mask Color")]),
+                on_click=self.color_selection.open_color_picker_mask,
+            ),
+            ft.PopupMenuItem(
+                content=ft.Row([self.color_selection.color_icon_outline, ft.Text("Outline Color")]),
+                on_click=self.color_selection.open_color_picker_outline,
+            )
         ]
