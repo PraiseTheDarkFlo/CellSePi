@@ -1,24 +1,6 @@
-from pathlib import Path
-
-import cv2
-#the following parameter need to be included/adaptable :
-# modeltype: 'cyto','nuclei' or user difiend
-#batch size
-#epochs
-#learning rate
-#vortrainiert oder out of scratch (boolean)
-#optimierungsalgo
-#diameter
-#Schichten im Modell
-#directory
-#
 import flet as ft
 from cellpose import models, train, io
 import os
-import time
-
-from networkx.algorithms.approximation.distance_measures import diameter
-
 
 class Training(ft.Container):
 
@@ -264,6 +246,7 @@ class Training(ft.Container):
         self.start_button.disabled = True
         self.gui.directory.disable_path_choosing()
         self.progress_ring.visible = True
+        self.progress_bar_text.value = ""
         self.disable_switch_environment()
         self.gui.page.update()
         if self.re_train_model.value and self.re_train_model_name is None:
@@ -323,8 +306,7 @@ class Training(ft.Container):
                                 n_epochs=self.epochs, model_name=self.re_train_model_name,save_path=os.path.dirname(self.model_directory))
                 self.progress_bar_text.value = "finished training"
             else:
-                model = models.CellposeModel(model_type=self.model)
-                model.diam_mean = diameter
+                model = models.CellposeModel(model_type=self.model,diam_mean=self.diameter)
                 train.train_seg(model.net,
                                 train_data=images, train_labels=labels,
                                 channels=[1, 2], normalize=True,
