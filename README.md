@@ -98,34 +98,40 @@ All changes are synchronised between the **Drawing Tools** window and the **main
 **Training**  
 #TODO: write training part and screenrecord
 ![Segmentation](docs/gifs/drawing_tools.gif)
-## ⬇️ **Installation**  
+## ⬇️ **Installation**
+To install CellSePi, simply run:
+
 ```bash
 pip install cellsepi
 ```
-Requirements are listed in `requirements.txt`. Make sure you have:  
-- **Python 3.8+**  
-- `numpy==1.26.4`  
-- `numba==0.61.0`
-- `pillow`  
-- `pandas`  
-- `openpyxl`  
-- `cellpose==3.1.1.1`  
-- `flet==0.25.2`  
-- `flet-desktop == 0.25.2` 
-- `flet-runtime == 0.24.1`  
-- `matplotlib`  
-- `pytest`  
-- `pyqt5`  
-- `flet_contrib`  
-- `flet_core == 0.24.1`
-- `bioio==1.2.0`
-- `bioio-lif`
 
-To install all dependencies:  
+This command automatically installs all required dependencies as specified in the package configuration. Alternatively, if you prefer to install the dependencies manually, you can use the provided `requirements.txt` file:
+
 ```bash
 pip install -r requirements.txt
 ```
 
+**Required Packages (with versions):**
+
+- **Python 3.8+**
+- `numpy==1.26.4`
+- `numba==0.61.0`
+- `pillow`
+- `pandas`
+- `openpyxl`
+- `cellpose==3.1.1.1`
+- `flet==0.25.2`
+- `flet-desktop==0.25.2`
+- `flet-runtime==0.24.1`
+- `matplotlib`
+- `pytest`
+- `pyqt5`
+- `flet_contrib`
+- `flet_core==0.24.1`
+- `bioio==1.2.0`
+- `bioio-lif`
+
+---
 ## 💭 **Feedback & Contributions**  
 - Report bugs or suggest features via [GitHub Issues](https://github.com/PraiseTheDarkFlo/CellSePi/issues)
 

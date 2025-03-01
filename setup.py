@@ -11,6 +11,9 @@ setup(
         "flet==0.25.2", "flet-desktop==0.25.2", "flet-runtime==0.24.1","bioio==1.2.0", "numba==0.61.0",
         "matplotlib", "pytest", "pyqt5", "flet_contrib", "flet_core==0.24.1", "bioio-lif"
     ],
+    author="Jenna Ahlvers, Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock",
+    url="https://github.com/PraiseTheDarkFlo/CellSePi",
+    description="Microscope segmentation and data analysis pipeline with a graphical interface, based on Cellpose.",
     entry_points={
         "console_scripts": [
             "cellsepi = cellsepi.main:main",
