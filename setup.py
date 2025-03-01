@@ -13,7 +13,7 @@ setup(
     ],
     author="Jenna Ahlvers, Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock",
     url="https://github.com/PraiseTheDarkFlo/CellSePi",
-    description="Microscope segmentation and data analysis pipeline with a graphical interface, based on Cellpose.",
+    description="Microscope segmentation and data analysis pipeline with a graphical interface, powered by Cellpose.",
     entry_points={
         "console_scripts": [
             "cellsepi = cellsepi.main:main",
