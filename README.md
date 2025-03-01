@@ -58,7 +58,7 @@ python -m cellsepi
 **Interface Overview**  
 *(Left: Start Screen; Right: Main Interface with Images)*  
 <p align="center">
-  <img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
+  <img src="docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
   <img src="docs/images/main_window_with_images.png" width="400" alt="Main Window with Images"/>
 </p>
 
