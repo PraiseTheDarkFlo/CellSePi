@@ -9,6 +9,7 @@ class CellSePi:
         self.segmentation_thread = None
         self.training_running = False
         self.model_path = None
+        self.re_train_model_path=None
         self.readout_running = False
         self.readout_thread = None
         self.readout_path = None

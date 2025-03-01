@@ -29,7 +29,7 @@ class GUI:
         self.switch_mask = ft.Switch(label="Mask", value=False)
         self.switch_mask.on_change = lambda e: self.update_view_mask()
         self.queue = multiprocessing.Queue()
-        self.average_diameter = AverageDiameter(self.csp)
+        self.average_diameter = AverageDiameter(self)
         parent_conn, child_conn = multiprocessing.Pipe()
         self.parent_conn, self.child_conn = parent_conn, child_conn
         self.cancel_event = None
@@ -221,8 +221,10 @@ class GUI:
                 self.cancel_segmentation()
                 self.cancel_event.wait()
             if self.csp.training_running:
+                print("training event started")
                 self.training_event = multiprocessing.Event()
                 self.training_event.wait()
+                print("training event ended")
             if self.csp.readout_running:
                 self.readout_event = multiprocessing.Event()
                 self.readout_event.wait()

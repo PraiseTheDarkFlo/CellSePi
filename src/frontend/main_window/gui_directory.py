@@ -154,6 +154,7 @@ class DirectoryCard(ft.Card):
             self.gui.open_button.visible = False
             self.gui.drawing_button.disabled = True
             self.gui.start_button.disabled = True
+            self.gui.training_environment.start_button.disabled = True
             fluorescence_button.visible = False
             self.gui.progress_bar_text.value = "Waiting for Input"
             self.gui.progress_bar.value = 0
@@ -299,6 +300,7 @@ class DirectoryCard(ft.Card):
                 mask_paths = {}
             else:
                 self.count_results_txt.color = None
+                self.gui.training_environment.start_button.disabled = False
                 if self.gui.csp.model_path is not None:
                     self.gui.progress_bar_text.value = "Ready to Start"
                     self.gui.start_button.disabled = False

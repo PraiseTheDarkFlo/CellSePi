@@ -29,8 +29,9 @@ class AverageDiameter:
     """
     This class calculates the average diameter of a cell in all the given images.
     """
-    def __init__(self, csp):
-        self.csp = csp
+    def __init__(self, gui):
+        self.gui = gui
+        self.csp = gui.csp
 
     def get_avg_diameter(self):
         """
@@ -62,6 +63,11 @@ class AverageDiameter:
             if len(all_diameters) == 0:
                 return 0.00
 
-            return round(np.mean(all_diameters), 2)
+            rounded_diameters = round(np.mean(all_diameters), 2)
+            self.gui.training_environment.diameter = rounded_diameters
+            if self.gui.training_environment.field_diameter.disabled is False:
+                self.gui.training_environment.field_diameter.value = rounded_diameters
+                self.gui.training_environment.field_diameter.update()
+            return rounded_diameters
 
 

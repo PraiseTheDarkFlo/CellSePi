@@ -115,22 +115,24 @@ class GUISegmentation():
             # visibility of buttons before start of segmentation (needed in case of error)
             state_fl_button = fl_button.visible
             state_open_button = self.gui.open_button.visible
-            #try:
-            start_button.visible = False
-            pause_button.visible = True
-            cancel_button.visible = True
-            model_title.disabled = True
-            model_chooser.disabled = True
-            fl_button.visible = False
-            cancel_button.color = ft.Colors.RED
-            cancel_button.icon_color = ft.Colors.RED
-            self.gui.open_button.visible = False
-            self.gui.directory.disable_path_choosing()
-            self.gui.page.update()
-            self.segmentation.run() # this will throw an error if something other than a model was chosen
-            """except:
+            try:
+                start_button.visible = False
+                pause_button.visible = True
+                cancel_button.visible = True
+                model_title.disabled = True
+                model_chooser.disabled = True
+                fl_button.visible = False
+                cancel_button.color = ft.Colors.RED
+                cancel_button.icon_color = ft.Colors.RED
+                self.gui.open_button.visible = False
+                self.gui.training_environment.disable_switch_environment()
+                self.gui.directory.disable_path_choosing()
+                self.gui.page.update()
+                self.segmentation.run() # this will throw an error if something other than a model was chosen
+            except:
                 self.gui.page.snack_bar = ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model."))
                 self.gui.page.snack_bar.open = True
+                self.gui.training_environment.enable_switch_environment()
                 start_button.visible = True
                 start_button.disabled = True
                 pause_button.visible = False
@@ -145,7 +147,7 @@ class GUISegmentation():
                 progress_bar_text.value = "Select new Model"
                 self.gui.csp.model_path = None
                 self.gui.page.update()
-            """
+
 
         def cancel_segmentation(): # called when the cancel button is clicked
             """
@@ -224,6 +226,7 @@ class GUISegmentation():
             model_title.disabled = False
             model_chooser.disabled = False
             self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+            self.gui.training_environment.enable_switch_environment()
             self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
             self.gui.page.update()
@@ -241,6 +244,7 @@ class GUISegmentation():
             if self.gui.csp.readout_path is not None:
                 self.gui.open_button.visible = True
             self.segmentation_cancelling = False
+            self.gui.training_environment.enable_switch_environment()
             self.gui.directory.enable_path_choosing()
             self.gui.csp.segmentation_running = False
             model_title.disabled = False

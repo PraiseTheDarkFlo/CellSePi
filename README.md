@@ -104,23 +104,22 @@ pip install cellsepi
 ```
 Requirements are listed in `requirements.txt`. Make sure you have:  
 - **Python 3.8+**  
-- `numpy`  
+- `numpy==1.26.4`  
+- `numba==0.61.0`
 - `pillow`  
 - `pandas`  
 - `openpyxl`  
-- `cellpose`  
+- `cellpose==3.1.1.1`  
 - `flet==0.25.2`  
-- `flet-desktop`  
-- `flet-runtime`  
+- `flet-desktop == 0.25.2` 
+- `flet-runtime == 0.24.1`  
 - `matplotlib`  
 - `pytest`  
 - `pyqt5`  
 - `flet_contrib`  
-- `opencv-python`  
-- `flet_core`  
-- `bioio-lif`  
-- `bioio`  
-
+- `flet_core == 0.24.1`
+- `bioio==1.2.0`
+- `bioio-lif`
 
 To install all dependencies:  
 ```bash
