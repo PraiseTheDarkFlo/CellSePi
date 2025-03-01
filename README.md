@@ -66,12 +66,12 @@ python -m cellsepi
 - The dark/light theme adapts to your system settings. Changing the theme is only for the current session. 
 - Mask and outline colors are saved in the configuration file for consistency.
 
-<img src="docs/gifs/options.gif" width="500" alt="Options">
+<img src="docs/gifs/options.gif" width="700" alt="Options">
 
 **Profiles**  
 Save and manage parameters like the bright-field channel, channel prefix, mask suffix, and diameter.
 
-<img src="docs/gifs/profiles.gif" width="500" alt="Profiles">
+<img src="docs/gifs/profiles.gif" width="700" alt="Profiles">
 
 **Segmentation**  
 To start segmentation, select:
@@ -88,12 +88,12 @@ During segmentation, you can:
 - **Pause:** Temporarily halt the process (useful for large images) and resume later.
 - **Cancel:** Abort the process, reverting to the previous mask or removing it if none existed.
 
-<img src="docs/gifs/segmentation.gif" width="500" alt="Segmentation">
+<img src="docs/gifs/segmentation.gif" width="700" alt="Segmentation">
 
 **Readout**  
 Generates an `.xlsx` file containing extracted fluorescence values. Click the "Open Excel" button to launch your system’s default spreadsheet application (e.g., ONLYOFFICE).
 
-<img src="docs/gifs/readout.gif" width="500" alt="Readout">
+<img src="docs/gifs/readout.gif" width="700" alt="Readout">
 
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
@@ -101,14 +101,14 @@ Correct segmentation errors manually or draw masks to train new models.
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
-<img src="docs/gifs/drawing_tools.gif" width="500" alt="Drawing Tools">
+<img src="docs/gifs/drawing_tools.gif" width="700" alt="Drawing Tools">
 
 **Training**  
 Train your own models using the **Cellpose** framework. Two training modes are available:
 1. **New Model Training:** Train a model from scratch using standard Cellpose models (e.g., `nuclei`, `cyto`, `cyto2`, `cyto3`).
 2. **Model Fine-Tuning:** Retrain an existing model with your own images and masks for improved performance.
 
-<img src="docs/gifs/training.gif" width="500" alt="Training">
+<img src="docs/gifs/training.gif" width="700" alt="Training">
 
 
 ## ⬇️ Installation
