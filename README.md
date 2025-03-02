@@ -3,6 +3,11 @@
 [![PyPI version](https://img.shields.io/pypi/v/cellsepi.svg)](https://pypi.org/project/cellsepi/)
 [![License](https://img.shields.io/pypi/l/cellsepi.svg)](LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/cellsepi.svg)](https://pypi.org/project/cellsepi/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/cellsepi.svg)](https://pypi.org/project/cellsepi/)
+[![Last Commit](https://img.shields.io/github/last-commit/PraiseTheDarkFlo/cellsepi.svg)](https://github.com/PraiseTheDarkFlo/cellsepi)
+![GitHub Repo stars](https://img.shields.io/github/stars/PraiseTheDarkFlo/cellsepi)
+![GitHub forks](https://img.shields.io/github/forks/PraiseTheDarkFlo/cellsepi)
+![GitHub issues](https://img.shields.io/github/issues/PraiseTheDarkFlo/cellsepi)
 
 > **Microscope segmentation and data analysis pipeline with a graphical interface, powered by Cellpose.**
 
