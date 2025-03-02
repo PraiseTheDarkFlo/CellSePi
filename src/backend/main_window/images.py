@@ -164,7 +164,7 @@ class BatchImageSegmentation(Notifier):
 
         start_index = self.num_seg_images
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
-            if segmentation_channel in image_paths[image_id]:
+            if segmentation_channel in image_paths[image_id] and os.path.isfile(image_paths[image_id][segmentation_channel]):
                 if self.cancel_now:
                     self.cancel_now = False
                     self.restore_backup()
@@ -316,7 +316,7 @@ class BatchImageSegmentation(Notifier):
             self.resume_now = False
             self.segmentation.is_resuming()
 
-        if segmentation_channel in image_paths[image_id]:
+        if segmentation_channel in image_paths[image_id] and os.path.isfile(image_paths[image_id][segmentation_channel]):
             image_path = image_paths[image_id][segmentation_channel]
             image = imread(image_path)
             # Normalization
