@@ -205,7 +205,7 @@ class GUI:
             self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(), self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, self.csp.window_mask_path,self.csp.window_channel_id,self.csp.current_channel_prefix))
         else:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel},has no image!"))
+                ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel}, has no image!"))
             self.page.snack_bar.open = True
             self.page.update()
 
@@ -266,7 +266,7 @@ class GUI:
                         self.csp.mask_paths[self.csp.window_image_id] = {}
                     self.csp.mask_paths[self.csp.window_image_id][self.csp.window_bf_channel] = self.csp.window_mask_path
                     self.directory.update_mask_check(split_data[1])
-                    print("in pipeline", split_data[1])
+                    self.page.run_task(self.directory.check_masks)
                 else:
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
                         handle_mask_update(self)
