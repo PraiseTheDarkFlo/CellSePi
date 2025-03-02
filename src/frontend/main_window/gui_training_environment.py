@@ -262,7 +262,7 @@ class Training(ft.Container):
             return
         self.gui.csp.training_running = True
         try:
-            mask_filter = f"{self.gui.csp.config.get_mask_suffix()}.npy"
+            mask_filter = f"{self.gui.csp.current_mask_suffix}.npy"
             output = io.load_train_test_data(train_dir= str(self.gui.csp.working_directory),
                                              mask_filter=mask_filter,
                                              look_one_level_down=False)

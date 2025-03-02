@@ -28,7 +28,7 @@ class BatchImageSegmentation(Notifier):
         self.device = device
         self.segmentation_channel = self.gui.csp.config.get_bf_channel()
         self.diameter = self.gui.csp.config.get_diameter()
-        self.suffix = self.gui.csp.config.get_mask_suffix()
+        self.suffix = self.gui.csp.current_mask_suffix
         self.masks_backup = {}
         self.prev_masks_exist = False
         self.num_seg_images = 0
@@ -135,7 +135,7 @@ class BatchImageSegmentation(Notifier):
             self.backup_masks()
             self.segmentation_channel = self.gui.csp.config.get_bf_channel()
             self.diameter = self.gui.csp.config.get_diameter()
-            self.suffix = self.gui.csp.config.get_mask_suffix()
+            self.suffix = self.gui.csp.current_mask_suffix
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()
@@ -246,7 +246,7 @@ class BatchImageSegmentation(Notifier):
             self.backup_masks()
             self.segmentation_channel = self.gui.csp.config.get_bf_channel()
             self.diameter = self.gui.csp.config.get_diameter()
-            self.suffix = self.gui.csp.config.get_mask_suffix()
+            self.suffix = self.gui.csp.current_mask_suffix
         if self.cancel_now:
             self.cancel_now = False
             self.restore_backup()

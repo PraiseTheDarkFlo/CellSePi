@@ -22,7 +22,9 @@ class CellSePi:
         self.window_channel_id = None
         self.window_mask_path = None
         self.current_channel_prefix = None
+        self.current_mask_suffix = None
         self.window_mask_path = None
+
 
         self.readout = None
 

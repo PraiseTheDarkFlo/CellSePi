@@ -74,7 +74,21 @@ python -m cellsepi
 <img src="docs/gifs/options.gif" width="700" alt="Options">
 
 **Profiles**  
-Save and manage parameters like the bright-field channel, channel prefix, mask suffix, and diameter.
+Save and manage parameters such as the bright-field channel, channel prefix, mask suffix, and diameter.
+
+- **Bright-Field Channel:**  
+  The channel on which segmentation is performed and whose masks are currently displayed.
+
+- **Channel Prefix:**  
+  The prefix indicating that the following part of the image name represents the channel. For example, if the channel prefix is set to `c`, the images `series100c1` and `series100c2` are recognized as part of series100 with channels 1 and 2.
+
+- **Mask Suffix:**  
+  Specifies the suffix that identifies the masks corresponding to images. For instance, `series100c1_seg` is recognized as the mask for the image `series100c1`.
+
+- **Diameter:**  
+  Represents the average cell diameter used by the segmentation model.
+
+> **Note:** Changes to the **Mask Suffix** or **Channel Prefix** will only take effect when new files are loaded.
 
 <img src="docs/gifs/profiles.gif" width="700" alt="Profiles">
 

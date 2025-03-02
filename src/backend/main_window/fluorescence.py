@@ -50,7 +50,7 @@ class Fluorescence(Notifier):
             fluorescence_button.disabled=True
 
             brightfield_channel = self.csp.config.get_bf_channel()
-            prefix = self.csp.config.get_channel_prefix()
+            prefix = self.csp.current_channel_prefix
             working_directory = self.csp.working_directory
 
             #creates the readout image and fills the mask_path
