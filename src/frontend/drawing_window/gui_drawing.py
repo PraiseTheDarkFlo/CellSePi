@@ -53,7 +53,17 @@ class MyQtWindow(QMainWindow):
             "font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
         tools_layout.addWidget(title)
 
+
+
         #Add buttons to the tools box
+        self.mask_toggle_button = QPushButton("Mask: ON")
+        self.mask_toggle_button.setCheckable(True)
+        self.mask_toggle_button.setChecked(True)
+        self.mask_toggle_button.setStyleSheet(
+            "font-size: 16px; color: #000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
+        self.mask_toggle_button.clicked.connect(self.toggle_mask)
+        tools_layout.addWidget(self.mask_toggle_button)
+
         self.draw_toggle_button = QPushButton("Drawing: ON")
         self.draw_toggle_button.setCheckable(True)
         self.draw_toggle_button.setChecked(True)
@@ -68,6 +78,7 @@ class MyQtWindow(QMainWindow):
             "font-size: 16px; color: #000000; padding: 10px 20px; margin-bottom: 10px; background-color: #F5F5F5; border: 1px solid #CCCCCC; border-radius: 5px;")
         self.delete_toggle_button.clicked.connect(self.toggle_delete_mode)
         tools_layout.addWidget(self.delete_toggle_button)
+
 
         tools_layout.addWidget(self.check_shifting, alignment=Qt.AlignCenter)
 
@@ -153,7 +164,7 @@ class MyQtWindow(QMainWindow):
         #if canvas is only a dummy create a new_canvas
         if self.canvas_dummy:
             new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
-                                       self.check_shifting, conn, mask_path, True, False)
+                                       self.check_shifting, conn, mask_path, True, False,mask_show=self.mask_toggle_button.isChecked())
         else:
             #check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
@@ -165,7 +176,7 @@ class MyQtWindow(QMainWindow):
                 new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id,
                                            adjusted_image_path,
                                            self.check_shifting, conn, mask_path, self.canvas.draw_mode,
-                                           self.canvas.delete_mode)
+                                           self.canvas.delete_mode,mask_show=self.mask_toggle_button.isChecked())
 
         #replace the old canvas with the new one and update the window
         self.restore_button.setEnabled(False)
@@ -211,6 +222,20 @@ class MyQtWindow(QMainWindow):
             else:
                 self.delete_toggle_button.setText("Delete Mode: OFF")
             self.canvas.toggle_delete_mode()
+
+    def toggle_mask(self):
+        """
+        Toggles if the mask is shown or not.
+        """
+        if not self.canvas_dummy:
+            if self.mask_toggle_button.isChecked():
+                self.mask_toggle_button.setText("Mask : ON")
+                self.canvas.mask_item.setVisible(True)
+                self.canvas.mask_show = True
+            else:
+                self.mask_toggle_button.setText("Mask : OFF")
+                self.canvas.mask_item.setVisible(False)
+                self.canvas.mask_show = False
 
     def resizeEvent(self, event):
         self.canvas.fitInView(self.canvas.sceneRect(), Qt.KeepAspectRatio)
@@ -369,7 +394,7 @@ class DrawingCanvas(QGraphicsView):
     redoAvailabilityChanged = pyqtSignal(bool)
 
     def __init__(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
-                 conn, mask_path, draw_mode=True, delete_mode=False):
+                 conn, mask_path, draw_mode=True, delete_mode=False,mask_show=True):
         super().__init__()
 
         self.mask_color = mask_color
@@ -395,6 +420,7 @@ class DrawingCanvas(QGraphicsView):
         self.check_box = check_box
         self.points = []  #saves all points in the drawing
         self.conn = conn
+        self.mask_show = mask_show
         self.load_mask_to_scene()
         self.load_image_to_scene()
 
@@ -650,6 +676,7 @@ class DrawingCanvas(QGraphicsView):
         self.mask_item = self.scene.addPixmap(pixmap)
         self.mask_item.setTransformationMode(Qt.SmoothTransformation)
         self.mask_item.setZValue(1)
+        self.mask_item.setVisible(self.mask_show)
 
         self.scene.setSceneRect(0, 0, width, height)
         self.fitInView(self.sceneRect(), Qt.KeepAspectRatio)
