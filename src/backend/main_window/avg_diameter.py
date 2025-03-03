@@ -53,21 +53,23 @@ class AverageDiameter:
                 mask_data = np.load(mask_path, allow_pickle=True).item()
                 mask = mask_data["masks"]
                 return calculate_mask_diameters(mask)
+            try:
+                with ThreadPoolExecutor() as executor:
+                    results = executor.map(process_image, valid_image_id)
 
-            with ThreadPoolExecutor() as executor:
-                results = executor.map(process_image, valid_image_id)
+                for diameters in results:
+                    all_diameters.extend(diameters)
 
-            for diameters in results:
-                all_diameters.extend(diameters)
+                if len(all_diameters) == 0:
+                    return 0.00
 
-            if len(all_diameters) == 0:
-                return 0.00
-
-            rounded_diameters = round(np.mean(all_diameters), 2)
-            self.gui.training_environment.diameter = rounded_diameters
-            if self.gui.training_environment.field_diameter.disabled is False:
-                self.gui.training_environment.field_diameter.value = rounded_diameters
-                self.gui.training_environment.field_diameter.update()
-            return rounded_diameters
+                rounded_diameters = round(np.mean(all_diameters), 2)
+                self.gui.training_environment.diameter = rounded_diameters
+                if self.gui.training_environment.field_diameter.disabled is False:
+                    self.gui.training_environment.field_diameter.value = rounded_diameters
+                    self.gui.training_environment.field_diameter.update()
+                return rounded_diameters
+            except:
+                return self.gui.diameter_text.value
 
 
