@@ -6,7 +6,7 @@ import flet as ft
 import cv2
 from PIL import Image, ImageEnhance
 from matplotlib import pyplot as plt
-from src.frontend.main_window.gui_canvas import update_main_image
+from cellsepi.frontend.main_window.gui_canvas import update_main_image
 
 
 class ImageTuning:

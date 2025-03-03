@@ -2,7 +2,7 @@ import base64
 from io import BytesIO
 from pathlib import Path
 
-from src.backend.main_window.cellsepi import CellSePi
+from cellsepi.backend.main_window.cellsepi import CellSePi
 import numpy as np
 from PIL import Image
 from collections import defaultdict

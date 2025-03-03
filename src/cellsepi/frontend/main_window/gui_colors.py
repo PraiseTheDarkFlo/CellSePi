@@ -4,7 +4,7 @@ import flet as ft
 from flet_contrib.color_picker import ColorPicker
 from enum import Enum
 
-from src.frontend.main_window.gui_mask import handle_mask_update
+from cellsepi.frontend.main_window.gui_mask import handle_mask_update
 
 
 def hex_to_rgb(hex_color):

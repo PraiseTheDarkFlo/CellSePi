@@ -1,6 +1,6 @@
 import flet as ft
-from src.frontend.main_window.gui_canvas import update_main_image
-from src.backend.main_window.config_file import ConfigFile, create_default_config
+from cellsepi.frontend.main_window.gui_canvas import update_main_image
+from cellsepi.backend.main_window.config_file import ConfigFile, create_default_config
 
 
 class GUIConfig:

@@ -9,9 +9,9 @@ import numpy as np
 from cellpose import models, io
 from cellpose.io import imread
 
-from src.backend.main_window.data_util import load_image_to_numpy
-from src.backend.main_window.notifier import Notifier
-from src.frontend.main_window.gui_mask import reset_mask, handle_mask_update
+from cellsepi.backend.main_window.data_util import load_image_to_numpy
+from cellsepi.backend.main_window.notifier import Notifier
+from cellsepi.frontend.main_window.gui_mask import reset_mask, handle_mask_update
 
 
 class BatchImageSegmentation(Notifier):

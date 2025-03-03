@@ -41,7 +41,6 @@ class Training(ft.Container):
         self.pre_trained = None
         self.diameter_default = True
         self.diameter = self.gui.average_diameter.get_avg_diameter()
-        self.directory = r"...\CellSePi\models"
         self.weight = 1e-4  # standard value for the weight
         self.model_name = "new_model"
         self.re_train_model_name = None
@@ -73,7 +72,10 @@ class Training(ft.Container):
             Arguments:
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
-            if e.files[0].path is not None:
+            if e.files is None:
+                #case: no model selected
+                pass
+            elif e.files[0].path is not None:
                 self.gui.csp.re_train_model_path = e.files[0].path
                 self.field_model_name.value = e.files[0].name
                 self.re_train_model_name = e.files[0].name
@@ -106,7 +108,7 @@ class Training(ft.Container):
                                            on_change=lambda e: self.changed_input("diameter", e))
         self.field_weights = ft.TextField(label="Weight Decay", value=self.weight, border_color=self.color,
                                           on_change=lambda e: self.changed_input("weight", e))
-        self.field_directory = ft.TextField(label="Directory", value=self.directory, border_color=self.color,
+        self.field_directory = ft.TextField(label="Directory", value=self.model_directory, border_color=self.color,
                                             read_only=True,disabled=True)
 
         self.progress_ring = ft.ProgressRing(visible=False)

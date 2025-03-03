@@ -8,9 +8,9 @@ from json.encoder import INFINITY
 from time import time
 import flet as ft
 
-from src.frontend.main_window.gui_canvas import update_main_image
-from src.frontend.main_window.gui_fluorescence import fluorescence_button
-from src.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
+from cellsepi.frontend.main_window.gui_canvas import update_main_image
+from cellsepi.frontend.main_window.gui_fluorescence import fluorescence_button
+from cellsepi.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
 def format_directory_path(dir_path, max_length=30):

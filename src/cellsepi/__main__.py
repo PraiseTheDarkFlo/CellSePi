@@ -1,5 +1,5 @@
 import flet as ft
-from src.cellsepi.main import main
+from cellsepi.main import main
 import multiprocessing
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import sys
 
 
 
-from src.backend.drawing_window.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
+from cellsepi.backend.drawing_window.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
     find_border_pixels, trace_contour
 
 

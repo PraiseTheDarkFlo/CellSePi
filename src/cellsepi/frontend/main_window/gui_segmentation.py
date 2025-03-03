@@ -5,11 +5,11 @@ import subprocess
 import sys
 import flet as ft
 
-from src.backend.main_window.avg_diameter import AverageDiameter
-from src.backend.main_window.fluorescence import Fluorescence
-from src.frontend.main_window.gui_fluorescence import fluorescence_button
-from src.backend.main_window.segmentation import Segmentation
-from src.frontend.main_window.gui_mask import handle_mask_update, reset_mask
+from cellsepi.backend.main_window.avg_diameter import AverageDiameter
+from cellsepi.backend.main_window.fluorescence import Fluorescence
+from cellsepi.frontend.main_window.gui_fluorescence import fluorescence_button
+from cellsepi.backend.main_window.segmentation import Segmentation
+from cellsepi.frontend.main_window.gui_mask import handle_mask_update, reset_mask
 
 
 class GUISegmentation():
@@ -91,7 +91,10 @@ class GUISegmentation():
             Arguments:
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
-            if e.files[0].path is not None:
+            if e.files is None:
+                #case: no model selected
+                pass
+            elif e.files[0].path is not None:
                 if self.gui.ready_to_start:
                     progress_bar_text.value = "Ready to Start"
                     start_button.disabled = False

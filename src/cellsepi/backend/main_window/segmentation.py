@@ -1,5 +1,5 @@
-from src.backend.main_window.images import BatchImageSegmentation
-from src.backend.main_window.notifier import Notifier
+from cellsepi.backend.main_window.images import BatchImageSegmentation
+from cellsepi.backend.main_window.notifier import Notifier
 
 
 class Segmentation(Notifier):

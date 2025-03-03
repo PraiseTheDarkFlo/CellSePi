@@ -1,6 +1,6 @@
 import flet as ft
 
-from src.frontend.main_window.gui_colors import ColorSelection
+from cellsepi.frontend.main_window.gui_colors import ColorSelection
 
 
 class Options(ft.Container):

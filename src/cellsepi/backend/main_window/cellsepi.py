@@ -1,4 +1,4 @@
-from src.backend.main_window.config_file import ConfigFile
+from cellsepi.backend.main_window.config_file import ConfigFile
 
 
 class CellSePi:

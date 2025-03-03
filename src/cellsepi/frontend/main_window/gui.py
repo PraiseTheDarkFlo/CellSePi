@@ -4,18 +4,18 @@ import os
 import threading
 import flet as ft
 
-from src.backend.main_window.avg_diameter import AverageDiameter
-from src.frontend.main_window.gui_segmentation import GUISegmentation
-from src.frontend.main_window.gui_options import Options
-from src.frontend.drawing_window.gui_drawing import open_qt_window
-from src.frontend.main_window.gui_canvas import Canvas
-from src.frontend.main_window.gui_config import GUIConfig
-from src.frontend.main_window.gui_directory import DirectoryCard, copy_to_clipboard
-from src.backend.main_window.cellsepi import CellSePi
-from src.backend.main_window.mask import Mask
-from src.frontend.main_window.gui_mask import error_banner, handle_image_switch_mask_on, handle_mask_update, reset_mask
-from src.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
-from src.frontend.main_window.gui_training_environment import Training
+from cellsepi.backend.main_window.avg_diameter import AverageDiameter
+from cellsepi.frontend.main_window.gui_segmentation import GUISegmentation
+from cellsepi.frontend.main_window.gui_options import Options
+from cellsepi.frontend.drawing_window.gui_drawing import open_qt_window
+from cellsepi.frontend.main_window.gui_canvas import Canvas
+from cellsepi.frontend.main_window.gui_config import GUIConfig
+from cellsepi.frontend.main_window.gui_directory import DirectoryCard, copy_to_clipboard
+from cellsepi.backend.main_window.cellsepi import CellSePi
+from cellsepi.backend.main_window.mask import Mask
+from cellsepi.frontend.main_window.gui_mask import error_banner, handle_image_switch_mask_on, handle_mask_update, reset_mask
+from cellsepi.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
+from cellsepi.frontend.main_window.gui_training_environment import Training
 
 
 class GUI:
@@ -66,7 +66,7 @@ class GUI:
         self.image_tuning = ImageTuning(self)
         self.progress_ring = ft.ProgressRing(visible=False)
         self.closing_sheet = ft.CupertinoBottomSheet(
-            content=ft.Column([ft.ProgressRing()],
+            content=ft.Column([ft.Container(ft.ProgressRing(),alignment=ft.alignment.center)],
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
             modal=True,

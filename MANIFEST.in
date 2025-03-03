@@ -1,2 +1,4 @@
 include README.md
 recursive-include model *
+include models/.gitkeep
+include config.json

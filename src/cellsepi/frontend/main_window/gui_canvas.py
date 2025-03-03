@@ -1,7 +1,7 @@
 import asyncio
 
 import flet as ft
-from src.frontend.main_window.gui_mask import handle_image_switch_mask_on
+from cellsepi.frontend.main_window.gui_mask import handle_image_switch_mask_on
 
 def update_main_image(img_id,channel_id,gui,on_click = True):
     """
