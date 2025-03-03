@@ -55,7 +55,7 @@ class Segmentation(Notifier):
 
         self.gui.csp.segmentation_running = True
 
-        self.batch_image_segmentation.run_parallel() if not self.gui.directory.is_lif else self.batch_image_segmentation.run()
+        self.batch_image_segmentation.run()
         self.gui.csp.segmentation_running = False
         if self.gui_seg.segmentation_cancelling:
             self._call_cancel_listeners()
