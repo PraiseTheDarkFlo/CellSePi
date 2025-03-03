@@ -21,7 +21,7 @@ setup(
     python_requires=">=3.8",
     author="Jenna Ahlvers, Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock",
     url="https://github.com/PraiseTheDarkFlo/CellSePi",
-    description="Microscope segmentation and data analysis pipeline with a graphical interface, powered by Cellpose.",
+    description="Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose",
     long_description=long_description,
     long_description_content_type="text/markdown",
     entry_points={
