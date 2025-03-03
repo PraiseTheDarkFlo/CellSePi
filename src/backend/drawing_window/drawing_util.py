@@ -110,7 +110,7 @@ def trace_contour(binary_mask):
 
 def fill_polygon_from_outline(contour, mask_shape):
     """
-    Fills the given poly in contour with scanLine technique.
+    Fills the given polygon in contour with the scanline technique.
     Attributes:
         contour (np.array): the contour
         mask_shape (np.array): the mask dimensions

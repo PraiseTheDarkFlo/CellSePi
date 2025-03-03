@@ -89,7 +89,7 @@ class Training(ft.Container):
 
         self.re_train_model_chooser = ft.IconButton(
                 icon=ft.icons.UPLOAD_FILE,
-                tooltip="Choose retrain model",
+                tooltip="Choose model to retrain",
                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
                                                                 initial_directory=self.model_directory),disabled=True
             )

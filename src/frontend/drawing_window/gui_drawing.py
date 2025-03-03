@@ -207,8 +207,6 @@ class MyQtWindow(QMainWindow):
                 self.draw_toggle_button.setText("Drawing : OFF")
             self.canvas.toggle_draw_mode()
 
-    #TODO: review by Jenna: warum prüfst und setzt du vorher das isChecked, wenn du gar kein
-    #checkbox-Kästchen verwendest? Dann ist das ja egal.
     def toggle_delete_mode(self):
         """
         Toggle delete mode when the button is clicked.
