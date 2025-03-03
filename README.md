@@ -111,7 +111,8 @@ Enhance the visibility of your image by using the brightness and contrast slider
 ![Brightness Contrast](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/brightness_contrast.gif?raw=true)
 
 **Average Diameter**  
-The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area. 
+The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area.  
+
 ![Average Diameter](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/average_diameter.png?raw=true)
 
 **Training**  
