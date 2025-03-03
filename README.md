@@ -166,8 +166,7 @@ Our segmentation and models are powered by [CellPose](https://github.com/MouseLa
   how to train your own model. *Nature Methods, 1-8.*
 - **Stringer, C. & Pachitariu, M. (2025). Cellpose3:**  
   one-click image restoration for improved segmentation. *Nature Methods.*
-- **Eva Maxfield Brown, Dan Toloudis, Jamie Sherman, Madison Swain-Bowden, Talley Lambert, Sean Meharry, Brian Whitney, AICSImageIO Contributors (2023). BioIO:** Image Reading, Metadata Conversion, and Image     
-  Writing for Microscopy Images in Pure Python [Computer software]. [GitHub](https://github.com/bioio-devs/bioio)
+- **Eva Maxfield Brown, Dan Toloudis, Jamie Sherman, Madison Swain-Bowden, Talley Lambert, Sean Meharry, Brian Whitney, AICSImageIO Contributors (2023). BioIO:** Image Reading, Metadata Conversion, and Image Writing for Microscopy Images in Pure Python [Computer software]. [GitHub](https://github.com/bioio-devs/bioio)
 - **dilli_hangrae(2024).**
   Scanline Filling Algorithm. [Website](https://medium.com/@dillihangrae/scanline-filling-algorithm-852ad47fb0dd)
 
