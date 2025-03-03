@@ -40,7 +40,6 @@ class AverageDiameter:
         """
         mask_paths = self.csp.mask_paths
         if mask_paths is not None:
-            image_paths = self.csp.image_paths
             segmentation_channel = self.csp.config.get_bf_channel()
             all_diameters = []
             valid_image_id = [
