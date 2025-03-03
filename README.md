@@ -40,11 +40,11 @@ python -m cellsepi
 
 **Interface Overview**  
 <figure style="display: inline-block; margin: 10px;">
-  <img src="docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
+  <img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
   <figcaption>Main Window Start Screen</figcaption>
 </figure>
 <figure style="display: inline-block; margin: 10px;">
-  <img src="docs/images/main_window_with_images.png" width="400" alt="Main Window with Images"/>
+  <img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_with_images.png" width="400" alt="Main Window with Images"/>
   <figcaption>Main Window with Images</figcaption>
 </figure>
 
@@ -53,7 +53,7 @@ python -m cellsepi
 - The dark/light theme adapts to your system settings. The changed theme is only active for the current session. 
 - Mask and outline colors can be customized and are saved between sessions.
 
-<img src="docs/gifs/options.gif" width="700" alt="Options">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/options.gif" width="700" alt="Options">
 
 **Profiles**  
 Save and manage the following parameters:
@@ -72,7 +72,7 @@ Save and manage the following parameters:
 
 > **Note:** Changes to the **Mask Suffix** or **Channel Prefix** will only take effect when new files are loaded.
 
-<img src="docs/gifs/profiles.gif" width="700" alt="Profiles">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/profiles.gif" width="700" alt="Profiles">
 
 **Segmentation**  
 To start segmentation process select both:
@@ -86,12 +86,12 @@ During segmentation, you can:
 - **Cancel:** Abort the process, reverting to the previous masks or removing them if none existed before.
 > **Note:** Large images can take longer to pause or to cancel, because the segmentation of the current image needs to be finished.
 
-<img src="docs/gifs/segmentation.gif" width="700" alt="Segmentation">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/segmentation.gif" width="700" alt="Segmentation">
 
 **Readout**  
 Generates an `.xlsx` file containing the extracted fluorescence values. Click the "Open fluorescence file" button to launch your system’s default spreadsheet application with the generated file (e.g. ONLYOFFICE as seen below).
 
-<img src="docs/gifs/readout.gif" width="700" alt="Readout">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/readout.gif" width="700" alt="Readout">
 
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
@@ -102,12 +102,14 @@ Correct segmentation errors manually or draw masks to train new models.
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
-<img src="docs/gifs/drawing_tools.gif" width="700" alt="Drawing Tools">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/drawing_tools.gif" width="700" alt="Drawing Tools">
 
 **Brightness and Contrast**  
-Enhance the visibility of your image by using the brightness and contrast sliders. The "Auto brightness and contrast" button automatically adjusts and normalizes the image.
+Enhance the visibility of your image by using the brightness and contrast sliders. The "Auto brightness and contrast" button automatically adjusts and normalizes the image.  
 
-**Diameter**  
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/brightness_contrast.gif" width="700" alt="Brightness Contrast">
+
+**Average Diameter**  
 The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area. 
 
 **Training**  
@@ -115,7 +117,7 @@ Train your own models using the **Cellpose** framework. Two training modes are a
 1. **New Model Training:** Train a model from scratch using standard Cellpose models (`nuclei`, `cyto`, `cyto2` or `cyto3`).
 2. **Model Fine-Tuning:** Retrain an existing model with your own images and masks for improved performance.
 
-<img src="docs/gifs/training.gif" width="700" alt="Training">
+<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/training.gif" width="700" alt="Training">
 
 
 ## ⬇️ Installation
@@ -163,9 +165,9 @@ Our segmentation and models are powered by [CellPose](https://github.com/MouseLa
 - **Stringer, C. & Pachitariu, M. (2025). Cellpose3:**  
   one-click image restoration for improved segmentation. *Nature Methods.*
 - **Eva Maxfield Brown, Dan Toloudis, Jamie Sherman, Madison Swain-Bowden, Talley Lambert, Sean Meharry, Brian Whitney, AICSImageIO Contributors (2023). BioIO:** Image Reading, Metadata Conversion, and Image     
-  Writing for Microscopy Images in Pure Python [Computer software]. GitHub. https://github.com/bioio-devs/bioio
+  Writing for Microscopy Images in Pure Python [Computer software]. [GitHub](https://github.com/bioio-devs/bioio)
 - **dilli_hangrae(2024).**
-  Scanline Filling Algorithm. https://medium.com/@dillihangrae/scanline-filling-algorithm-852ad47fb0dd
+  Scanline Filling Algorithm. [Website](https://medium.com/@dillihangrae/scanline-filling-algorithm-852ad47fb0dd)
 
 ## ✍️ Authors
 
