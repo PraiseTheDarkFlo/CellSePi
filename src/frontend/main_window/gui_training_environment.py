@@ -326,7 +326,7 @@ class Training(ft.Container):
                             weight_decay=self.weight, SGD=sgd_value, learning_rate=self.learning_rate,
                             n_epochs=self.epochs, model_name=model_name,
                             save_path=os.path.dirname(self.model_directory))
-            self.progress_bar_text.value = "finished training"
+            self.progress_bar_text.value = "Finished Training"
 
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
