@@ -286,6 +286,7 @@ class Training(ft.Container):
             self.page.update()
             return
         self.gui.csp.training_running = True
+        self.gui.queue.put("delete_mask")
         try:
             mask_filter = f"{self.gui.csp.current_mask_suffix}.npy"
 
