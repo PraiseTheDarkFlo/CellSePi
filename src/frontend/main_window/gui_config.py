@@ -471,7 +471,7 @@ class GUIConfig:
                 ft.IconButton(
                     icon=ft.Icons.LIBRARY_ADD_ROUNDED,
                     content=ft.Text("Add Profile", size=18),
-                    tooltip="Add new Profile",
+                    tooltip="Add new profile",
                     on_click=lambda e: self.add_profile_pressed(e)
                 ),
 

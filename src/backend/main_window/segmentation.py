@@ -55,8 +55,7 @@ class Segmentation(Notifier):
 
         self.gui.csp.segmentation_running = True
 
-        #differs between lif and tif run as tif can make faster by paralleling the process
-        self.batch_image_segmentation.run_parallel() if not self.gui.directory.is_lif else self.batch_image_segmentation.run()
+        self.batch_image_segmentation.run()
         self.gui.csp.segmentation_running = False
         if self.gui_seg.segmentation_cancelling:
             self._call_cancel_listeners()

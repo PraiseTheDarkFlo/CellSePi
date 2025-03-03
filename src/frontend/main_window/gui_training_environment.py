@@ -63,7 +63,7 @@ class Training(ft.Container):
             ],border_color=ft.colors.BLUE_400,
             on_change=lambda e: self.changed_input("modeltype", e),expand=True,
         )
-        self.re_train_model = ft.Checkbox(value=False, label="re-train Model",on_change=lambda e: self.change_re_train_model())
+        self.re_train_model = ft.Checkbox(value=False, label="Re-train Model",on_change=lambda e: self.change_re_train_model())
 
         # the following methods are called when clicking on the corresponding button
         def pick_model_result(e: ft.FilePickerResultEvent):
@@ -74,8 +74,7 @@ class Training(ft.Container):
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
             if e.files is None:
-                ft.SnackBar(ft.Text(f"No files exist"))
-
+                print("no model selected")
             elif e.files[0].path is not None:
                 self.gui.csp.re_train_model_path = e.files[0].path
                 self.field_model_name.value = e.files[0].name
@@ -83,35 +82,35 @@ class Training(ft.Container):
                 self.field_model_name.color = ft.colors.BLUE_400
                 self.gui.page.update()
             else:
-                ft.SnackBar(ft.Text(f"No model selected"))
+                print("no model selected")
 
         pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
         self.gui.page.overlay.extend([pick_model_dialog])
 
         self.re_train_model_chooser = ft.IconButton(
                 icon=ft.icons.UPLOAD_FILE,
-                tooltip="Choose re-train Model",
+                tooltip="Choose re-train model",
                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
                                                                 initial_directory=self.model_directory),disabled=True
             )
-        self.field_model_name = ft.TextField(label="model name", value=self.model_name, border_color=self.color,on_change=lambda e: self.changed_input("model_name", e))
+        self.field_model_name = ft.TextField(label="Model Name", value=self.model_name, border_color=self.color,on_change=lambda e: self.changed_input("model_name", e))
         self.model_stack = ft.Stack([self.field_model_name, self.re_train_model_chooser],alignment=ft.alignment.top_right)
         self.field_model = ft.Row([self.model_dropdown, self.model_stack])
         # New field for custom model input, visible only if "custom" is selected
         self.field_custom_model = ft.TextField(label="Custom Model", value="", border_color=self.color, visible=False,
                                                on_change=lambda e: self.changed_input("custom_model", e))
 
-        self.field_batch = ft.TextField(label="batch_size", value=self.batch_size, border_color=self.color,
+        self.field_batch = ft.TextField(label="Batch Size", value=self.batch_size, border_color=self.color,
                                         on_change=lambda e: self.changed_input("batch_size", e))
-        self.field_epoch = ft.TextField(label="epochs", value=self.epochs, border_color=self.color,
+        self.field_epoch = ft.TextField(label="Epochs", value=self.epochs, border_color=self.color,
                                         on_change=lambda e: self.changed_input("epochs", e))
-        self.field_lr = ft.TextField(label="learning_rate", value=self.learning_rate, border_color=self.color,
+        self.field_lr = ft.TextField(label="Learning Rate", value=self.learning_rate, border_color=self.color,
                                      on_change=lambda e: self.changed_input("learning_rate", e))
-        self.field_diameter = ft.TextField(label="diameter", value=self.diameter, border_color=self.color,
+        self.field_diameter = ft.TextField(label="Diameter", value=self.diameter, border_color=self.color,
                                            on_change=lambda e: self.changed_input("diameter", e))
-        self.field_weights = ft.TextField(label="weight_decay", value=self.weight, border_color=self.color,
+        self.field_weights = ft.TextField(label="Weight Decay", value=self.weight, border_color=self.color,
                                           on_change=lambda e: self.changed_input("weight", e))
-        self.field_directory = ft.TextField(label="directory", value=self.directory, border_color=self.color,
+        self.field_directory = ft.TextField(label="Directory", value=self.directory, border_color=self.color,
                                             read_only=True,disabled=True)
 
         self.progress_ring = ft.ProgressRing(visible=False)
@@ -250,11 +249,9 @@ class Training(ft.Container):
         self.progress_bar_text.value = ""
         self.disable_switch_environment()
         self.gui.page.update()
-
-        #checks if the right model type was selected
         if self.re_train_model.value and self.re_train_model_name is None:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"The model you inserted is not a retrained model!"))
+                ft.Text(f"No model selected to re-train."))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
@@ -266,16 +263,13 @@ class Training(ft.Container):
         self.gui.csp.training_running = True
         try:
             mask_filter = f"{self.gui.csp.current_mask_suffix}.npy"
-
-            #loads the mask files out of the directory to start training
             output = io.load_train_test_data(train_dir= str(self.gui.csp.working_directory),
                                              mask_filter=mask_filter,
                                              look_one_level_down=False)
             images, labels, image_names, test_images, test_labels, image_names_test = output
-
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Something went wrong while gather training data: {str(e)}"))
+                ft.Text(f"Something went wrong while gathering training data: {str(e)}"))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
@@ -302,28 +296,25 @@ class Training(ft.Container):
                 self.gui.training_event.set()
             return
         try:
-            #initializing variables, who differ if pretrained or not (Initialized with not pretrained)
-
-            sgd_value= False
-            model_name =self.model_name
-            model= models.CellposeModel(model_type=self.model,diam_mean=self.diameter)
             if self.re_train_model.value:
-                sgd_value =True
-                model_name = self.re_train_model_name
-                model= models.CellposeModel(model_type=None, pretrained_model=self.gui.csp.re_train_model_path)
-
-           
-            #start the training epochs
-          
-            train.train_seg(model.net,
-                            train_data=images, train_labels=labels,
-                            channels=[1, 2], normalize=True,
-                            test_data=test_images, test_labels=test_labels,
-                            weight_decay=self.weight, SGD=sgd_value, learning_rate=self.learning_rate,
-                            n_epochs=self.epochs, model_name=model_name,
-                            save_path=os.path.dirname(self.model_directory))
-            self.progress_bar_text.value = "finished training"
-
+                model = models.CellposeModel(model_type=None, pretrained_model=self.gui.csp.re_train_model_path)
+                train.train_seg(model.net,
+                                train_data=images, train_labels=labels,
+                                channels=[1, 2], normalize=True,
+                                test_data=test_images, test_labels=test_labels,
+                                weight_decay=self.weight, SGD=True, learning_rate=self.learning_rate,
+                                n_epochs=self.epochs, model_name=self.re_train_model_name,save_path=os.path.dirname(self.model_directory))
+                self.progress_bar_text.value = "finished training"
+            else:
+                model = models.CellposeModel(model_type=self.model,diam_mean=self.diameter)
+                train.train_seg(model.net,
+                                train_data=images, train_labels=labels,
+                                channels=[1, 2], normalize=True,
+                                test_data=test_images, test_labels=test_labels,
+                                weight_decay=self.weight, SGD=False, learning_rate=self.learning_rate,
+                                n_epochs=self.epochs, model_name=self.model_name,
+                                save_path=os.path.dirname(self.model_directory))
+                self.progress_bar_text.value = "finished training"
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
                 ft.Text(f"Something went wrong while training: {str(e)}"))
