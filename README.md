@@ -40,10 +40,10 @@ python -m cellsepi
 
 **Interface Overview**  
 ### Main Window Start Screen
-![Main Window Start Screen](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/main_window_start_screen.png?raw=true)
+![Main Window Start Screen](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_start_screen.png?raw=true)
 
 ### Main Window with Images
-![Main Window with Images](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/main_window_with_images.png?raw=true)
+![Main Window with Images](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_with_images.png?raw=true)
 
 
 
@@ -85,13 +85,13 @@ During segmentation, you can:
 - **Cancel:** Abort the process, reverting to the previous masks or removing them if none existed before.
 > **Note:** Large images can take longer to pause or to cancel, because the segmentation of the current image needs to be finished.
 
-![Segmentation](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/segmentation.gif)
+![Segmentation](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/segmentation.gif?raw=true)
 
 
 **Readout**  
 Generates an `.xlsx` file containing the extracted fluorescence values. Click the "Open fluorescence file" button to launch your system’s default spreadsheet application with the generated file (e.g. ONLYOFFICE as seen below).
 
-![Readout](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/readout.gif)
+![Readout](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/readout.gif?raw=true)
 
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
@@ -102,13 +102,13 @@ Correct segmentation errors manually or draw masks to train new models.
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
-![Drawing Tools](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/drawing_tools.gif)
+![Drawing Tools](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/drawing_tools.gif?raw=true)
 
 
 **Brightness and Contrast**  
 Enhance the visibility of your image by using the brightness and contrast sliders. The "Auto brightness and contrast" button automatically adjusts and normalizes the image.  
 
-![Brightness Contrast](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/brightness_contrast.gif)
+![Brightness Contrast](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/brightness_contrast.gif?raw=true)
 
 **Average Diameter**  
 The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area. 
@@ -118,7 +118,7 @@ Train your own models using the **Cellpose** framework. Two training modes are a
 1. **New Model Training:** Train a model from scratch using standard Cellpose models (`nuclei`, `cyto`, `cyto2` or `cyto3`).
 2. **Model Fine-Tuning:** Retrain an existing model with your own images and masks for improved performance.
 
-![Training](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/training.gif)
+![Training](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/training.gif?raw=true)
 
 ## ⬇️ Installation
 
