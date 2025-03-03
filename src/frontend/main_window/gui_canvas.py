@@ -7,7 +7,6 @@ def update_main_image(img_id,channel_id,gui,on_click = True):
     """
     Method that handles what happens when the image is clicked or the main image need an update.
     """
-    print("selected img:",img_id)
     if on_click:
         if gui.csp.image_id is not None and gui.csp.image_id in gui.directory.selected_images_visualise:
             if gui.csp.channel_id is not None and gui.csp.channel_id in gui.directory.selected_images_visualise[gui.csp.image_id]:

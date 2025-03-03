@@ -28,11 +28,9 @@ class Fluorescence(Notifier):
         if self.check_readout_possible():
             self._call_start_listeners(True)
             def on_update(progress,current_image):
-                print(f"{progress}% is progressed")
                 self._call_update_listeners(progress, current_image)
 
             def completed_readout(readout, readout_path):
-                print("fluorescence values readout")
                 self.csp.readout= readout
                 self.csp.readout_path=readout_path
                 self.csp.readout_running=False
@@ -42,10 +40,9 @@ class Fluorescence(Notifier):
                 fluorescence_button.disabled = False
                 if self.csp.model_path is not None:
                     self.gui.start_button.disabled =False
-                print(f"values are stored in {readout_path}")
                 self._call_completion_listeners()
 
-            print("Preparing readout")
+
             self.csp.readout_running=True
             fluorescence_button.disabled=True
 
@@ -54,7 +51,6 @@ class Fluorescence(Notifier):
             working_directory = self.csp.working_directory
 
             #creates the readout image and fills the mask_path
-            print(self.csp.mask_paths)
             batch_image_readout = BatchImageReadout(image_paths=self.csp.image_paths,
                                                           mask_paths=self.csp.mask_paths,
                                                           segmentation_channel=brightfield_channel,
@@ -66,7 +62,6 @@ class Fluorescence(Notifier):
             target = batch_image_readout.run
             self.csp.readout_thread = threading.Thread(target=target)
 
-            print("starting readout")
             self._call_start_listeners(False)
             self.csp.readout_thread.start()
 
@@ -83,10 +78,8 @@ class Fluorescence(Notifier):
         """
 
         if self.csp.readout_running:
-            error_banner(self.gui,"Readout already started")
             return False,
         if self.csp.readout_thread is not None and self.csp.readout_thread.is_alive():
-            print("Already occupied")
             return False
         if self.csp.image_paths is None or len(self.csp.image_paths) ==0 :
             error_banner(self.gui, "No image to process")

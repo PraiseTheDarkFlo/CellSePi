@@ -135,10 +135,10 @@ class DirectoryCard(ft.Card):
         self.count_results_txt.value = f"Results: {len(self.gui.csp.image_paths)}"
         self.count_results_txt.update()
 
-    #TODO Review: ein paar Kommentare in dieser Methode wären hilfreich fürs Verständnis
     def get_directory_result(self, e: ft.FilePickerResultEvent):
         """
         Checks if the picked directory or file exists and if it worked updates everything with the new values.
+        builds the canvas container for the file results on the right column of the GUI
         """
         if not(e.files is None and e.path is None):
             self.gui.progress_ring.visible = True
@@ -170,14 +170,17 @@ class DirectoryCard(ft.Card):
                 self.gui.page.window.progress_bar = -1
             self.gui.page.update()
             self.gui.queue.put("delete_mask")
+
+            #differentiate between the lif and tiff case, as there are two different file formats
             if self.is_lif:
+                #is a file
                 path = e.files[0].path
             else:
+                #is a directory
                 path = e.path
             if path:
                 self.directory_path.value = path
                 self.select_directory_parallel(path)
-                # self.benchmark_seq_and_par(path)
                 self.load_images()
             else:
                 self.image_gallery.controls.clear()
@@ -542,62 +545,3 @@ class DirectoryCard(ft.Card):
                 fluorescence_button.visible = False
                 fluorescence_button.update()
 
-    def benchmark_seq_and_par(self, path):
-        """
-        The method is only included for testing purposes.
-        Comparison between the sequential and parallel selection of dictionary with tiff files.
-        Is executed if a dictionary is selected in the CellSePi window.
-        Args:
-            path-the selected path in the GUI
-
-        """
-
-        #sequential iterations
-        start_sequential = time()
-        min_time_sequential = INFINITY
-        max_time_sequential = 0
-        for i in range(10):
-            iteration_start_time_sequential = time()
-            self.select_directory(path)
-            iteration_end_time_sequential = time()
-
-            if iteration_end_time_sequential - iteration_start_time_sequential < min_time_sequential:
-                min_time_sequential = iteration_end_time_sequential - iteration_start_time_sequential
-
-            if iteration_end_time_sequential - iteration_start_time_sequential > max_time_sequential:
-                max_time_sequential = iteration_end_time_sequential - iteration_start_time_sequential
-
-        end_sequential = time()
-        total_time_sequential = end_sequential - start_sequential
-        avg_time_sequential = total_time_sequential / 100
-
-        #parallel iterations
-        start_parallel = time()
-        min_time_parallel=INFINITY
-        max_time_parallel = 0
-        for i in range(10):
-            iteration_start_time_parallel = time()
-            self.select_directory_parallel(path)
-            iteration_end_time_parallel = time()
-
-            if iteration_end_time_parallel-iteration_start_time_parallel < min_time_parallel:
-                min_time_parallel = iteration_end_time_parallel-iteration_start_time_parallel
-
-            if iteration_end_time_parallel - iteration_start_time_parallel > max_time_parallel:
-                max_time_parallel = iteration_end_time_parallel - iteration_start_time_parallel
-
-        end_parallel = time()
-        total_time_parallel = end_parallel - start_parallel
-        avg_time_sequential = total_time_sequential / 100
-
-        print("Comparison total time:\n ")
-        print(f"The sequential function needs {total_time_sequential:.6f} seconds\n")
-        print(f"The parallel function needs {total_time_parallel:.6f} seconds\n")
-
-        print("Comparison minimal time:\n")
-        print(f"The minimal time the parallel function needs {min_time_parallel:.6f} seconds\n")
-        print(f"The minimal time the sequential function needs {min_time_sequential:.6f} seconds\n")
-
-        print("Comparison maximal time:\n")
-        print(f"The maximal time the parallel function needs {max_time_parallel:.6f} seconds\n")
-        print(f"The maximal time the sequential function needs {max_time_sequential:.6f} seconds\n")

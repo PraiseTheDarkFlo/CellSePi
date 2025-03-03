@@ -90,7 +90,6 @@ class BatchImageSegmentation(Notifier):
                             np.save(backup_path, mask)
                             if image_id == self.gui.csp.window_image_id:
                                 if segmentation_channel == self.gui.csp.window_bf_channel:
-                                    print("test")
                                     self.gui.queue.put("refresh_mask")  # refreshes if the backup is the current selected image and the mask is the same channel
                             if image_id == self.gui.csp.image_id and segmentation_channel == self.gui.csp.config.get_bf_channel(): #refreshes or delete the current generated mask
                                 handle_mask_update(self.gui)
@@ -291,12 +290,11 @@ class BatchImageSegmentation(Notifier):
         # reset variables
         self.num_seg_images = 0
 
-    def image_segmentation(self, iN, image_id, image_paths, segmentation_channel, diameter, suffix, model):
+    def image_segmentation(self,image_id, image_paths, segmentation_channel, diameter, suffix, model):
         """
         Applies the segmentation model to a single image.
 
         Attributes:
-            iN: number of images that have been segmented until now
             image_id: identification number of the image
             image_paths: list of image paths
             segmentation_channel: bright field channel
@@ -431,15 +429,12 @@ class BatchImageReadout(Notifier):
 
             if not image_id in mask_paths:
                 continue
-            print(mask_paths)
             mask_path = mask_paths[image_id][segmentation_channel]
-            print("mask path in images", mask_path)
             mask_data = np.load(mask_path,allow_pickle=True).item()
             mask = mask_data["masks"]
 
             cell_ids = np.unique(mask)
             if len(cell_ids) == 1:
-                print(f"Skipping image {image_id} as no cells are present.")
                 continue
             cell_ids = cell_ids[1:]
 

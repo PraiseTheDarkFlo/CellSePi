@@ -92,7 +92,8 @@ class GUISegmentation():
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
             if e.files is None:
-                print("no model selected")
+                #case: no model selected
+                pass
             elif e.files[0].path is not None:
                 if self.gui.ready_to_start:
                     progress_bar_text.value = "Ready to Start"
@@ -102,7 +103,7 @@ class GUISegmentation():
                 self.gui.csp.model_path = e.files[0].path
                 self.gui.page.update()
             else:
-                print("no model selected")
+                pass
 
         pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
         self.gui.page.overlay.extend([pick_model_dialog])
@@ -256,7 +257,6 @@ class GUISegmentation():
             self.gui.page.update()
             if self.gui.cancel_event is not None:
                 self.gui.cancel_event.set()
-                print("cancel_event")
 
         def paused_segmentation():
             """
@@ -303,11 +303,10 @@ class GUISegmentation():
                 progress_bar.value = int(extracted_num.group())/100
                 if not platform.system() == "Linux":
                     self.gui.page.window.progress_bar = progress_bar.value
-            print("Update: ", progress)
+
             if current_image is not None:
                 if current_image["image_id"] == self.gui.csp.window_image_id:
                     if self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.window_bf_channel:
-                        print("test")
                         self.gui.queue.put("refresh_mask")
                 if current_image["image_id"] == self.gui.csp.image_id and self.segmentation.batch_image_segmentation.segmentation_channel == self.gui.csp.config.get_bf_channel():
                     handle_mask_update(self.gui)

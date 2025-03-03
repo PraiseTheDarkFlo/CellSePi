@@ -264,7 +264,6 @@ class Updater(QObject):
         """
         If the update signal is received, update the window accordingly.
         """
-        print("update signal")
         mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data
         self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
                                     conn, mask_path, channel_id, channel_prefix)
@@ -276,17 +275,14 @@ class Updater(QObject):
         """
         If the close signal is received, close the process.
         """
-        print("test close")
         self.window.hide()
         running[0] = False
         app.quit()
-        print("handle close finished")
 
     def handle_delete(self, app):
         """
         If the delete signal is received, closes the process, but lets it restart invisible.
         """
-        print("delete signal")
         self.window.hide()
         app.quit()
 
@@ -294,7 +290,6 @@ class Updater(QObject):
         """
         If the refresh signal is received, refreshes the mask in canvas from disc.
         """
-        print("refresh signal")
         if not self.window.canvas_dummy:
             self.window.canvas.store_mask_and_update()
 
@@ -360,7 +355,6 @@ def open_qt_window(queue, conn):
 
         thread = threading.Thread(target=background_listener, daemon=True)
         thread.start()
-        print("before app.exec")
         app.exec_()
         if running[0]:
             queue.put("close_thread")
@@ -368,7 +362,6 @@ def open_qt_window(queue, conn):
             thread.join()
         window.close()
         window.deleteLater()
-    print("main window closed")
     conn.send("close")
     sys.exit(0)
 
@@ -580,7 +573,6 @@ class DrawingCanvas(QGraphicsView):
         np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
         new_state = (mask.copy(), outline.copy())
 
-        print(f"Deleted cell ID {cell_id}. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
@@ -605,7 +597,6 @@ class DrawingCanvas(QGraphicsView):
 
         #Restore the old state (undo)
         np.save(mask_path, {"masks": old_state[0], "outlines": old_state[1]}, allow_pickle=True)
-        print("Undo performed. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
@@ -627,7 +618,6 @@ class DrawingCanvas(QGraphicsView):
 
         #Redo: restore the new state
         np.save(mask_path, {"masks": new_state[0], "outlines": new_state[1]}, allow_pickle=True)
-        print("Redo performed. Reloading mask...")
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
@@ -726,7 +716,6 @@ class DrawingCanvas(QGraphicsView):
         old_state = (mask.copy(), outline.copy())
 
         free_id = search_free_id(mask, outline)  #search for the next free id in mask and outline
-        print(free_id)
 
         #add the outline of the new mask (only the parts which not overlap with already existing cells) to outline npy array and fill the complete outline to new_cell_outline to calculate inner pixels
         new_cell_outline = np.zeros_like(outline, dtype=np.uint8)

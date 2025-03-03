@@ -73,8 +73,13 @@ class ColorSelection:
         e.control.page.update()
 
     def change_color(self, e):
-        print(f"Changing color to {self.color_type}")
 
+        """
+        Standard color: Mask outline= green, Filling: red
+            if it is reasonable, change the color to the liking
+        Attributes:
+            self.color_picker (ColorPicker)
+        """
         if self.color_type == ColorTypes.Mask:
             self.color_icon_mask.icon_color = self.color_picker.color
             self.config.set_mask_color(hex_to_rgb(self.color_picker.color))
@@ -91,7 +96,6 @@ class ColorSelection:
         e.control.page.update()
 
     def close_dialog(self, e):
-        print("Closing dialog...")
         e.control.page.close(self.dialog)
         self.dialog.update()
 

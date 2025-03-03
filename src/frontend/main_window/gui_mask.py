@@ -14,7 +14,6 @@ def handle_image_switch_mask_on(gui):
 
     """
     if gui.switch_mask.value:
-        print("on")
         image = gui.csp.image_id
         bfc=gui.csp.config.get_bf_channel()
 
@@ -27,11 +26,11 @@ def handle_image_switch_mask_on(gui):
             #loads mask into container
             insert_mask(gui,image,bfc)
         else:
+            #case off
             error_banner(gui,f"There is no mask for {gui.csp.image_id} with bright-field channel {bfc} generated ")
             gui.canvas.container_mask.visible = False
             gui.switch_mask.value=False
     else:
-        print("off")
         gui.canvas.container_mask.visible = False
 
     gui.page.update()

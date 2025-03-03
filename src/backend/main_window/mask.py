@@ -1,4 +1,3 @@
-#the mask is uploaded in the canvas
 import base64
 from io import BytesIO
 from pathlib import Path
@@ -28,7 +27,6 @@ class Mask:
         """
         loads the numpy files of the mask to the id and converts it to png
         """
-        print ("Display Mask")
         #iterate over the processed data to load the mask images for the current image
         image_id = self.csp.image_id
         bfc= self.csp.config.get_bf_channel()
@@ -43,12 +41,12 @@ class Mask:
             self.convert_npy_to_canvas(mask,outline)
 
         else:
-            print(f"{image_id } is not in mask paths")
+            pass
 
 
     def convert_npy_to_canvas(self,mask, outline):
         """
-        handles the convertation of the given file data
+        handles the conversion of the given file data
 
         Args:
             mask= the mask data stored in the numpy directory

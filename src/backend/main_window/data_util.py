@@ -100,36 +100,6 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None):
             print(f"Something went wrong while processing {src_path.name}: {str(e)}")
             continue
 
-"""
-def extract_from_lif_file(lif_path, target_dir):
-
-    lif_path = pathlib.Path(lif_path)
-    if lif_path.suffix == ".lif":
-        lif = LifFile(lif_path)
-
-        os.makedirs(target_dir, exist_ok=True)
-
-        for series in lif.get_iter_image():
-            #get the series name
-            img_id = series.info["name"]
-            n_channels = series.channels
-            for channel_id in range(n_channels):
-                img = series.get_frame(c=channel_id)
-                file_name = f"{img_id}c{channel_id + 1}.tif"
-                target_path = target_dir / file_name
-                try:
-                    if target_path.exists():
-                        if platform.system() == "Windows":
-                            os.chmod(target_path, stat.S_IWRITE)
-                        else:
-                            target_path.chmod(0o777)
-                        target_path.unlink()
-                    img.save(target_path)
-                except Exception as e:
-                    print(f"Something went wrong while processing {file_name}: {str(e)}")
-                    continue
-"""
-
 def extract_from_lif_file(lif_path, target_dir,channel_prefix):
     """
     Extracts all series from the lif file using the bioio-lif library and
@@ -187,7 +157,8 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix):
                     print(f"Error processing {file_name}: {e}")
                     continue
     else:
-        print(f"The file {lif_path} is not a .lif file")
+        pass
+
 
 
 def load_image_to_numpy(path):
@@ -203,6 +174,14 @@ def write_numpy_to_image(array, path):
 
 
 def remove_gradient(img):
+
+    """
+    The method evens out the background of the images to prone microscopy errors
+
+    Arguments:
+        img {PIL.Image} -- The image to be corrected
+
+    """
     top = np.median(img[100:200, 400: -400])
     bottom = np.median(img[-200:-100, 400: -400])
 

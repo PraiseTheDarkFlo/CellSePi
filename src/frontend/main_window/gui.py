@@ -160,7 +160,6 @@ class GUI:
         Method that controls what happened when switch is on/off
         """
         if self.csp.image_id is None:
-            print("No image selected")
             error_banner(self,"No image selected!")
             self.switch_mask.value=False
         else:
@@ -181,13 +180,13 @@ class GUI:
         """
         self.image_tuning.save_current_main_image()
         if self.process_drawing_window is None or not self.process_drawing_window.is_alive(): #make sure that the process is running before putting new image in the queue
-            print("Process is not alive, restarting...")
+
             if self.process_drawing_window is not None:
                 try:
                     self.process_drawing_window.terminate()
                     self.process_drawing_window.join()
                 except Exception as e:
-                    print(f"Error while terminating process: {e}")
+                    ft.SnackBar(ft.Text(f"Error while terminating process: {e}"))
             self.queue = multiprocessing.Queue()
             parent_conn, child_conn = multiprocessing.Pipe()
             self.parent_conn, self.child_conn = parent_conn, child_conn
@@ -221,19 +220,15 @@ class GUI:
                 self.cancel_segmentation()
                 self.cancel_event.wait()
             if self.csp.training_running:
-                print("training event started")
                 self.training_event = multiprocessing.Event()
                 self.training_event.wait()
-                print("training event ended")
             if self.csp.readout_running:
                 self.readout_event = multiprocessing.Event()
                 self.readout_event.wait()
             self.pipe_listener_running = False
             self.queue.put("close")
-            print("test before drawing")
             if self.process_drawing_window is not None and self.process_drawing_window.is_alive():
                 self.process_drawing_window.join()
-            print("test5")
             self.child_conn.send("close")
 
             if self.thread is not None and self.thread.is_alive():
@@ -244,9 +239,6 @@ class GUI:
             self.page.window.on_event = None
             self.page.update()
             self.page.window.destroy()
-            print("closing window finished")
-
-
 
     def child_conn_listener(self):
         """
@@ -257,7 +249,6 @@ class GUI:
         async def pipe_listener():
             while self.pipe_listener_running:
                 data = await asyncio.to_thread(self.parent_conn.recv)
-                print(f"Empfangene Daten: {data}")
                 split_data = data.split(".")
                 if data == "close":
                     break

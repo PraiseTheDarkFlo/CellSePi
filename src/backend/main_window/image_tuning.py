@@ -162,7 +162,6 @@ class AutoImageTuning:
                 update_main_image(self.gui.csp.image_id, self.gui.csp.channel_id, self.gui, False)
 
     def update_main_image_auto(self):
-        print("auto_brightness_contrast")
         self.gui.canvas.main_image.content.src_base64 = self.auto_adjust()
         self.gui.canvas.main_image.update()
 
@@ -177,22 +176,3 @@ class AutoImageTuning:
 
         return base64.b64encode(buffer).decode('utf-8')
 
-    def show_histograms(self, image, title="Histogramm"):
-        """
-        Shows the histograms.
-        """
-        colors = ['r', 'g', 'b']
-        channels = ['Red', 'Green', 'Blue']
-
-        plt.figure(figsize=(12, 6))
-        for i, color in enumerate(colors):
-            histogram = cv2.calcHist([image], [i], None, [256], [0, 256])
-            plt.plot(histogram, color=color, label=f'{channels[i]} Channel')
-            plt.xlim([0, 256])
-
-        plt.title(title)
-        plt.xlabel("intensity")
-        plt.ylabel("Pixel count")
-        plt.legend()
-        plt.grid()
-        plt.show()

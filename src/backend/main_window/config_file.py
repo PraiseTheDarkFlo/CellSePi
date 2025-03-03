@@ -42,6 +42,9 @@ def load_config(file_directory):
 def reset_config(file_directory):
     """
     Creates a new default config and tries to save it.
+    Args:
+        file_directory (str): The directory of the file.
+
     Returns:
         create_default_config() (dict)
     """
@@ -120,7 +123,7 @@ class ConfigFile:
             try:
                 with open(self.file_directory, 'w') as file:
                     json.dump(self.config, file, indent=4)
-                print("Config has been saved.")
+
             except Exception as e:
                 print(f"Error while saving config: {e}")
 

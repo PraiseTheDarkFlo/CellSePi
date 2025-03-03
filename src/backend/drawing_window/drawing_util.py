@@ -26,9 +26,9 @@ def search_free_id(mask,outline):
     Search in a NumPy array of integers (e.g., [1,1,2,2,3,4,5,5,7,7]) for the first missing number (in this case, 6).
     If no gap is found, return the highest value + 1.
     """
-    print("XXXX")
+
     combined = np.concatenate((mask.ravel(),outline.ravel()))
-    print("NAME")
+
     unique_vals = np.unique(combined)
 
     if unique_vals.size == 0:
@@ -73,8 +73,16 @@ def bresenham_line(start: QPointF, end: QPointF):
 
     return pixels
 
-#TODO review by JEnna: hier fehlen Kommentare
 def trace_contour(binary_mask):
+    """
+    This method traces the contours of the inputted mask and returns the outline
+    Attributes:
+        binary_mask (np.array): the binary mask.
+
+    Returns:
+        contour: the outline of the cells in the mask
+
+    """
     y_indices, x_indices = np.where(binary_mask)
     start_idx = np.lexsort((x_indices, y_indices))[0]
     start_x, start_y = x_indices[start_idx], y_indices[start_idx]
@@ -103,6 +111,12 @@ def trace_contour(binary_mask):
 def fill_polygon_from_outline(contour, mask_shape):
     """
     Fills the given poly in contour with scanLine technique.
+    Attributes:
+        contour (np.array): the contour
+        mask_shape (np.array): the mask dimensions
+
+    Returns:
+        mask: the adapted mask with newly filled cells
     """
     mask = np.zeros(mask_shape, dtype=np.uint8)
     if not contour:
@@ -162,6 +176,9 @@ def find_border_pixels(mask, outline, cell_id,):
         mask: A 2D mask representing the ID of each pixel in the area.
         outline: A 2D mask marking the edge pixels (typically with a value of 100).
         cell_id: The ID of the cell whose edge pixels should be found.
+
+    Returns:
+        border_pixels: all neighbours of the cell
     """
     border_pixels = []
 
