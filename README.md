@@ -16,7 +16,7 @@
 - **User-Friendly Interface:** Intuitive GUI for seamless image segmentation.
 - **Advanced Segmentation:** Leverages Cellpose models for accurate cellular segmentation.
 - **Correction Tools:** Easily refine and correct segmentation results.
-- **Fluorescence Readout:** Automatically extract and analyze fluorescence data.
+- **Fluorescence Readout:** Automatically extract fluorescence data.
 - **Custom Model Training:** Train and fine-tune models with your own data.
 - **Batch Processing:** Process multiple images simultaneously.
 - **Multi-Format Support:** Compatible with Lif and Tif image formats.
@@ -106,7 +106,7 @@ It means the chosen model isn’t compatible with Cellpose’s segmentation proc
 During segmentation, you can:
 - **Pause:** Temporarily halt the process and resume later.
 - **Cancel:** Abort the process, reverting to the previous mask or removing it if none existed.
-> **Note:** With large images it can take longer time to pause or to cancel.
+> **Note:** With large images it can take longer to pause or to cancel.
 
 <img src="docs/gifs/segmentation.gif" width="700" alt="Segmentation">
 
