@@ -13,16 +13,16 @@ from cellsepi.frontend.main_window.gui_fluorescence import fluorescence_button
 from cellsepi.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
     convert_tiffs_to_png_parallel
 
-def format_directory_path(dir_path, max_length=30):
+def format_directory_path(dir_path: str, max_length=30):
     """
     Format the directory so that it can be shown in the card.
     Args:
-        dir_path (Txt): Path to the directory that should be formatted.
+        dir_path (str): Path to the directory that should be formatted.
         max_length (int): Maximum length of the directory path.
     """
-    parts = dir_path.value.split('/')
-    path = dir_path.value
-    if len(dir_path.value) > max_length:
+    parts = dir_path.split('/')
+    path = dir_path
+    if len(dir_path) > max_length:
         if len(parts) > 2:
             path = f".../{parts[len(parts) - 2]}/{parts[len(parts) - 1]}"
         else:
@@ -80,8 +80,8 @@ class DirectoryCard(ft.Card):
         super().__init__()
         self.gui = gui
         self.count_results_txt = ft.Text(value="Results: 0")
-        self.directory_path = ft.Text(weight=ft.FontWeight.BOLD,value='Directory Path')
-        self.formatted_path = ft.Text(format_directory_path(self.directory_path), weight=ft.FontWeight.BOLD)
+        self.directory_path = ft.Text(value='Directory Path',weight=ft.FontWeight.BOLD)
+        self.formatted_path = ft.Text(value=format_directory_path(self.directory_path.value), weight=ft.FontWeight.BOLD)
         self.is_lif = self.gui.csp.config.get_lif_slider()
         if self.is_lif:
             index = 1
@@ -186,7 +186,7 @@ class DirectoryCard(ft.Card):
                 self.image_gallery.controls.clear()
                 self.image_gallery.update()
 
-            self.formatted_path.value = format_directory_path(self.directory_path)
+            self.formatted_path.value = format_directory_path(self.directory_path.value)
             if self.output_dir or not self.is_supported_lif:
                 self.formatted_path.color = ft.Colors.RED
                 self.gui.diameter_text.value = 0.0

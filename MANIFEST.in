@@ -1,4 +1,3 @@
 include README.md
-recursive-include model *
-include models/.gitkeep
-include config.json
+include src/cellsepi/models/*
+include src/cellsepi/config.json

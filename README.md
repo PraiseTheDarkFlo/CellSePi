@@ -2,7 +2,6 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/cellsepi.svg)](https://pypi.org/project/cellsepi/)
 [![License](https://img.shields.io/pypi/l/cellsepi.svg)](LICENSE)
-[![Python Versions](https://img.shields.io/pypi/pyversions/cellsepi.svg)](https://pypi.org/project/cellsepi/)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/cellsepi.svg)](https://pypi.org/project/cellsepi/)
 [![Last Commit](https://img.shields.io/github/last-commit/PraiseTheDarkFlo/cellsepi.svg)](https://github.com/PraiseTheDarkFlo/cellsepi)
 ![GitHub Repo stars](https://img.shields.io/github/stars/PraiseTheDarkFlo/cellsepi)
@@ -130,11 +129,7 @@ To install CellSePi, simply run:
 pip install cellsepi
 ```
 
-This command automatically installs all required dependencies as specified in the package configuration. Alternatively, if you prefer installing dependencies manually, you can use the provided `requirements.txt`, by running:
-
-```bash
-pip install -r requirements.txt
-```
+This command automatically installs all required dependencies as specified in the package configuration.
 
 **Required Packages (with versions):**
 

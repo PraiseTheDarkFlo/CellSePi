@@ -2,6 +2,9 @@ import flet as ft
 from cellpose import models, train, io
 import os
 
+from cellsepi.frontend.main_window.gui_directory import format_directory_path
+
+
 class Training(ft.Container):
 
     def __init__(self, gui):
@@ -47,7 +50,7 @@ class Training(ft.Container):
         self.color = ft.colors.BLUE_400
         self.progress_bar_text = ft.Text("")
 
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.model_directory = os.path.join(project_root, "models")
 
         # Changed from TextField to Dropdown for model type selection
@@ -108,7 +111,7 @@ class Training(ft.Container):
                                            on_change=lambda e: self.changed_input("diameter", e))
         self.field_weights = ft.TextField(label="Weight Decay", value=self.weight, border_color=self.color,
                                           on_change=lambda e: self.changed_input("weight", e))
-        self.field_directory = ft.TextField(label="Directory", value=self.model_directory, border_color=self.color,
+        self.field_directory = ft.TextField(label="Directory", value=format_directory_path(self.model_directory,60), border_color=self.color,
                                             read_only=True,disabled=True)
 
         self.progress_ring = ft.ProgressRing(visible=False)

@@ -381,7 +381,7 @@ class GUISegmentation():
                             )
                         )
 
-        project_root =os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        project_root =os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         model_directory = os.path.join(project_root, "models")
 
         model_chooser = ft.Container(

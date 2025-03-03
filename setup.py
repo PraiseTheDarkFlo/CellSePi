@@ -6,31 +6,9 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 
-def get_data_files():
-    data_files = []
-
-    if os.path.isfile('config.json'):
-        data_files.append(('share/cellsepi', ['config.json']))
-
-    models_dir = 'models'
-    for root, _, files in os.walk(models_dir):
-        install_dir = os.path.join('share/cellsepi', root)
-
-        filtered_files = [
-            os.path.join(root, f)
-            for f in files
-            if f.endswith('.gitkeep') or (f != '.gitkeep' and files)
-        ]
-
-        if filtered_files:
-            data_files.append((install_dir, filtered_files))
-
-    return data_files
-
-
 setup(
     name="cellsepi",
-    version="0.4",
+    version="0.4.1",
     license="Apache License 2.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -51,6 +29,8 @@ setup(
             "cellsepi = cellsepi.main:main",
         ],
     },
-    data_files=get_data_files(),
+    package_data={
+        "cellsepi": ["models/*", "models/**/*"]
+    },
     include_package_data=True
 )

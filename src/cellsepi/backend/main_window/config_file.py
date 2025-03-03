@@ -107,7 +107,7 @@ class ConfigFile:
         config_lock (Lock): a lock to make writing the config file save.
     """
     def __init__(self,filename="config.json"):
-        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.file_directory = os.path.join(self.project_root, filename)
         self.config = load_config(self.file_directory)
         self.config_lock = Lock()
