@@ -283,7 +283,7 @@ class DirectoryCard(ft.Card):
             image_paths, mask_paths = load_directory(working_directory, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
             if len(image_paths) == 0:
                 self.gui.ready_to_start = False
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current Channel Prefix!"))
+                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current channel prefix!"))
                 self.gui.page.snack_bar.open = True
                 self.gui.page.update()
                 self.count_results_txt.color = ft.Colors.RED

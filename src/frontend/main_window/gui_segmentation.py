@@ -390,7 +390,7 @@ class GUISegmentation():
         model_chooser = ft.Container(
                             content=ft.IconButton(
                                 icon=ft.icons.UPLOAD_FILE,
-                                tooltip="Choose Model",
+                                tooltip="Choose model",
                                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False, initial_directory=model_directory),
                             ), alignment=ft.alignment.bottom_right,
                         )

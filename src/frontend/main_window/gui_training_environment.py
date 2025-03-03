@@ -63,7 +63,7 @@ class Training(ft.Container):
             ],border_color=ft.colors.BLUE_400,
             on_change=lambda e: self.changed_input("modeltype", e),expand=True,
         )
-        self.re_train_model = ft.Checkbox(value=False, label="re-train Model",on_change=lambda e: self.change_re_train_model())
+        self.re_train_model = ft.Checkbox(value=False, label="Re-train Model",on_change=lambda e: self.change_re_train_model())
 
         # the following methods are called when clicking on the corresponding button
         def pick_model_result(e: ft.FilePickerResultEvent):
@@ -89,28 +89,28 @@ class Training(ft.Container):
 
         self.re_train_model_chooser = ft.IconButton(
                 icon=ft.icons.UPLOAD_FILE,
-                tooltip="Choose re-train Model",
+                tooltip="Choose re-train model",
                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
                                                                 initial_directory=self.model_directory),disabled=True
             )
-        self.field_model_name = ft.TextField(label="model name", value=self.model_name, border_color=self.color,on_change=lambda e: self.changed_input("model_name", e))
+        self.field_model_name = ft.TextField(label="Model Name", value=self.model_name, border_color=self.color,on_change=lambda e: self.changed_input("model_name", e))
         self.model_stack = ft.Stack([self.field_model_name, self.re_train_model_chooser],alignment=ft.alignment.top_right)
         self.field_model = ft.Row([self.model_dropdown, self.model_stack])
         # New field for custom model input, visible only if "custom" is selected
         self.field_custom_model = ft.TextField(label="Custom Model", value="", border_color=self.color, visible=False,
                                                on_change=lambda e: self.changed_input("custom_model", e))
 
-        self.field_batch = ft.TextField(label="batch_size", value=self.batch_size, border_color=self.color,
+        self.field_batch = ft.TextField(label="Batch Size", value=self.batch_size, border_color=self.color,
                                         on_change=lambda e: self.changed_input("batch_size", e))
-        self.field_epoch = ft.TextField(label="epochs", value=self.epochs, border_color=self.color,
+        self.field_epoch = ft.TextField(label="Epochs", value=self.epochs, border_color=self.color,
                                         on_change=lambda e: self.changed_input("epochs", e))
-        self.field_lr = ft.TextField(label="learning_rate", value=self.learning_rate, border_color=self.color,
+        self.field_lr = ft.TextField(label="Learning Rate", value=self.learning_rate, border_color=self.color,
                                      on_change=lambda e: self.changed_input("learning_rate", e))
-        self.field_diameter = ft.TextField(label="diameter", value=self.diameter, border_color=self.color,
+        self.field_diameter = ft.TextField(label="Diameter", value=self.diameter, border_color=self.color,
                                            on_change=lambda e: self.changed_input("diameter", e))
-        self.field_weights = ft.TextField(label="weight_decay", value=self.weight, border_color=self.color,
+        self.field_weights = ft.TextField(label="Weight Decay", value=self.weight, border_color=self.color,
                                           on_change=lambda e: self.changed_input("weight", e))
-        self.field_directory = ft.TextField(label="directory", value=self.directory, border_color=self.color,
+        self.field_directory = ft.TextField(label="Directory", value=self.directory, border_color=self.color,
                                             read_only=True,disabled=True)
 
         self.progress_ring = ft.ProgressRing(visible=False)
@@ -251,7 +251,7 @@ class Training(ft.Container):
         self.gui.page.update()
         if self.re_train_model.value and self.re_train_model_name is None:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"You selected to re-train a model, so pls select re-train model!"))
+                ft.Text(f"No model selected to re-train."))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
@@ -269,7 +269,7 @@ class Training(ft.Container):
             images, labels, image_names, test_images, test_labels, image_names_test = output
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Something went wrong while gather training data: {str(e)}"))
+                ft.Text(f"Something went wrong while gathering training data: {str(e)}"))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
