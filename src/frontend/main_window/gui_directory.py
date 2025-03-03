@@ -366,7 +366,7 @@ class DirectoryCard(ft.Card):
             )
             self.icon_check[image_id] = ft.Icon(ft.Icons.CHECK, color=ft.Colors.GREEN, size=17, visible=False,
                                                 tooltip="Mask is available")
-            self.icon_x[image_id] = ft.Icon(ft.Icons.CLOSE, size=17, visible=True, tooltip="Mask is not available")
+            self.icon_x[image_id] = ft.Icon(ft.Icons.CLOSE, size=17, visible=True, tooltip="Mask not available")
             self.update_mask_check(image_id)
             self.image_gallery.controls.append(ft.Column([ft.Row(
             [ft.Text(f"{image_id}", weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER), self.icon_check[image_id], self.icon_x[image_id]], spacing=2),

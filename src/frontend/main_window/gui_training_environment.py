@@ -63,7 +63,7 @@ class Training(ft.Container):
             ],border_color=ft.colors.BLUE_400,
             on_change=lambda e: self.changed_input("modeltype", e),expand=True,
         )
-        self.re_train_model = ft.Checkbox(value=False, label="Re-train Model",on_change=lambda e: self.change_re_train_model())
+        self.re_train_model = ft.Checkbox(value=False, label="Retrain Model",on_change=lambda e: self.change_re_train_model())
 
         # the following methods are called when clicking on the corresponding button
         def pick_model_result(e: ft.FilePickerResultEvent):
@@ -89,7 +89,7 @@ class Training(ft.Container):
 
         self.re_train_model_chooser = ft.IconButton(
                 icon=ft.icons.UPLOAD_FILE,
-                tooltip="Choose re-train model",
+                tooltip="Choose retrain model",
                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
                                                                 initial_directory=self.model_directory),disabled=True
             )
@@ -251,7 +251,7 @@ class Training(ft.Container):
         self.gui.page.update()
         if self.re_train_model.value and self.re_train_model_name is None:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"No model selected to re-train."))
+                ft.Text(f"No model selected to retrain."))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False

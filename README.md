@@ -9,47 +9,25 @@
 ![GitHub forks](https://img.shields.io/github/forks/PraiseTheDarkFlo/cellsepi)
 ![GitHub issues](https://img.shields.io/github/issues/PraiseTheDarkFlo/cellsepi)
 
-> **Microscope segmentation and data analysis pipeline with a graphical interface, powered by Cellpose.**
+> **Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose.**
 
 ## 🌟 Highlights
 
 - **User-Friendly Interface:** Intuitive GUI for seamless image segmentation.
 - **Advanced Segmentation:** Leverages Cellpose models for accurate cellular segmentation.
+- **Correction Tools:** Easily refine and correct segmentation results with an integrated drawing tool.
+- **Fluorescence Readout:** Automatically extract fluorescence data.
 - **Correction Tools:** Easily refine and correct segmentation results.
 - **Fluorescence Readout:** Automatically extract fluorescence data.
 - **Custom Model Training:** Train and fine-tune models with your own data.
 - **Batch Processing:** Process multiple images simultaneously.
-- **Multi-Format Support:** Compatible with Lif and Tif image formats.
+- **Multi-Format Support:** Compatible with `.lif` and `.tif`/`.tiff` image formats.
 - **Configurable Profiles:** Save and manage processing parameters effortlessly.
-- **Adjustable Image Settings:** Fine-tune contrast, brightness, and more.
+- **Adjustable Image Settings:** Manually or automatically fine-tune contrast and brightness.
 
 ## ℹ️ Overview
 
-CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By leveraging the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
-
-## 📚 Citation
-
-Our segmentation and models are powered by [CellPose](https://github.com/MouseLand/cellpose) and include additional tools for correction and analysis.
-
-- **Stringer, C., Wang, T., Michaelos, M., & Pachitariu, M. (2021). Cellpose:**  
-  a generalist algorithm for cellular segmentation. *Nature Methods, 18*(1), 100-106.
-- **Pachitariu, M. & Stringer, C. (2022). Cellpose 2.0:**  
-  how to train your own model. *Nature Methods, 1-8.*
-- **Stringer, C. & Pachitariu, M. (2025). Cellpose3:**  
-  one-click image restoration for improved segmentation. *Nature Methods.*
-
-## ✍️ Authors
-
-Developed by:  
-- **Jenna Ahlvers** – [GitHub](https://github.com/Jnnnaa)  
-- **Santosh Chhetri Thapa** – [GitHub](https://github.com/SantoshCT111)  
-- **Nike Dratt** – [GitHub](https://github.com/SirHenry10)  
-- **Pascal Heß** – [GitHub](https://github.com/Pasykaru)  
-- **Florian Hock** – [GitHub](https://github.com/PraiseTheDarkFlo)
-
-## 📝 License
-
-This project is licensed under the **Apache License 2.0** – see the [LICENSE](LICENSE) file for details.
+CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By utilizing the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
 
 ## 🚀 Usage
 
@@ -61,29 +39,33 @@ python -m cellsepi
 ```
 
 **Interface Overview**  
-*(Left: Start Screen; Right: Main Interface with Images)*  
-<p align="center">
+<figure style="display: inline-block; margin: 10px;">
   <img src="docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
+  <figcaption>Main Window Start Screen</figcaption>
+</figure>
+<figure style="display: inline-block; margin: 10px;">
   <img src="docs/images/main_window_with_images.png" width="400" alt="Main Window with Images"/>
-</p>
+  <figcaption>Main Window with Images</figcaption>
+</figure>
+
 
 **Options**  
-- The dark/light theme adapts to your system settings. Changing the theme is only for the current session. 
-- Mask and outline colors are saved in the configuration file for consistency.
+- The dark/light theme adapts to your system settings. The changed theme is only active for the current session. 
+- Mask and outline colors can be customized and are saved between sessions.
 
 <img src="docs/gifs/options.gif" width="700" alt="Options">
 
 **Profiles**  
-Save and manage parameters such as the bright-field channel, channel prefix, mask suffix, and diameter.
+Save and manage the following parameters:
 
 - **Bright-Field Channel:**  
   The channel on which segmentation is performed and whose masks are currently displayed.
 
 - **Channel Prefix:**  
-  The prefix indicating that the following part of the image name represents the channel. For example, if the channel prefix is set to `c`, the images `series100c1` and `series100c2` are recognized as part of series100 with channels 1 and 2.
+  The prefix in the image name that separates the series name and the channel. For example, if the channel prefix is set to `c`, the images `series100c1` and `series100c2` are recognized as part of series100 with channels 1 and 2.
 
 - **Mask Suffix:**  
-  Specifies the suffix that identifies the masks corresponding to images. For instance, `series100c1_seg` is recognized as the mask for the image `series100c1`.
+  Specifies the suffix that is used to identify and create the masks of the corresponding images. For instance, `series100c1_seg` is recognized as the mask for the image `series100c1`.
 
 - **Diameter:**  
   Represents the average cell diameter used by the segmentation model.
@@ -93,31 +75,27 @@ Save and manage parameters such as the bright-field channel, channel prefix, mas
 <img src="docs/gifs/profiles.gif" width="700" alt="Profiles">
 
 **Segmentation**  
-To start segmentation, select:
-- A Lif or Tif file
-- A compatible model
+To start segmentation process select both:
+- a `.lif` or `.tif`/`.tiff` file 
+- a compatible model
 
-If you see:
-```text
-You have selected an incompatible file for the segmentation model.
-```
-It means the chosen model isn’t compatible with Cellpose’s segmentation process.
+You will be alerted if you selected an incompatible model, when trying to start the segmentation. 
 
 During segmentation, you can:
 - **Pause:** Temporarily halt the process and resume later.
-- **Cancel:** Abort the process, reverting to the previous mask or removing it if none existed.
-> **Note:** With large images it can take longer to pause or to cancel.
+- **Cancel:** Abort the process, reverting to the previous masks or removing them if none existed before.
+> **Note:** Large images can take longer to pause or to cancel, because the segmentation of the current image needs to be finished.
 
 <img src="docs/gifs/segmentation.gif" width="700" alt="Segmentation">
 
 **Readout**  
-Generates an `.xlsx` file containing extracted fluorescence values. Click the "Open Excel" button to launch your system’s default spreadsheet application (e.g., ONLYOFFICE).
+Generates an `.xlsx` file containing the extracted fluorescence values. Click the "Open fluorescence file" button to launch your system’s default spreadsheet application with the generated file (e.g. ONLYOFFICE as seen below).
 
 <img src="docs/gifs/readout.gif" width="700" alt="Readout">
 
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
-- **Cell ID Shifting:** Automatically adjusts mask IDs to maintain a continuous sequence when a mask is deleted.
+- **Cell ID Shifting:** Automatically adjusts cell IDs to maintain a consecutive numbering when a cell is deleted.
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
@@ -125,7 +103,7 @@ All changes in the Drawing Tools window are synchronized in real time with the m
 
 **Training**  
 Train your own models using the **Cellpose** framework. Two training modes are available:
-1. **New Model Training:** Train a model from scratch using standard Cellpose models (e.g., `nuclei`, `cyto`, `cyto2`, `cyto3`).
+1. **New Model Training:** Train a model from scratch using standard Cellpose models (`nuclei`, `cyto`, `cyto2` or `cyto3`).
 2. **Model Fine-Tuning:** Retrain an existing model with your own images and masks for improved performance.
 
 <img src="docs/gifs/training.gif" width="700" alt="Training">
@@ -139,7 +117,7 @@ To install CellSePi, simply run:
 pip install cellsepi
 ```
 
-This command automatically installs all required dependencies as specified in the package configuration. Alternatively, if you prefer to install dependencies manually, you can use the provided `requirements.txt`, by run:
+This command automatically installs all required dependencies as specified in the package configuration. Alternatively, if you prefer installing dependencies manually, you can use the provided `requirements.txt`, by running:
 
 ```bash
 pip install -r requirements.txt
@@ -165,6 +143,31 @@ pip install -r requirements.txt
 - `bioio==1.2.0`
 - `bioio-lif`
 
+## 📚 Citations
+
+Our segmentation and models are powered by [CellPose](https://github.com/MouseLand/cellpose).
+
+- **Stringer, C., Wang, T., Michaelos, M., & Pachitariu, M. (2021). Cellpose:**  
+  a generalist algorithm for cellular segmentation. *Nature Methods, 18*(1), 100-106.
+- **Pachitariu, M. & Stringer, C. (2022). Cellpose 2.0:**  
+  how to train your own model. *Nature Methods, 1-8.*
+- **Stringer, C. & Pachitariu, M. (2025). Cellpose3:**  
+  one-click image restoration for improved segmentation. *Nature Methods.*
+
+## ✍️ Authors
+
+Developed by:  
+- **Jenna Ahlvers** – [GitHub](https://github.com/Jnnnaa)  
+- **Santosh Chhetri Thapa** – [GitHub](https://github.com/SantoshCT111)  
+- **Nike Dratt** – [GitHub](https://github.com/SirHenry10)  
+- **Pascal Heß** – [GitHub](https://github.com/Pasykaru)  
+- **Florian Hock** – [GitHub](https://github.com/PraiseTheDarkFlo)
+
+## 📝 License
+
+This project is licensed under the **Apache License 2.0** – see the [LICENSE](LICENSE) file for details.
+
+
 ## 💭 Feedback & Contributions
 
-Report bugs or suggest features via [GitHub Issues](https://github.com/PraiseTheDarkFlo/CellSePi/issues)
+Report bugs or suggest features via [GitHub Issues](https://github.com/PraiseTheDarkFlo/CellSePi/issues).
