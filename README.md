@@ -27,7 +27,7 @@
 
 ## ℹ️ Overview
 
-CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By utilizing the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
+This project was developed in the context of a Bachelor project in cooperation with the [Self-Organizing Systems Lab](https://www.bcs.tu-darmstadt.de/welcome/index.en.jsp) of the Technical University Darmstadt and supervised by [Eric Kubaczka](https://github.com/ERIK-KE). CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By utilizing the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
 
 ## 🚀 Usage
 
@@ -103,6 +103,12 @@ Correct segmentation errors manually or draw masks to train new models.
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
 <img src="docs/gifs/drawing_tools.gif" width="700" alt="Drawing Tools">
+
+**Brightness and Contrast**  
+Enhance the visibility of your image by using the brightness and contrast sliders. The "Auto brightness and contrast" button automatically adjusts and normalizes the image.
+
+**Diameter**  
+The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area. 
 
 **Training**  
 Train your own models using the **Cellpose** framework. Two training modes are available:
