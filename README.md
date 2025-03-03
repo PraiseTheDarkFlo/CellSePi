@@ -40,10 +40,10 @@ python -m cellsepi
 
 **Interface Overview**  
 ### Main Window Start Screen
-![Main Window Start Screen](https://raw.githubusercontent.com/PraiseTheDarkFlo/CellSePi/main/docs/images/main_window_start_screen.png)
+![Main Window Start Screen](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/main_window_start_screen.png?raw=true)
 
 ### Main Window with Images
-![Main Window with Images](https://raw.githubusercontent.com/PraiseTheDarkFlo/CellSePi/main/docs/images/main_window_with_images.png)
+![Main Window with Images](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/main_window_with_images.png?raw=true)
 
 
 
@@ -51,7 +51,7 @@ python -m cellsepi
 - The dark/light theme adapts to your system settings. The changed theme is only active for the current session. 
 - Mask and outline colors can be customized and are saved between sessions.
 
-![Options](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/options.gif)
+![Options](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/options.gif?raw=true)
 
 **Profiles**  
 Save and manage the following parameters:
@@ -70,7 +70,8 @@ Save and manage the following parameters:
 
 > **Note:** Changes to the **Mask Suffix** or **Channel Prefix** will only take effect when new files are loaded.
 
-![Profiles](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/profiles.gif)
+
+![Profiles](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/profiles.gif?raw=true)
 
 **Segmentation**  
 To start segmentation process select both:
