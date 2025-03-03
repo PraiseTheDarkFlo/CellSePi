@@ -73,16 +73,12 @@ class Training(ft.Container):
             Arguments:
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
-            if e.files is None:
-                print("no model selected")
-            elif e.files[0].path is not None:
+            if e.files[0].path is not None:
                 self.gui.csp.re_train_model_path = e.files[0].path
                 self.field_model_name.value = e.files[0].name
                 self.re_train_model_name = e.files[0].name
                 self.field_model_name.color = ft.colors.BLUE_400
                 self.gui.page.update()
-            else:
-                print("no model selected")
 
         pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
         self.gui.page.overlay.extend([pick_model_dialog])
@@ -249,9 +245,11 @@ class Training(ft.Container):
         self.progress_bar_text.value = ""
         self.disable_switch_environment()
         self.gui.page.update()
+
+        # checks if the right model type was selected
         if self.re_train_model.value and self.re_train_model_name is None:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"No model selected to retrain."))
+                ft.Text(f"The model you inserted is not a retrained model!"))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
@@ -263,13 +261,16 @@ class Training(ft.Container):
         self.gui.csp.training_running = True
         try:
             mask_filter = f"{self.gui.csp.current_mask_suffix}.npy"
-            output = io.load_train_test_data(train_dir= str(self.gui.csp.working_directory),
+
+            # loads the mask files out of the directory to start training
+            output = io.load_train_test_data(train_dir=str(self.gui.csp.working_directory),
                                              mask_filter=mask_filter,
                                              look_one_level_down=False)
             images, labels, image_names, test_images, test_labels, image_names_test = output
+
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Something went wrong while gathering training data: {str(e)}"))
+                ft.Text(f"Something went wrong while gather training data: {str(e)}"))
             self.page.snack_bar.open = True
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
@@ -296,25 +297,25 @@ class Training(ft.Container):
                 self.gui.training_event.set()
             return
         try:
+            # initializing variables, who differ if pretrained or not (Initialized with not pretrained)
+            sgd_value = False
+            model_name = self.model_name
+            model = models.CellposeModel(model_type=self.model, diam_mean=self.diameter)
             if self.re_train_model.value:
+                sgd_value = True
+                model_name = self.re_train_model_name
                 model = models.CellposeModel(model_type=None, pretrained_model=self.gui.csp.re_train_model_path)
-                train.train_seg(model.net,
-                                train_data=images, train_labels=labels,
-                                channels=[1, 2], normalize=True,
-                                test_data=test_images, test_labels=test_labels,
-                                weight_decay=self.weight, SGD=True, learning_rate=self.learning_rate,
-                                n_epochs=self.epochs, model_name=self.re_train_model_name,save_path=os.path.dirname(self.model_directory))
-                self.progress_bar_text.value = "finished training"
-            else:
-                model = models.CellposeModel(model_type=self.model,diam_mean=self.diameter)
-                train.train_seg(model.net,
-                                train_data=images, train_labels=labels,
-                                channels=[1, 2], normalize=True,
-                                test_data=test_images, test_labels=test_labels,
-                                weight_decay=self.weight, SGD=False, learning_rate=self.learning_rate,
-                                n_epochs=self.epochs, model_name=self.model_name,
-                                save_path=os.path.dirname(self.model_directory))
-                self.progress_bar_text.value = "finished training"
+
+            # start the training epochs
+            train.train_seg(model.net,
+                            train_data=images, train_labels=labels,
+                            channels=[1, 2], normalize=True,
+                            test_data=test_images, test_labels=test_labels,
+                            weight_decay=self.weight, SGD=sgd_value, learning_rate=self.learning_rate,
+                            n_epochs=self.epochs, model_name=model_name,
+                            save_path=os.path.dirname(self.model_directory))
+            self.progress_bar_text.value = "finished training"
+
         except Exception as e:
             self.page.snack_bar = ft.SnackBar(
                 ft.Text(f"Something went wrong while training: {str(e)}"))

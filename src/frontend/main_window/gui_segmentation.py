@@ -91,10 +91,7 @@ class GUISegmentation():
             Arguments:
                 e (ft.FilePickerResultEvent): the result of the file picker event, i.e. the chosen file
             """
-            if e.files is None:
-                #case: no model selected
-                pass
-            elif e.files[0].path is not None:
+            if e.files[0].path is not None:
                 if self.gui.ready_to_start:
                     progress_bar_text.value = "Ready to Start"
                     start_button.disabled = False
@@ -102,8 +99,6 @@ class GUISegmentation():
                 model_text.color = None
                 self.gui.csp.model_path = e.files[0].path
                 self.gui.page.update()
-            else:
-                pass
 
         pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
         self.gui.page.overlay.extend([pick_model_dialog])

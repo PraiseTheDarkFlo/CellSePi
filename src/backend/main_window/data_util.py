@@ -156,8 +156,6 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix):
                 except Exception as e:
                     print(f"Error processing {file_name}: {e}")
                     continue
-    else:
-        pass
 
 
 

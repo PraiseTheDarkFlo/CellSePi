@@ -1,0 +1,4 @@
+include README.md
+recursive-include docs/images *
+recursive-include docs/gifs *
+recursive-include model *

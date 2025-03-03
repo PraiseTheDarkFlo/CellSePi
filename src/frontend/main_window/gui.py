@@ -180,7 +180,6 @@ class GUI:
         """
         self.image_tuning.save_current_main_image()
         if self.process_drawing_window is None or not self.process_drawing_window.is_alive(): #make sure that the process is running before putting new image in the queue
-
             if self.process_drawing_window is not None:
                 try:
                     self.process_drawing_window.terminate()

@@ -10,6 +10,7 @@ setup(
     version="0.1",
     license="Apache License 2.0",
     packages=find_packages(where="src"),
+    include_package_data=True,
     package_dir={"": "src"},
     install_requires=[
         "numpy==1.26.4", "pillow", "pandas", "openpyxl", "cellpose==3.1.1.1",

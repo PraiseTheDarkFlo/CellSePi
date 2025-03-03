@@ -40,8 +40,6 @@ class Mask:
             outline = mask_data["outlines"]
             self.convert_npy_to_canvas(mask,outline)
 
-        else:
-            pass
 
 
     def convert_npy_to_canvas(self,mask, outline):
