@@ -39,21 +39,19 @@ python -m cellsepi
 ```
 
 **Interface Overview**  
-<figure style="display: inline-block; margin: 10px;">
-  <img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_start_screen.png" width="400" alt="Main Window Start Screen"/>
-  <figcaption>Main Window Start Screen</figcaption>
-</figure>
-<figure style="display: inline-block; margin: 10px;">
-  <img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_with_images.png" width="400" alt="Main Window with Images"/>
-  <figcaption>Main Window with Images</figcaption>
-</figure>
+### Main Window Start Screen
+![Main Window Start Screen](https://raw.githubusercontent.com/PraiseTheDarkFlo/CellSePi/main/docs/images/main_window_start_screen.png)
+
+### Main Window with Images
+![Main Window with Images](https://raw.githubusercontent.com/PraiseTheDarkFlo/CellSePi/main/docs/images/main_window_with_images.png)
+
 
 
 **Options**  
 - The dark/light theme adapts to your system settings. The changed theme is only active for the current session. 
 - Mask and outline colors can be customized and are saved between sessions.
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/options.gif" width="700" alt="Options">
+![Options](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/options.gif)
 
 **Profiles**  
 Save and manage the following parameters:
@@ -72,7 +70,7 @@ Save and manage the following parameters:
 
 > **Note:** Changes to the **Mask Suffix** or **Channel Prefix** will only take effect when new files are loaded.
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/profiles.gif" width="700" alt="Profiles">
+![Profiles](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/profiles.gif)
 
 **Segmentation**  
 To start segmentation process select both:
@@ -86,12 +84,13 @@ During segmentation, you can:
 - **Cancel:** Abort the process, reverting to the previous masks or removing them if none existed before.
 > **Note:** Large images can take longer to pause or to cancel, because the segmentation of the current image needs to be finished.
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/segmentation.gif" width="700" alt="Segmentation">
+![Segmentation](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/segmentation.gif)
+
 
 **Readout**  
 Generates an `.xlsx` file containing the extracted fluorescence values. Click the "Open fluorescence file" button to launch your system’s default spreadsheet application with the generated file (e.g. ONLYOFFICE as seen below).
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/readout.gif" width="700" alt="Readout">
+![Readout](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/readout.gif)
 
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
@@ -102,12 +101,13 @@ Correct segmentation errors manually or draw masks to train new models.
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/drawing_tools.gif" width="700" alt="Drawing Tools">
+![Drawing Tools](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/drawing_tools.gif)
+
 
 **Brightness and Contrast**  
 Enhance the visibility of your image by using the brightness and contrast sliders. The "Auto brightness and contrast" button automatically adjusts and normalizes the image.  
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/brightness_contrast.gif" width="700" alt="Brightness Contrast">
+![Brightness Contrast](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/brightness_contrast.gif)
 
 **Average Diameter**  
 The average diameter of all cells over all images is displayed and updated with every change in the masks. The cell diameter is approximated by assuming circular cells and calculating the diameter from the area. 
@@ -117,8 +117,7 @@ Train your own models using the **Cellpose** framework. Two training modes are a
 1. **New Model Training:** Train a model from scratch using standard Cellpose models (`nuclei`, `cyto`, `cyto2` or `cyto3`).
 2. **Model Fine-Tuning:** Retrain an existing model with your own images and masks for improved performance.
 
-<img src="https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/training.gif" width="700" alt="Training">
-
+![Training](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/training.gif)
 
 ## ⬇️ Installation
 
