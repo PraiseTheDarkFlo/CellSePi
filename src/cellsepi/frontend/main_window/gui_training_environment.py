@@ -2,7 +2,7 @@ import flet as ft
 from cellpose import models, train, io
 import os
 
-from cellsepi.frontend.main_window.gui_directory import format_directory_path
+from cellsepi.frontend.main_window.gui_directory import format_directory_path, copy_to_clipboard
 
 
 class Training(ft.Container):
@@ -114,6 +114,16 @@ class Training(ft.Container):
         self.field_directory = ft.TextField(label="Directory", value=format_directory_path(self.model_directory,60), border_color=self.color,
                                             read_only=True,disabled=True)
 
+        self.directory_stack = ft.Stack([self.field_directory,ft.Container(
+                            content=ft.Container(
+                                content=ft.IconButton(
+                                    icon=ft.icons.COPY,
+                                    tooltip="Copy to clipboard",
+                                    on_click=lambda e: copy_to_clipboard(self.gui.page,self.model_directory,"Model directory")
+                                ),
+                                alignment=ft.alignment.top_right,
+                            )
+                        )])
         self.progress_ring = ft.ProgressRing(visible=False)
         self.train_loss = None
         self.test_loss = None
@@ -153,7 +163,7 @@ class Training(ft.Container):
         return ft.Container(
             ft.Column(
                 [self.field_model,self.re_train_model, self.field_custom_model, self.field_batch, self.field_epoch, self.field_weights,
-                 self.field_lr, self.field_diameter, self.field_directory
+                 self.field_lr, self.field_diameter, self.directory_stack
                  ]
             ), padding=10,
         )
