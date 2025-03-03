@@ -114,6 +114,9 @@ class Training(ft.Container):
         self.test_loss = None
 
     def change_re_train_model(self):
+        """
+        Choosing a model to retrain.
+        """
         self.field_model_name.disabled = self.re_train_model.value
         if self.re_train_model.value is True:
             self.re_train_model_chooser.disabled = False
@@ -151,6 +154,12 @@ class Training(ft.Container):
         )
 
     def changed_input(self, field, e):
+        """
+        Changing the value of one of the parameters for training.
+        Arguments:
+            field: the parameter to change
+            e = the change event
+        """
         updated_value = e.control.value
 
         if field == "modeltype":
@@ -239,6 +248,9 @@ class Training(ft.Container):
         return progress_card
 
     def start_training(self, e):
+        """
+        This method starts the training process with the selected parameters and model.
+        """
         self.start_button.disabled = True
         self.gui.directory.disable_path_choosing()
         self.progress_ring.visible = True
