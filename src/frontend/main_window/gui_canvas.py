@@ -32,16 +32,7 @@ def update_main_image(img_id,channel_id,gui,on_click = True):
         gui.contrast_slider.disabled = False
         gui.brightness_slider.disabled = False
         gui.page.update()
-        if gui.csp.linux:
-            if on_click:
-                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(False, True))
-            else:
-                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(True, True))
-        else:
-            if on_click:
-                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(False))
-            else:
-                asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(True))
+        asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(on_click=on_click, linux=gui.csp.linux))
     else:
         gui.auto_image_tuning.update_main_image_auto()
 
