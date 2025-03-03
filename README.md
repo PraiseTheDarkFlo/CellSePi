@@ -96,6 +96,9 @@ Generates an `.xlsx` file containing the extracted fluorescence values. Click th
 **Drawing Tools**  
 Correct segmentation errors manually or draw masks to train new models.  
 - **Cell ID Shifting:** Automatically adjusts cell IDs to maintain a consecutive numbering when a cell is deleted.
+- **Drawing:** Draw own cells. Finishes the outline anf fills the cell with color automatically 
+- **Deletion:** Delete an unwanted cell
+- **Undo/Redo changes:** If the deletion or drawing is not to your liking, you are able to reverse the made changes 
 
 All changes in the Drawing Tools window are synchronized in real time with the main window.
 
