@@ -104,8 +104,9 @@ You have selected an incompatible file for the segmentation model.
 It means the chosen model isn’t compatible with Cellpose’s segmentation process.
 
 During segmentation, you can:
-- **Pause:** Temporarily halt the process (useful for large images) and resume later.
+- **Pause:** Temporarily halt the process and resume later.
 - **Cancel:** Abort the process, reverting to the previous mask or removing it if none existed.
+> **Note:** With large images it can take longer time to pause or to cancel.
 
 <img src="docs/gifs/segmentation.gif" width="700" alt="Segmentation">
 
