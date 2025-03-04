@@ -187,11 +187,11 @@ Jenna Ahlvers,Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock(2025)
 or as bibtext: 
 ```bash
 @misc{cellsepi,
-  author    = {Ahlvers, Jenna and Chhetri Thapa, Santosh and Dratt, Nike and Heß, Pascal and Hock, Florian},<br/> 
-  title     = {CellSePi: Cell Segmentation Pipeline},<br/>
-  year      = {2025},<br/>
-  publisher = {GitHub},<br/>
-  url       = {https://github.com/cellsepio}<br/>
+  author    = {Ahlvers, Jenna and Chhetri Thapa, Santosh and Dratt, Nike and Heß, Pascal and Hock, Florian},   
+  title     = {CellSePi: Cell Segmentation Pipeline},  
+  year      = {2025},  
+  publisher = {GitHub},  
+  url       = {https://github.com/cellsepi}  
 }
 ```
 
