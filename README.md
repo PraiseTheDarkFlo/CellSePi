@@ -38,10 +38,10 @@ python -m cellsepi
 ```
 
 **Interface Overview**  
-### Main Window Start Screen
+Main Window Start Screen
 ![Main Window Start Screen](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_start_screen.png?raw=true)
 
-### Main Window with Images
+Main Window with Images
 ![Main Window with Images](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/images/main_window_with_images.png?raw=true)
 
 
