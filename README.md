@@ -180,7 +180,7 @@ Developed by:
 This project is licensed under the **Apache License 2.0** – see the [LICENSE](LICENSE) file for details.
 
 ##  How to cite 
-If you use our repository in you own work, please cite us as followes: 
+If you use our repository in you own work, please cite us as followed: 
 ```bash
 Jenna Ahlvers,Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock(2025). CellSePi: Cell Segmentation Pipeline[computer software]. GitHub. https://github.com/PraiseTheDarkFlo/CellSePi
 ```
