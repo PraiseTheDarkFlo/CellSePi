@@ -181,11 +181,11 @@ This project is licensed under the **Apache License 2.0** – see the [LICENSE](
 
 ##  How to cite 
 If you use our repository in you own work, please cite us as followes: 
-
+```bash
 Jenna Ahlvers,Santosh Chhetri Thapa, Nike Dratt, Pascal Heß, Florian Hock(2025). CellSePi: Cell Segmentation Pipeline[computer software]. GitHub.https://github.com/cellsepi
-
+```
 or as bibtext: 
-
+```bash
 @misc{cellsepi,
   author    = {Ahlvers, Jenna and Chhetri Thapa, Santosh and Dratt, Nike and Heß, Pascal and Hock, Florian},<br/> 
   title     = {CellSePi: Cell Segmentation Pipeline},<br/>
@@ -193,7 +193,7 @@ or as bibtext:
   publisher = {GitHub},<br/>
   url       = {https://github.com/cellsepio}<br/>
 }
-
+```
 
 ## 💭 Feedback & Contributions
 
