@@ -21,7 +21,7 @@
         "outline": "(0, 255, 0)"
     },
     "States": {
-        "auto_button": false,
+        "auto_button": true,
         "lif_slider": true
     }
 }
