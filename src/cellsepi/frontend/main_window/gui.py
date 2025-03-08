@@ -200,7 +200,7 @@ class GUI:
             name, _ = os.path.splitext(filename)
             mask_file_name = f"{name}{self.csp.current_mask_suffix}.npy"
             self.csp.window_mask_path= os.path.join(directory, mask_file_name)
-            self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(), self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, self.csp.window_mask_path,self.csp.window_channel_id,self.csp.current_channel_prefix))
+            self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(),self.csp.color_opacity, self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, self.csp.window_mask_path,self.csp.window_channel_id,self.csp.current_channel_prefix))
         else:
             self.page.snack_bar = ft.SnackBar(
                 ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel} has no image!"))

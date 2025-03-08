@@ -24,6 +24,7 @@ class CellSePi:
         self.current_channel_prefix = None
         self.current_mask_suffix = None
         self.window_mask_path = None
+        self.color_opacity = 128
 
 
         self.readout = None

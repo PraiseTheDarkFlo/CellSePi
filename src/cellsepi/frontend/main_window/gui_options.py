@@ -1,6 +1,6 @@
 import flet as ft
 
-from cellsepi.frontend.main_window.gui_colors import ColorSelection
+from cellsepi.frontend.main_window.gui_colors import ColorSelection, ColorOpacity
 
 
 class Options(ft.Container):
@@ -18,6 +18,7 @@ class Options(ft.Container):
             on_click=self.theme_changed,
         )
         self.color_selection = ColorSelection(gui)
+        self.color_opacity= ColorOpacity(gui)
         self.menu_button = ft.PopupMenuButton(
             items=self.create_appbar_items(),
             content=ft.Icon(ft.icons.MENU),
@@ -78,5 +79,25 @@ class Options(ft.Container):
             ft.PopupMenuItem(
                 content=ft.Row([self.color_selection.color_icon_outline, ft.Text("Outline Color")]),
                 on_click=self.color_selection.open_color_picker_outline,
+            ),
+            ft.PopupMenuItem(
+                content=ft.Container(
+                    content=ft.Column(
+                [
+                            ft.Container(
+                                content=self.color_opacity.text,
+                                padding=ft.padding.only(bottom=-10)
+                            ),
+                            ft.Container(
+                                content=self.color_opacity.slider,
+                                padding=ft.padding.only(bottom=-8)
+                            ),
+                        ],
+                        spacing=0,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                    ),
+                    padding=ft.padding.all(0),
+                ),
             )
         ]

@@ -140,7 +140,7 @@ class MyQtWindow(QMainWindow):
         if not self.canvas_dummy:
             self.canvas.redo_delete()
 
-    def set_queue_image(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
+    def set_queue_image(self, mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path, conn,
                         mask_path, channel_id, channel_prefix):
         """
         Sets the current selected mask and image into the MyQtWindow, replacing the canvas with the current parameters.
@@ -149,6 +149,7 @@ class MyQtWindow(QMainWindow):
         Arguments:
             mask_color: The color to use for the mask
             outline_color: The color to use for the outline
+            opacity: The opacity of the mask
             bf_channel: The current bf channel
             mask_paths: The paths to each masks
             image_id: The id of the current selected image
@@ -163,17 +164,23 @@ class MyQtWindow(QMainWindow):
 
         #if canvas is only a dummy create a new_canvas
         if self.canvas_dummy:
-            new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+            new_canvas = DrawingCanvas(mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path,
                                        self.check_shifting, conn, mask_path, True, False,mask_show=self.mask_toggle_button.isChecked())
         else:
             #check if the current image_id and bf_channel equal to the values in canvas than only update the background image (adjusted_image)
             if image_id == self.canvas.image_id and bf_channel == self.canvas.bf_channel:
-                self.canvas.adjusted_image_path = adjusted_image_path
-                self.canvas.load_image_to_scene()
+                if opacity == self.canvas.opacity:
+                    self.canvas.adjusted_image_path = adjusted_image_path
+                    self.canvas.load_image_to_scene()
+                else:
+                    self.canvas.opacity = opacity
+                    self.canvas.adjusted_image_path = adjusted_image_path
+                    self.canvas.load_image_to_scene()
+                    self.canvas.load_mask_to_scene()
                 return  #return because no new canvas, so no need for replacing the old canvas with the new and update the connections
             else:
                 #new mask and image so need for new_canvas
-                new_canvas = DrawingCanvas(mask_color, outline_color, bf_channel, mask_paths, image_id,
+                new_canvas = DrawingCanvas(mask_color, outline_color, opacity, bf_channel, mask_paths, image_id,
                                            adjusted_image_path,
                                            self.check_shifting, conn, mask_path, self.canvas.draw_mode,
                                            self.canvas.delete_mode,mask_show=self.mask_toggle_button.isChecked())
@@ -247,7 +254,7 @@ class Updater(QObject):
     close_signal = pyqtSignal(object, object)  #Signal to close the drawing window
     delete_signal = pyqtSignal(object, )  #Signal that the main_image mask got deleted
     refresh_signal = pyqtSignal()  #Signal that the main_image mask got deleted
-    color_change_signal = pyqtSignal(object, object)
+    color_change_signal = pyqtSignal(object, object) #Signal that the colors got changed
 
     def __init__(self, window):
         super().__init__()
@@ -262,8 +269,8 @@ class Updater(QObject):
         """
         If the update signal is received, update the window accordingly.
         """
-        mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data
-        self.window.set_queue_image(mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path,
+        mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data
+        self.window.set_queue_image(mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path,
                                     conn, mask_path, channel_id, channel_prefix)
         self.window.setVisible(True)
         self.window.raise_()
@@ -368,28 +375,18 @@ class DrawingCanvas(QGraphicsView):
     """
     Class for displaying and interacting with images (background, mask).
     Includes delete functionality for cells and supports undo (restore) and redo of cell deletion.
-
-    Attributes:
-        csp: Object of CellSePi
-        scene: Main scene of the window
-        image_array: Stores cell data points
-        mask_item: Graphics item for the mask
-        background_item: Graphics item for the background image
-        delete_mode: Boolean to track if delete mode is enabled
-        cell_history: List to keep track of state transitions for undo (each entry is a tuple: (old_state, new_state))
-        redo_history: List to keep track of state transitions for redo (each entry is a tuple: (old_state, new_state))
-        check_box: QCheckBox to check if the cells should be shifted when deleted.
     """
     #Signals to indicate whether a restore or redo action is available.
     restoreAvailabilityChanged = pyqtSignal(bool)
     redoAvailabilityChanged = pyqtSignal(bool)
 
-    def __init__(self, mask_color, outline_color, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
+    def __init__(self, mask_color, outline_color,opacity, bf_channel, mask_paths, image_id, adjusted_image_path, check_box,
                  conn, mask_path, draw_mode=True, delete_mode=False,mask_show=True):
         super().__init__()
 
         self.mask_color = mask_color
         self.outline_color = outline_color
+        self.opacity = opacity
         self.bf_channel = bf_channel
         self.mask_paths = mask_paths
         self.image_id = image_id
@@ -650,7 +647,7 @@ class DrawingCanvas(QGraphicsView):
         #Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r, g, b = self.mask_color
-        image_mask[mask != 0] = (r, g, b, 128)
+        image_mask[mask != 0] = (r, g, b, self.opacity)
         r, g, b = self.outline_color
         image_mask[outline != 0] = (r, g, b, 255)
         self.image_array = mask

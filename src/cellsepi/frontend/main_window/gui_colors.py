@@ -99,4 +99,18 @@ class ColorSelection:
         e.control.page.close(self.dialog)
         self.dialog.update()
 
+class ColorOpacity:
+    def __init__(self,gui):
+        self.gui = gui
+        self.slider = ft.Slider(
+            min=10, max=128, value=128, width=142,
+            on_change=lambda _: self.opacity_change()
+        )
+        self.text = ft.Container(
+            content=ft.Text("Mask Opacity"),
+            alignment=ft.alignment.center
+        )
 
+    def opacity_change(self):
+        self.gui.csp.color_opacity = self.slider.value
+        handle_mask_update(self.gui)
