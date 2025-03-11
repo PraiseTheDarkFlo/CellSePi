@@ -49,9 +49,9 @@ Main Window with Images
 **Options**  
 - The dark/light theme adapts to your system settings. The changed theme is only active for the current session. 
 - Mask and outline colors can be customized and are saved between sessions.
-- Mask opacity can be changed for the current season
+- Mask opacity can be changed for the current session.
 
-> **Note:** Changes to the **Mask Opacity** will only appear in the drawing window after reloading the current processed image by pressing on the **Drawing Tools** button.
+> **Note:** Changes to the **Mask Opacity** will only appear in the drawing window after reloading the currently opened image by pressing on the **Drawing Tools** button.
 
 ![Options](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/docs/gifs/options.gif?raw=true)
 
