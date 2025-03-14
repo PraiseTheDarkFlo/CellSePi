@@ -26,7 +26,7 @@
 
 ## ℹ️ Overview
 
-This project was developed in the context of a Bachelor project commissioned by the [Self-Organizing Systems Lab](https://www.bcs.tu-darmstadt.de/welcome/index.en.jsp) of the Technical University Darmstadt and supervised by [Eric Kubaczka](https://github.com/ERIK-KE). CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By utilizing the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
+This project was developed in the context of a Bachelor project commissioned by the [Self-Organizing Systems Lab](https://www.bcs.tu-darmstadt.de/welcome/index.en.jsp) of the Technical University Darmstadt and supervised by [Erik Kubaczka](https://github.com/ERIK-KE) and Anja J. Engel. CellSePi is a powerful segmentation pipeline designed for microscopy images, featuring an interactive GUI to streamline your workflow. By utilizing the advanced Cellpose segmentation engine, CellSePi empowers researchers to efficiently process and analyze cellular images.
 
 ## 🚀 Usage
 
