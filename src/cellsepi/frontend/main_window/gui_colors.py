@@ -113,4 +113,5 @@ class ColorOpacity:
 
     def opacity_change(self):
         self.gui.csp.color_opacity = self.slider.value
+        self.gui.mask.mask_outputs = defaultdict(dict)
         handle_mask_update(self.gui)
