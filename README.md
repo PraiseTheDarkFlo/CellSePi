@@ -138,7 +138,7 @@ This command automatically installs all required dependencies as specified in th
 
 - **Python 3.8+**
 - `numpy==1.26.4`
-- `numba==0.61.0`
+- `numba>=0.59.0`
 - `pillow`
 - `pandas`
 - `openpyxl`
@@ -152,7 +152,8 @@ This command automatically installs all required dependencies as specified in th
 - `flet_contrib`
 - `flet_core==0.24.1`
 - `bioio==1.2.0`
-- `bioio-lif`
+- `bioio-lif==1.0.0`
+- `bioio-base==1.0.4`
 
 ## 📚 Citations
 

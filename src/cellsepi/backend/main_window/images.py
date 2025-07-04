@@ -439,7 +439,6 @@ class BatchImageReadout(Notifier):
             cell_ids = cell_ids[1:]
 
             channels = list(image_paths[image_id])
-            channels.remove(segmentation_channel)
             n_channels = len(channels)
 
             cur_row_entries = [None] * len(cell_ids)
@@ -454,9 +453,6 @@ class BatchImageReadout(Notifier):
                 cur_row_entries[iX] = data_entry
 
             for channel_id in channels:
-                if channel_id == segmentation_channel:
-                    raise Exception("")
-
                 image_path = image_paths[image_id][channel_id]
                 channel_name = self._channel_name(channel_id)
 
