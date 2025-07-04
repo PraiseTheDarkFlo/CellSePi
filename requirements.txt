@@ -9,7 +9,6 @@ bioio-base==1.0.4
 bioio-lif==1.0.0
 numba>=0.59.0
 flet_contrib
-bioio-lif
 pillow
 pandas
 openpyxl
