@@ -8,7 +8,6 @@ class Port:
         self.opt = opt #optional
         self._data = None
 
-
     @property
     def data(self):
         return self._data
