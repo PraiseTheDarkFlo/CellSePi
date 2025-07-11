@@ -89,7 +89,9 @@ class DummyModule4(Module):
         self._name = "test4"
         self._inputs = {
             "port1": Port("port1", int),
-            "port2": Port("port2", str)
+            "port2": Port("port2", str),
+            "port4": Port("port4", str,True),
+            "port5": Port("port5", str,True),
         }
         self._outputs = {
             "port3": Port("port3", str),
@@ -185,3 +187,13 @@ def test_n_to_one_module():
     assert mod4.inputs["port2"].data == "The resulting data is: 67", "Something went wrong when transferring the data with the pipe from the m1 to m4"
     assert mod4.inputs["port1"].data == 67, "Something went wrong when transferring the data with the pipe from m1 to m4"
     assert mod4.outputs["port3"].data == "The resulting data is: 67 == 67", "Something went wrong when running the fourth module"
+
+def test_find_mandatory_inputs():
+    mod4 = DummyModule4()
+    mandatory_inputs = mod4.get_mandatory_inputs()
+    assert mandatory_inputs == ["port1", "port2"], "Something went wrong when getting the mandatory inputs"
+
+def test_find_no_mandatory_inputs():
+    mod1 = DummyModule1()
+    mandatory_inputs = mod1.get_mandatory_inputs()
+    assert mandatory_inputs == [], "Something went wrong when getting the mandatory inputs"

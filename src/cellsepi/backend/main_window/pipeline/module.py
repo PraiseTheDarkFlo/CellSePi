@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
 import flet as ft
+from typing import List
 
 class Port:
+    """
+    Ports defines an input or output of a module.
+    Ports with the same names in different modules are considered as the same type of ports
+    and their data can be transferred with pipes to each other.
+    """
     def __init__(self, name: str, data_type: type, opt: bool = False):
         self.name = name
         self.data_type = data_type #type
@@ -21,6 +27,11 @@ class Port:
 
 
 class Module(ABC):
+    """
+    Modules are independent processes within the pipeline that perform a specific task.
+    The modules should be designed to function independently of other modules,
+    as long as the correct inputs are provided.
+    """
     #name for the gui
     @property
     @abstractmethod
@@ -32,6 +43,16 @@ class Module(ABC):
     @abstractmethod
     def inputs(self) -> dict[str, Port]:
         pass
+
+    def get_mandatory_inputs(self) -> List[str]:
+        """
+        Returns the list of names of input ports that are required by the module.
+        """
+        mandatory_inputs = []
+        for port in self.inputs.values():
+            if not port.opt:
+                mandatory_inputs.append(port.name)
+        return mandatory_inputs
 
     #the needed outputs of the module
     @property
@@ -48,3 +69,4 @@ class Module(ABC):
     @abstractmethod
     def run(self):
         pass
+
