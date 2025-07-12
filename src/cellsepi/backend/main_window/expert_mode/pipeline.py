@@ -1,13 +1,14 @@
 from itertools import chain
 
-from cellsepi.backend.main_window.pipeline.module import Module,Port
-from cellsepi.backend.main_window.pipeline.pipe import Pipe
+from cellsepi.backend.main_window.expert_mode.module import Module,Port
+from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict
 
 
 class Pipeline:
     def __init__(self):
-        self.modules: List[Module] = []
+        self.modules: List[Module] = [] #running order
+        self.module_map: Dict[str, Module] = {} #mapping for fast access to the modules
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
 
@@ -20,12 +21,10 @@ class Pipeline:
         """
         if any(mod.name == module.name for mod in self.modules):
             raise ValueError(f"Module name '{module.name}' already exists in the pipeline.")
-        if module not in self.modules:
-            self.modules.append(module)
-            self.pipes_in[module.name] = []
-            self.pipes_out[module.name] = []
-        else:
-            raise ValueError(f"Module '{module}' already exists in the pipeline.")
+        self.modules.append(module)
+        self.module_map[module.name] = module
+        self.pipes_in[module.name] = []
+        self.pipes_out[module.name] = []
 
     def remove_module(self, module: Module) -> None:
         """
@@ -37,6 +36,7 @@ class Pipeline:
             raise RuntimeError(f"Cannot remove module '{module.name}' from pipeline while connections to other modules still exists.")
         if module in self.modules:
             self.modules.remove(module)
+            del self.module_map[module.name]
             del self.pipes_in[module.name]
             del self.pipes_out[module.name]
 

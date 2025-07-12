@@ -20,6 +20,10 @@ class Port:
 
     @data.setter
     def data(self, value):
+        """
+        Raises:
+            TypeError: If the data type is not the required type.
+        """
         if isinstance(value, self.data_type) or value is None:
             self._data = value
         else:
