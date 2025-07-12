@@ -36,7 +36,7 @@ def test_add_module_same_names():
     with pytest.raises(ValueError):
         pipeline.add_module(mod1)
 
-def test_add_connection(two_module_pipe):
+def test_add_connection():
     pipeline = Pipeline()
     mod1 = DummyModule1()
     mod2 = DummyModule2()
@@ -71,6 +71,7 @@ def test_add_connection_already_added(two_module_pipeline):
         two_module_pipeline.add_connection(two_module_pipeline.get_pipe("test1","test2"))
 
 def test_remove_connection_with_error(two_module_pipeline):
+    two_module_pipeline.remove_connection("test1", "test2")
     with pytest.raises(ValueError):
         two_module_pipeline.remove_connection("test1", "test2")
 
