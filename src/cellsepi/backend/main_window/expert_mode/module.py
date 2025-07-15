@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 import flet as ft
 from typing import List
 
+from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
+
+
 class Port:
     """
     Ports defines an input or output of a module.
@@ -28,7 +31,6 @@ class Port:
             self._data = value
         else:
             raise TypeError(f"Expected data of type {self.data_type}, got {type(value)}!")
-
 
 class Module(ABC):
     """
@@ -64,11 +66,25 @@ class Module(ABC):
     def outputs(self) -> dict[str, Port]:
         pass
 
-    #the provided gui from the module
     @property
     @abstractmethod
-    def gui(self) -> ft.Container:
+    def settings(self) -> ft.Container:
+        """
+        The settings window of the module in the gui.
+        """
         pass
+
+
+    @property
+    @abstractmethod
+    def event_manager(self) -> EventManager:
+        pass
+
+    @event_manager.setter
+    @abstractmethod
+    def event_manager(self, value: EventManager):
+        pass
+
 
     @abstractmethod
     def run(self):

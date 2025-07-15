@@ -130,3 +130,5 @@ def test_run_n_to_one_module_valid(two_module_pipeline):
                "port1"].data == 67, "Something went wrong when transferring the data with the pipe from m1 to m4"
     assert mod4.outputs[
                "port3"].data == "The resulting data is: 67 == 67", "Something went wrong when running the fourth module"
+    for mod in two_module_pipeline.modules:
+        assert mod.event_manager is not None, "Something went wrong by setting the event_manager attribute"

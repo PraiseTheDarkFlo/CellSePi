@@ -1,4 +1,6 @@
 import flet as ft
+
+from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from src.cellsepi.backend.main_window.expert_mode.module import Module,Port
 
 class DummyModule1(Module):
@@ -7,6 +9,7 @@ class DummyModule1(Module):
         self._outputs = {
             "port1": Port("port1", int)
         }
+        self._event_manager = None
 
     @property
     def name(self) -> str:
@@ -21,8 +24,16 @@ class DummyModule1(Module):
         return self._outputs
 
     @property
-    def gui(self) -> ft.Container:
+    def settings(self) -> ft.Container:
         pass
+
+    @property
+    def event_manager(self) -> EventManager:
+        return self._event_manager
+
+    @event_manager.setter
+    def event_manager(self, value: EventManager):
+        self._event_manager = value
 
     def run(self):
         result = 42 + 25
@@ -51,8 +62,17 @@ class DummyModule2(Module):
         return self._outputs
 
     @property
-    def gui(self) -> ft.Container:
+    def settings(self) -> ft.Container:
         pass
+
+    @property
+    def event_manager(self) -> EventManager:
+        return self._event_manager
+
+    @event_manager.setter
+    def event_manager(self, value: EventManager):
+        self._event_manager = value
+
 
     def run(self):
         port1 = self.inputs["port1"].data
@@ -64,6 +84,8 @@ class DummyModule3(Module):
         self._inputs = {
             "port1": Port("port1", str),
         }
+        self._event_manager = None
+
     @property
     def name(self) -> str:
         return self._name
@@ -77,10 +99,19 @@ class DummyModule3(Module):
         return {}
 
     @property
-    def gui(self) -> ft.Container:
+    def settings(self) -> ft.Container:
         pass
 
-    def run(self):
+    @property
+    def event_manager(self) -> EventManager:
+        return self._event_manager
+
+    @event_manager.setter
+    def event_manager(self, value: EventManager):
+        self._event_manager = value
+
+
+def run(self):
         pass
 class DummyModule4(Module):
     def __init__(self):
@@ -94,6 +125,8 @@ class DummyModule4(Module):
         self._outputs = {
             "port3": Port("port3", str),
         }
+        self._event_manager = None
+
     @property
     def name(self) -> str:
         return self._name
@@ -107,8 +140,17 @@ class DummyModule4(Module):
         return self._outputs
 
     @property
-    def gui(self) -> ft.Container:
+    def settings(self) -> ft.Container:
         pass
+
+    @property
+    def event_manager(self) -> EventManager:
+        return self._event_manager
+
+    @event_manager.setter
+    def event_manager(self, value: EventManager):
+        self._event_manager = value
+
 
     def run(self):
         result = self.inputs["port2"].data + " == " + str(self.inputs["port1"].data)

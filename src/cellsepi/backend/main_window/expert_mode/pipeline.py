@@ -1,5 +1,6 @@
 from itertools import chain
 
+from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from cellsepi.backend.main_window.expert_mode.module import Module,Port
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict
@@ -11,6 +12,7 @@ class Pipeline:
         self.module_map: Dict[str, Module] = {} #mapping for fast access to the modules
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
+        self.event_manager: EventManager = EventManager()
 
     def add_module(self, module: Module) -> None:
         """
@@ -108,6 +110,7 @@ class Pipeline:
         if not self.check_runnable():
             raise RuntimeError(f"Pipeline is not runnable. One or more modules has no connection to all their mandatory inputs.")
         for module in self.modules:
+            module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.name]
             for pipe in module_pipes:
                 pipe.run()
