@@ -111,8 +111,8 @@ class DummyModule3(Module):
         self._event_manager = value
 
 
-def run(self):
-        pass
+    def run(self):
+            pass
 class DummyModule4(Module):
     def __init__(self):
         self._name = "test4"
