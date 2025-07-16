@@ -117,7 +117,7 @@ class Pipeline:
                 if in_degree[pipe.target_module.name] == 0:
                     queue.append(pipe.target_module.name)
         if len(topological_order) != len(self.modules):
-            raise RuntimeError(f"The pipeline contains a cycle, only acycle graphs are supported.")
+            raise RuntimeError(f"The pipeline contains a cycle, only acyclic graphs are supported.")
         return topological_order
 
     def check_pipeline_runnable(self) -> bool:
@@ -149,9 +149,9 @@ class Pipeline:
             module = self.module_map[module_name]
             module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.name]
+            for pipe in module_pipes:
+                pipe.run()
             if self.check_module_runnable(module_name):
-                for pipe in module_pipes:
-                    pipe.run()
                 module.run()
             else:
                 continue

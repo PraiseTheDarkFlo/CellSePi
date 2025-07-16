@@ -48,6 +48,21 @@ def test_pipe_target_without_port():
     with pytest.raises(KeyError):
         pipe.run()
 
+def test_empty_ports_pipe():
+    mod1 = DummyModule1()
+    mod1.outputs["port1"].data = 42
+    mod2 = DummyModule2()
+    with pytest.raises(ValueError):
+        pipe = Pipe(mod1, mod2,[])
+
+def test_none_ports_pipe():
+    mod1 = DummyModule1()
+    mod1.outputs["port1"].data = 42
+    mod2 = DummyModule2()
+    with pytest.raises(ValueError):
+        pipe = Pipe(mod1, mod2, None)
+
+
 def test_correct_pipe():
     mod1 = DummyModule1()
     mod1.outputs["port1"].data = 42

@@ -13,7 +13,7 @@ class Pipe:
         if source_module.name == target_module.name:
             raise ValueError(f"Source and target modules must be different!")
         if ports is None or len(ports) == 0:
-            raise ValueError(f"Ports must be non-empty!")
+            raise ValueError(f"Ports must be non empty!")
         self.source_module = source_module
         self.target_module = target_module
         self.ports = ports

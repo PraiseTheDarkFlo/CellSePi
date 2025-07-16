@@ -97,10 +97,13 @@ def test_remove_module_valid(two_module_pipeline):
     assert two_module_pipeline.pipes_out == {
         "test2": [], }, "Something went wrong when removing the pipe from the pipeline"
 
-def test_run_with_false_runnable(two_module_pipeline):
+def test_runnable_false(two_module_pipeline):
     two_module_pipeline.remove_connection("test1", "test2")
-    with pytest.raises(RuntimeError):
-        two_module_pipeline.run()
+    assert two_module_pipeline.check_pipeline_runnable() == False, "Something went wrong when checking the pipeline runnable"
+
+def test_runnable_true(two_module_pipeline):
+    assert two_module_pipeline.check_pipeline_runnable() == True, "Something went wrong when checking the pipeline runnable"
+
 
 def test_run_valid(two_module_pipeline):
     two_module_pipeline.run()
@@ -132,3 +135,23 @@ def test_run_n_to_one_module_valid(two_module_pipeline):
                "port3"].data == "The resulting data is: 67 == 67", "Something went wrong when running the fourth module"
     for mod in two_module_pipeline.modules:
         assert mod.event_manager is not None, "Something went wrong by setting the event_manager attribute"
+
+def test_run_one_module_invalid(two_module_pipeline):
+    mod1 = two_module_pipeline.module_map["test1"]
+    mod2 = two_module_pipeline.module_map["test2"]
+    two_module_pipeline.remove_connection("test1", "test2")
+    two_module_pipeline.run()
+    assert mod1.outputs["port1"].data == 67, "Something went wrong when running the first module"
+    assert mod2.inputs[
+               "port1"].data is None, "Something went wrong when skipping the second module"
+    assert mod2.outputs[
+               "port2"].data is None, "Something went wrong when skipping the second module"
+
+def test_cycled_graph(two_module_pipeline):
+    mod2 = two_module_pipeline.module_map["test2"]
+    mod4 = DummyModule4()
+    two_module_pipeline.add_module(mod4)
+    two_module_pipeline.add_connection(Pipe(mod2, mod4, ["port2"]))
+    two_module_pipeline.add_connection(Pipe(mod4, mod2, ["port1"]))
+    with pytest.raises(RuntimeError):
+        two_module_pipeline.run()

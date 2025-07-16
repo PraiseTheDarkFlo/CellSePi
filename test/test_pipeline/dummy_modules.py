@@ -123,6 +123,7 @@ class DummyModule4(Module):
             "port5": Port("port5", str,True),
         }
         self._outputs = {
+            "port!": Port("port1", int),
             "port3": Port("port3", str),
         }
         self._event_manager = None
