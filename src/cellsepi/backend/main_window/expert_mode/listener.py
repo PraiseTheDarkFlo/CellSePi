@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List, Type, TypeVar, Generic
 
 class Event(ABC):
+    """
+    Abstract base class for all event types.
+    Subclass this to define specific event types.
+    """
     pass
 
 class ProgressEvent(Event):
@@ -11,6 +15,10 @@ class ProgressEvent(Event):
 
 
 class EventListener(ABC):
+    """
+    Abstract base class for event listeners.
+    Subclasses must define the type of event they handle and implement the update logic.
+    """
     @abstractmethod
     def get_event_type(self) -> Type[Event]:
         pass

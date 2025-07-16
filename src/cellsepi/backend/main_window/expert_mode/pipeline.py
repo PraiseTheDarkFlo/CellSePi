@@ -1,3 +1,5 @@
+import math
+from collections import deque
 from itertools import chain
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
@@ -90,7 +92,35 @@ class Pipeline:
         self.pipes_in[pipe.target_module.name].append(pipe)
         self.pipes_out[pipe.source_module.name].append(pipe)
 
-    def check_runnable(self) -> bool:
+    def setup_incoming_degree(self) -> Dict[str, int]:
+        """
+        Returns a dictionary mapping module names to incoming degree (incoming degree is how many pipes are going into a module).
+        """
+        return {module.name: len(self.pipes_in[module.name]) for module in self.modules}
+
+    def get_run_order(self) -> List[str]:
+        """
+        Topologic orders with Kahn's algorithm the graph given by the pipes, to obtain an execution order.
+        """
+        topological_order: List[str] = []
+        in_degree = self.setup_incoming_degree()
+        queue = deque()
+        for module_name, degree in in_degree.items():
+            if degree == 0:
+                queue.append(module_name)
+        while queue:
+            module_name = queue.popleft()
+            topological_order.append(module_name)
+            del in_degree[module_name]
+            for pipe in self.pipes_out[module_name]:
+                in_degree[pipe.target_module.name] -= 1
+                if in_degree[pipe.target_module.name] == 0:
+                    queue.append(pipe.target_module.name)
+        if len(topological_order) != len(self.modules):
+            raise RuntimeError(f"The pipeline contains a cycle, only acycle graphs are supported.")
+        return topological_order
+
+    def check_pipeline_runnable(self) -> bool:
         """
         Checks if every modules inputs is satisfied.
         """
@@ -101,17 +131,27 @@ class Pipeline:
                 return False
         return True
 
+    def check_module_runnable(self,module_name: str) -> bool:
+        """
+        Checks if the module input port data from the given module_name is not None.
+        """
+        if not all(self.module_map[module_name].inputs[port_name].data is not None for port_name in self.module_map[module_name].get_mandatory_inputs()):
+            return False
+        else:
+            return True
+
     def run(self):
         """
         Executes the steps of the Pipeline.
-        Raises:
-            RuntimeError: If one or more modules are not satisfied with their mandatory inputs.
+        Skips steps of the Pipeline if min. one of the mandatory inputs is None.
         """
-        if not self.check_runnable():
-            raise RuntimeError(f"Pipeline is not runnable. One or more modules has no connection to all their mandatory inputs.")
-        for module in self.modules:
+        for module_name in self.get_run_order():
+            module = self.module_map[module_name]
             module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.name]
-            for pipe in module_pipes:
-                pipe.run()
-            module.run()
+            if self.check_module_runnable(module_name):
+                for pipe in module_pipes:
+                    pipe.run()
+                module.run()
+            else:
+                continue

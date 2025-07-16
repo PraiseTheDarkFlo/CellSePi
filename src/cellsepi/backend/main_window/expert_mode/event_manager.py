@@ -2,7 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List, Type, TypeVar, Generic
 from cellsepi.backend.main_window.expert_mode.listener import *
 
-class EventManager():
+class EventManager:
+    """
+    Manages the different Listeners and notify them if they associated event happens.
+    """
     def __init__(self):
         self._listeners: dict[Type[Event], List[EventListener]] = {}
 
