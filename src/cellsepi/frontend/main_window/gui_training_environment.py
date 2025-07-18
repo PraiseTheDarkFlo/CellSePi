@@ -24,6 +24,7 @@ class Training(ft.Container):
         self.button_training_environment_menu = ft.PopupMenuButton(
             items=[self.button_event],
             content=self.switch_icon,
+            tooltip="Training",
             on_open=lambda _: self.text.update(),
         )
         self.content = self.button_training_environment_menu

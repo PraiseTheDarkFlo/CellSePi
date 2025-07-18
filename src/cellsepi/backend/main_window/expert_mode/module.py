@@ -41,7 +41,7 @@ class Categories(Enum):
     FILTERS = ft.Colors.PURPLE
     SEGMENTATION = ft.Colors.YELLOW
 
-class GuiConfig:
+class ModuleGuiConfig:
     def __init__(self, name: str, category: Categories, description:str = None):
         self.name = name
         self.category = category
@@ -92,7 +92,7 @@ class Module(ABC):
 
     @classmethod
     @abstractmethod
-    def get_gui_config(cls) -> GuiConfig:
+    def gui_config(cls) -> ModuleGuiConfig:
        pass
 
     @abstractmethod
@@ -100,7 +100,7 @@ class Module(ABC):
         pass
 
     def destroy(self):
-        id_number = self.module_id.removeprefix(self.get_gui_config().name)
+        id_number = self.module_id.removeprefix(self.gui_config().name)
         if id_number != "":
             number = int(id_number)
             self.free_id(number)

@@ -1,7 +1,7 @@
 import flet as ft
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
-from cellsepi.backend.main_window.expert_mode.module import GuiConfig
+from cellsepi.backend.main_window.expert_mode.module import ModuleGuiConfig
 from src.cellsepi.backend.main_window.expert_mode.module import Module,Port
 
 class DummyModule1(Module):
@@ -13,8 +13,8 @@ class DummyModule1(Module):
         self._event_manager = None
 
     @classmethod
-    def get_gui_config(cls) -> GuiConfig:
-        return GuiConfig("test1",None,None)
+    def gui_config(cls) -> ModuleGuiConfig:
+        return ModuleGuiConfig("test1", None, None)
 
     @property
     def module_id(self) -> str:
@@ -56,8 +56,8 @@ class DummyModule2(Module):
         }
 
     @classmethod
-    def get_gui_config(cls) -> GuiConfig:
-        return GuiConfig("test2", None, None)
+    def gui_config(cls) -> ModuleGuiConfig:
+        return ModuleGuiConfig("test2", None, None)
 
     @property
     def module_id(self) -> str:
@@ -97,8 +97,8 @@ class DummyModule3(Module):
         self._event_manager = None
 
     @classmethod
-    def get_gui_config(cls) -> GuiConfig:
-        return GuiConfig("test3", None, None)
+    def gui_config(cls) -> ModuleGuiConfig:
+        return ModuleGuiConfig("test3", None, None)
 
     @property
     def module_id(self) -> str:
@@ -143,8 +143,8 @@ class DummyModule4(Module):
         self._event_manager = None
 
     @classmethod
-    def get_gui_config(cls) -> GuiConfig:
-        return GuiConfig("test4", None, None)
+    def gui_config(cls) -> ModuleGuiConfig:
+        return ModuleGuiConfig("test4", None, None)
 
     @property
     def module_id(self) -> str:

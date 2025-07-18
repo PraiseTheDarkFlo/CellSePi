@@ -1,6 +1,6 @@
 import flet as ft
 fluorescence_button= ft.ElevatedButton(text= "Readout",
-                                       icon=ft.icons.FILE_DOWNLOAD,
+                                       icon=ft.Icons.FILE_DOWNLOAD,
                                        tooltip="Readout fluorescence values",
                                        disabled=False,
                                        visible=False)

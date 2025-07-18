@@ -3,11 +3,14 @@ import os
 import pathlib
 import platform
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 from json.encoder import INFINITY
 from time import time
 import flet as ft
 
+from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
+from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
+from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningException
 from cellsepi.frontend.main_window.gui_canvas import update_main_image
 from cellsepi.frontend.main_window.gui_fluorescence import fluorescence_button
 from cellsepi.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \
@@ -76,54 +79,55 @@ class DirectoryCard(ft.Card):
     """
     Handles the directory card with all event handlers.
     """
-    def __init__(self, gui):
-        super().__init__()
-        self.gui = gui
-        self.count_results_txt = ft.Text(value="Results: 0")
-        self.directory_path = ft.Text(value='Directory Path',weight=ft.FontWeight.BOLD)
-        self.formatted_path = ft.Text(value=format_directory_path(self.directory_path.value), weight=ft.FontWeight.BOLD)
-        self.is_lif = self.gui.csp.config.get_lif_slider()
-        if self.is_lif:
-            index = 1
-        else:
-            index = 0
-        self.lif_slider = ft.CupertinoSlidingSegmentedButton(
-            selected_index=index,
-            thumb_color=ft.Colors.BLUE_400,
-            on_change=self.update_view,
-            padding=ft.padding.symmetric(0, 0),
-            controls=[
-                ft.Text("Tif"),
-                ft.Text("Lif")
-            ],
-        )
-        self.image_gallery = ft.ListView()
-        self.path_list_tile = self.create_path_list_tile()
-        self.get_directory_dialog = None
-        self.pick_files_dialog = None
-        self.create_handlers()
-        self.directory_row = self.create_dir_row()
-        self.files_row = self.create_files_row()
-        self.lif_slider_blocker = ft.Container(
-            width=80,
-            height=30,
-            bgcolor=ft.Colors.TRANSPARENT,
-            on_click= None,
-            visible= False,
-        )
-        self.lif_row = ft.Row([ft.Stack([self.lif_slider,self.lif_slider_blocker]),
-                                               self.directory_row,
-                                               self.files_row
-                                                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                                              )
-        self.content = self.create_directory_container()
-        self.output_dir = False
-        self.is_supported_lif = True
-        self.files_row.visible = self.is_lif
-        self.directory_row.visible = not self.is_lif
-        self.selected_images_visualise = {}
-        self.icon_check = {}
-        self.icon_x = {}
+    def __init__(self, gui = None):
+        if gui is not None:
+            super().__init__()
+            self.gui = gui
+            self.count_results_txt = ft.Text(value="Results: 0")
+            self.directory_path = ft.Text(value='Directory Path',weight=ft.FontWeight.BOLD)
+            self.formatted_path = ft.Text(value=format_directory_path(self.directory_path.value), weight=ft.FontWeight.BOLD)
+            self.is_lif = self.gui.csp.config.get_lif_slider()
+            if self.is_lif:
+                index = 1
+            else:
+                index = 0
+            self.lif_slider = ft.CupertinoSlidingSegmentedButton(
+                selected_index=index,
+                thumb_color=ft.Colors.BLUE_400,
+                on_change=self.update_view,
+                padding=ft.padding.symmetric(0, 0),
+                controls=[
+                    ft.Text("Tif"),
+                    ft.Text("Lif")
+                ],
+            )
+            self.image_gallery = ft.ListView()
+            self.path_list_tile = self.create_path_list_tile()
+            self.get_directory_dialog = None
+            self.pick_files_dialog = None
+            self.create_handlers()
+            self.directory_row = self.create_dir_row()
+            self.files_row = self.create_files_row()
+            self.lif_slider_blocker = ft.Container(
+                width=80,
+                height=30,
+                bgcolor=ft.Colors.TRANSPARENT,
+                on_click= None,
+                visible= False,
+            )
+            self.lif_row = ft.Row([ft.Stack([self.lif_slider,self.lif_slider_blocker]),
+                                                   self.directory_row,
+                                                   self.files_row
+                                                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                                  )
+            self.content = self.create_directory_container()
+            self.output_dir = False
+            self.is_supported_lif = True
+            self.files_row.visible = self.is_lif
+            self.directory_row.visible = not self.is_lif
+            self.selected_images_visualise = {}
+            self.icon_check = {}
+            self.icon_x = {}
 
     def create_path_list_tile(self):
         return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
@@ -180,7 +184,7 @@ class DirectoryCard(ft.Card):
                 path = e.path
             if path:
                 self.directory_path.value = path
-                self.select_directory_parallel(path)
+                self.select_directory_parallel(path,self.is_lif,self.gui.csp.config.get_channel_prefix())
                 self.load_images()
             else:
                 self.image_gallery.controls.clear()
@@ -198,56 +202,104 @@ class DirectoryCard(ft.Card):
                 self.formatted_path.color = None
             self.formatted_path.update()
 
-    def select_directory_parallel(self, directory_path):
+    def select_directory_parallel(self, directory_path ,is_lif:bool,channel_prefix: str ,event_manager: EventManager = None):
         """
             Gets the working directory and copies the images in there.
 
             Args:
                 directory_path (str): the selected directory_path
+                is_lif (bool): if the images are lif or tif
+                channel_prefix (str): the channel prefix
+                event_manager (EventManager): the event manager which is used when the methode gets started as a module.
                 """
-        is_lif = self.is_lif
         is_supported_tif = True
-        self.is_supported_lif = True
+        if event_manager is None:
+            self.is_supported_lif = True
         path = pathlib.Path(directory_path)
         # Lif Case
         if is_lif:
-            self.output_dir = False
+            if event_manager is None:
+                self.output_dir = False
             working_directory = path.parent / "output/"
             os.makedirs(working_directory, exist_ok=True)
             if path.suffix.lower() == ".lif":
-                # Extract from lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
-                extract_from_lif_file(lif_path=path, target_dir=working_directory,channel_prefix=self.gui.csp.config.get_channel_prefix())
+                # Extract from a lif file all the single series images and extract to .tif, .tiff and .npy files into subdirectory
+                extract_from_lif_file(lif_path=path, target_dir=working_directory,channel_prefix=channel_prefix,event_manager=event_manager)
             else:
-                self.is_supported_lif = False
+                if event_manager is not None:
+                    raise PipelineRunningException("Type Error","Expected .lif!")
+                else:
+                    self.is_supported_lif = False
 
 
         # Tiff Case
         else:
             if path.name == "output":
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
-                self.gui.page.snack_bar.open = True
-                self.output_dir = True
-                self.gui.page.update()
-                self.gui.csp.image_paths = {}
-                self.gui.csp.linux_images = {}
-                self.gui.csp.mask_paths = {}
-                self.gui.ready_to_start = False
-                self.gui.progress_ring.visible = False
-                return
-            self.output_dir = False
+                if event_manager is not None:
+                    raise PipelineRunningException("Directory Error","Directory ’output’ is not supported!")
+                else:
+                    self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
+                    self.gui.page.snack_bar.open = True
+                    self.output_dir = True
+                    self.gui.page.update()
+                    self.gui.csp.image_paths = {}
+                    self.gui.csp.linux_images = {}
+                    self.gui.csp.mask_paths = {}
+                    self.gui.ready_to_start = False
+                    self.gui.progress_ring.visible = False
+                    return None
+            if event_manager is None:
+                self.output_dir = False
             # Copy .tif, .tiff and .npy files into subdirectory
             working_directory = path / "output/"
             os.makedirs(working_directory, exist_ok=True)
             copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
+            tiff_paths = [p for p in working_directory.iterdir() if
+                          p.suffix.lower() in [".tif", ".tiff"] and p.is_file()]
+            total = len(tiff_paths)
+            converted_count = 0
+            failed = False
 
-            #convert the 16bit bit depth in 8 bit (parallel)
-            with ThreadPoolExecutor() as executor:
-                result = list(executor.map(self.convert_tiffs_to_8_bit,working_directory.iterdir()))
-                if False in result:
-                    is_supported_tif=False
+            if event_manager is not None:
+                event_manager.notify(ProgressEvent(percent=0, process=f"Convert TIFFs: {converted_count}/{total}"))
 
-        self.gui.csp.working_directory = working_directory
-        self.set_paths(is_supported_tif)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = {executor.submit(self.convert_tiffs_to_8_bit, path): path for path in tiff_paths}
+                for future in concurrent.futures.as_completed(futures):
+                    path = futures[future]
+                    try:
+                        result = future.result()
+                        if not result:
+                            failed = True
+                    except Exception as e:
+                        print(f"Error converting {path.name}: {e}")
+                        failed = True
+
+                    converted_count += 1
+                    if event_manager is not None:
+                        event_manager.notify(
+                            ProgressEvent(percent=int(converted_count / total*100),process=f"Convert Tiff's: {converted_count}/{total}")
+                        )
+
+            if failed:
+                if event_manager is not None:
+                    raise PipelineRunningException("Type Error",
+                                                   "The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed.")
+                else:
+                    is_supported_tif = False
+            else:
+                if event_manager is not None:
+                    event_manager.notify(
+                        ProgressEvent(percent=100,
+                                      process=f"Finished converting Tiff's!")
+                    )
+
+        if event_manager is not None:
+            return working_directory
+        else:
+            self.gui.csp.working_directory = working_directory
+            self.set_paths(is_supported_tif)
+            return None
 
     def convert_tiffs_to_8_bit(self, path):
         """
@@ -283,7 +335,7 @@ class DirectoryCard(ft.Card):
             self.gui.progress_ring.visible = False
             self.gui.page.update()
         else:
-            image_paths, mask_paths = load_directory(working_directory, bright_field_channel=bfc, channel_prefix=cp, mask_suffix=ms)
+            image_paths, mask_paths = load_directory(working_directory, channel_prefix=cp, mask_suffix=ms)
             if len(image_paths) == 0:
                 self.gui.ready_to_start = False
                 self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current channel prefix!"))

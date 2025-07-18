@@ -9,10 +9,21 @@ class Event(ABC):
     pass
 
 class ProgressEvent(Event):
-    def __init__(self,percent: float,name: str):
+    def __init__(self,percent: int,process: str):
         self.percent = percent
-        self.name = name
+        self.process = process
 
+    def __str__(self):
+        return f"ProgressEvent: {self.percent}% - {self.process}"
+
+class ModuleEvent(Event):
+    def __init__(self,module_name: str):
+        self.module_name = module_name
+
+class ErrorEvent(Event):
+    def __init__(self,error_name: str, error_msg: str):
+        self.error_name = error_name
+        self.error_msg = error_msg
 
 class EventListener(ABC):
     """

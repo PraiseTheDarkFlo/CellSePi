@@ -3,6 +3,7 @@ from collections import deque
 from itertools import chain
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
+from cellsepi.backend.main_window.expert_mode.listener import ErrorEvent
 from cellsepi.backend.main_window.expert_mode.module import Module,Port
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict, Type
@@ -20,7 +21,7 @@ class Pipeline:
         """
         Creates a module of the given class and adds it to the pipeline.
         """
-        module = module_class(module_id= module_class.get_gui_config().name + str(module_class.get_id()))
+        module = module_class(module_id=module_class.gui_config().name + str(module_class.get_id()))
         print(f"Adding module {module.module_id}")
         self.modules.append(module)
         self.module_map[module.module_id] = module
@@ -151,6 +152,16 @@ class Pipeline:
             for pipe in module_pipes:
                 pipe.run()
             if self.check_module_runnable(module_name):
-                module.run()
+                try:
+                    module.run()
+                except PipelineRunningException as e:
+                    module.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    return
             else:
                 continue
+
+class PipelineRunningException(Exception):
+    def __init__(self, error_type: str, description: str):
+        self.error_type = error_type
+        self.description = description
+        super().__init__(f"{error_type}: {description}")

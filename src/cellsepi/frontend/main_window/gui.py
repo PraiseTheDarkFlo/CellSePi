@@ -5,6 +5,7 @@ import threading
 import flet as ft
 
 from cellsepi.backend.main_window.avg_diameter import AverageDiameter
+from cellsepi.frontend.main_window.expert_mode.gui_expert_mode import ExpertMode
 from cellsepi.frontend.main_window.gui_segmentation import GUISegmentation
 from cellsepi.frontend.main_window.gui_options import Options
 from cellsepi.frontend.drawing_window.gui_drawing import open_qt_window
@@ -51,6 +52,7 @@ class GUI:
         self.page.title = "CellSePi"
         self.canvas = Canvas()
         self.op = Options(self)
+        self.ex_mode = ExpertMode(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -145,7 +147,7 @@ class GUI:
                                 ],
                                 expand=True,
                             ),
-                            ft.Column([self.op, self.training_environment]),
+                            ft.Column([self.op, self.training_environment,self.ex_mode]),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         expand=True,

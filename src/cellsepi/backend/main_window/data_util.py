@@ -5,12 +5,15 @@ import platform
 import shutil
 import stat
 from concurrent.futures import ThreadPoolExecutor
+from enum import Enum, auto
 from io import BytesIO
 
 import numpy as np
 from PIL import Image
 from bioio import BioImage
 import bioio_lif
+
+from cellsepi.backend.main_window.expert_mode.event_manager import *
 
 
 def listdir(directory):
@@ -42,12 +45,26 @@ def organize_files(files, channel_prefix, mask_suffix=""):
     id_to_file = dict(sorted(id_to_file.items()))
     return id_to_file
 
+class ReturnTypePath(Enum):
+    IMAGE_PATHS = auto()
+    MASK_PATHS = auto()
+    BOTH_PATHS = auto()
 
-def load_directory(directory, bright_field_channel=None, channel_prefix=None, mask_suffix=None):
+def load_directory(directory, channel_prefix=None, mask_suffix=None,return_type: ReturnTypePath=ReturnTypePath.BOTH_PATHS,event_manager: EventManager=None):
     assert directory is not None
 
-    if bright_field_channel is None:
-        bright_field_channel = 1
+    total_steps = 4 if return_type == ReturnTypePath.BOTH_PATHS else 3
+    step = 0
+
+    def notifier(process:str,start= False):
+        nonlocal step
+        if start:
+            if event_manager is not None:
+                event_manager.notify(event=ProgressEvent(0, process=process))
+        else:
+            step += 1
+            if event_manager is not None:
+                event_manager.notify(event=ProgressEvent(int(step/total_steps*100), process=process))
 
     if channel_prefix is None:
         channel_prefix = "c"
@@ -55,34 +72,49 @@ def load_directory(directory, bright_field_channel=None, channel_prefix=None, ma
     if mask_suffix is None:
         mask_suffix = "_seg"
 
-
+    notifier("Organizing: Listing Directory",True)
     names = os.listdir(directory)
     paths = [directory / name for name in names]
-
     file_paths = [path for path in paths if path.is_file()]
 
+
+    notifier("Organizing: Filtering Directory for Images")
     tiff_files = [path for path in file_paths if path.suffix == ".tif" or path.suffix == ".tiff"]
-    # lif_files = [path for path in file_paths if path.suffix == ".lif"]
-    mask_files = [path for path in file_paths if path.suffix == ".npy" and path.stem.endswith(mask_suffix)]
 
-    #    if len(lif_files) > 0:
-    #        raise Exception("Lif Files are currently not supported.")
+    match return_type:
+            case ReturnTypePath.IMAGE_PATHS:
+                notifier( "Organizing: Image Files")
+                id_to_image = organize_files(tiff_files, channel_prefix=channel_prefix)
+                notifier( "Finished Organizing Files")
+                return id_to_image
+            case ReturnTypePath.MASK_PATHS:
+                notifier( "Organizing: Mask Files")
+                mask_files = [path for path in file_paths if path.suffix == ".npy" and path.stem.endswith(mask_suffix)]
+                id_to_mask = organize_files(mask_files, channel_prefix=channel_prefix, mask_suffix=mask_suffix)
+                notifier( "Finished Organizing Files")
+                return id_to_mask
+            case ReturnTypePath.BOTH_PATHS:
+                notifier( "Organizing: Image Files")
+                id_to_image = organize_files(tiff_files, channel_prefix=channel_prefix)
+                notifier( "Organizing: Mask Files")
+                mask_files = [path for path in file_paths if path.suffix == ".npy" and path.stem.endswith(mask_suffix)]
+                id_to_mask = organize_files(mask_files, channel_prefix=channel_prefix, mask_suffix=mask_suffix)
+                notifier( "Finished Organizing Files!")
+                return id_to_image, id_to_mask
 
-    # image_ids = [(file.stem.split(channel_prefix)[0], file) for file in tiff_files]
-
-    id_to_image = organize_files(tiff_files, channel_prefix=channel_prefix)
-    id_to_mask = organize_files(mask_files, channel_prefix=channel_prefix, mask_suffix=mask_suffix)
-
-    return id_to_image, id_to_mask
-    # raise Exception("Not Implemented Yet")
-
-def copy_files_between_directories(source_dir, target_dir, file_types = None):
+def copy_files_between_directories(source_dir, target_dir, file_types = None, event_manager: EventManager=None):
     file_filter = lambda file_path: file_path.is_file() and (True if file_types is None else file_path.suffix in file_types)
 
 
     files = listdir(source_dir)
     files_to_copy = [file for file in files if file_filter(file)]
 
+    total_files = len(files_to_copy)
+    copied_files = 0
+
+    if event_manager is not None:
+        event_manager.notify(
+            event=ProgressEvent(0, process=f"Copy Files: {copied_files}/{total_files}"))
     for src_path in files_to_copy:
         target_path = target_dir / src_path.name
 
@@ -98,9 +130,16 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None):
 
         except Exception as e:
             print(f"Something went wrong while processing {src_path.name}: {str(e)}")
-            continue
+        finally:
+            copied_files+=1
+            if event_manager is not None:
+                event_manager.notify(event=ProgressEvent(int(copied_files/total_files*100), process=f"Copy Files: {copied_files}/{total_files}"))
 
-def extract_from_lif_file(lif_path, target_dir,channel_prefix):
+    if event_manager is not None:
+        event_manager.notify(
+            event=ProgressEvent(100, process="Finished copy Files!"))
+
+def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: EventManager=None):
     """
     Extracts all series from the lif file using the bioio-lif library and
     copies the images to the target directory.
@@ -119,6 +158,10 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix):
 
         # get all series in the lif file
         scenes= bio_image.scenes
+        total_scenes = len(scenes)
+        if event_manager is not None:
+            event_manager.notify(
+                event=ProgressEvent(0, process=f"Extracting Scenes: {0}/{total_scenes}"))
 
         for index,scene_id in enumerate(scenes):
             scene= scene_id
@@ -156,7 +199,12 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix):
                 except Exception as e:
                     print(f"Error processing {file_name}: {e}")
                     continue
-
+            if event_manager is not None:
+                event_manager.notify(event=ProgressEvent(int((index+1) / total_scenes * 100),
+                                                         process=f"Extracted Files: {index+1}/{total_scenes}"))
+        if event_manager is not None:
+            event_manager.notify(
+                event=ProgressEvent(100, process=f"Finished extracting Scenes!"))
 
 
 def load_image_to_numpy(path):
