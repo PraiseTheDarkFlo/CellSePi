@@ -5,7 +5,7 @@ from itertools import chain
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from cellsepi.backend.main_window.expert_mode.module import Module,Port
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
-from typing import List, Dict
+from typing import List, Dict, Type
 
 
 class Pipeline:
@@ -16,19 +16,17 @@ class Pipeline:
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
         self.event_manager: EventManager = EventManager()
 
-    def add_module(self, module: Module) -> None:
+    def add_module(self, module_class: Type[Module]) -> Module:
         """
-        Adds a module to the pipeline.
-
-        Raises:
-            ValueError: If a module with the same name already exists in the pipeline or the module itself is already added.
+        Creates a module of the given class and adds it to the pipeline.
         """
-        if any(mod.name == module.name for mod in self.modules):
-            raise ValueError(f"Module name '{module.name}' already exists in the pipeline.")
+        module = module_class(module_id= module_class.get_gui_config().name + str(module_class.get_id()))
+        print(f"Adding module {module.module_id}")
         self.modules.append(module)
-        self.module_map[module.name] = module
-        self.pipes_in[module.name] = []
-        self.pipes_out[module.name] = []
+        self.module_map[module.module_id] = module
+        self.pipes_in[module.module_id] = []
+        self.pipes_out[module.module_id] = []
+        return module
 
     def remove_module(self, module: Module) -> None:
         """
@@ -36,14 +34,14 @@ class Pipeline:
         Raises:
             RuntimeError: If the module is still connected to other modules.
         """
-        if not self.is_disconnected(module.name):
-            raise RuntimeError(f"Cannot remove module '{module.name}' from pipeline while connections to other modules still exists.")
+        if not self.is_disconnected(module.module_id):
+            raise RuntimeError(f"Cannot remove module '{module.module_id}' from pipeline while connections to other modules still exists.")
         if module in self.modules:
             self.modules.remove(module)
-            del self.module_map[module.name]
-            del self.pipes_in[module.name]
-            del self.pipes_out[module.name]
-
+            del self.module_map[module.module_id]
+            del self.pipes_in[module.module_id]
+            del self.pipes_out[module.module_id]
+            module.destroy()
 
     def is_disconnected(self, module_name: str) -> bool:
         """
@@ -51,25 +49,25 @@ class Pipeline:
         """
         return len(self.pipes_in[module_name]) == 0 and len(self.pipes_out[module_name]) == 0
 
-    def remove_connection(self,source_name: str, target_name: str) -> None:
+    def remove_connection(self,source_id: str, target_id: str) -> None:
         """
         Removes a pipe between the source and target modules.
         Raises:
             ValueError: If a pipe between the source and target modules does not exist.
         """
-        pipe = self.get_pipe(source_name, target_name)
+        pipe = self.get_pipe(source_id, target_id)
         if pipe is None:
-            raise ValueError(f"Pipe between source module '{source_name}' and target module '{target_name}' does not exist.")
+            raise ValueError(f"Pipe between source module '{source_id}' and target module '{target_id}' does not exist.")
 
-        self.pipes_in[target_name].remove(pipe)
-        self.pipes_out[source_name].remove(pipe)
+        self.pipes_in[target_id].remove(pipe)
+        self.pipes_out[source_id].remove(pipe)
 
     def get_pipe(self, source_name: str, target_name: str) -> Pipe | None:
         """
         Returns the pipe between source module and target module or if it does not exist it returns None.
         """
         for pipe in self.pipes_in.get(target_name, []):
-            if pipe.source_module.name == source_name:
+            if pipe.source_module.module_id == source_name:
                 return pipe
         return None
 
@@ -81,26 +79,27 @@ class Pipeline:
             ValueError: If a pipe between the target and source module exists already in the pipeline.
         """
         if pipe.source_module not in self.modules:
-            raise ModuleNotFoundError(f"Source module '{pipe.source_module.name}' not found in the pipeline.")
+            raise ModuleNotFoundError(f"Source module '{pipe.source_module.module_id}' not found in the pipeline.")
         if pipe.target_module not in self.modules:
-            raise ModuleNotFoundError(f"Target module '{pipe.target_module.name}' not found in the pipeline.")
+            raise ModuleNotFoundError(f"Target module '{pipe.target_module.module_id}' not found in the pipeline.")
 
-        for existing_pipe in self.pipes_in[pipe.target_module.name]:
-            if existing_pipe.source_module.name == pipe.source_module.name:
-                raise ValueError(f"Pipe between source module '{pipe.source_module.name}' and target module '{pipe.target_module.name}' already exists.")
+        for existing_pipe in self.pipes_in[pipe.target_module.module_id]:
+            if existing_pipe.source_module.module_id == pipe.source_module.module_id:
+                raise ValueError(f"Pipe between source module '{pipe.source_module.module_id}' and target module '{pipe.target_module.module_id}' already exists.")
 
-        self.pipes_in[pipe.target_module.name].append(pipe)
-        self.pipes_out[pipe.source_module.name].append(pipe)
+        self.pipes_in[pipe.target_module.module_id].append(pipe)
+        self.pipes_out[pipe.source_module.module_id].append(pipe)
 
     def setup_incoming_degree(self) -> Dict[str, int]:
         """
         Returns a dictionary mapping module names to incoming degree (incoming degree is how many pipes are going into a module).
         """
-        return {module.name: len(self.pipes_in[module.name]) for module in self.modules}
+        return {module.module_id: len(self.pipes_in[module.module_id]) for module in self.modules}
 
     def get_run_order(self) -> List[str]:
         """
-        Topologic orders with Kahn's algorithm the graph given by the pipes, to obtain an execution order.
+        Get the topologic orders with Kahn's algorithm.
+        For this the algorithm uses the graph given by the pipes of the pipeline.
         """
         topological_order: List[str] = []
         in_degree = self.setup_incoming_degree()
@@ -113,9 +112,9 @@ class Pipeline:
             topological_order.append(module_name)
             del in_degree[module_name]
             for pipe in self.pipes_out[module_name]:
-                in_degree[pipe.target_module.name] -= 1
-                if in_degree[pipe.target_module.name] == 0:
-                    queue.append(pipe.target_module.name)
+                in_degree[pipe.target_module.module_id] -= 1
+                if in_degree[pipe.target_module.module_id] == 0:
+                    queue.append(pipe.target_module.module_id)
         if len(topological_order) != len(self.modules):
             raise RuntimeError(f"The pipeline contains a cycle, only acyclic graphs are supported.")
         return topological_order
@@ -125,7 +124,7 @@ class Pipeline:
         Checks if every modules inputs is satisfied.
         """
         for module in self.modules:
-            module_pipes = self.pipes_in[module.name]
+            module_pipes = self.pipes_in[module.module_id]
             delivered_ports = set(chain.from_iterable(pipe.ports for pipe in module_pipes))
             if not all(port_name in delivered_ports for port_name in module.get_mandatory_inputs()):
                 return False
@@ -148,7 +147,7 @@ class Pipeline:
         for module_name in self.get_run_order():
             module = self.module_map[module_name]
             module.event_manager = self.event_manager
-            module_pipes = self.pipes_in[module.name]
+            module_pipes = self.pipes_in[module.module_id]
             for pipe in module_pipes:
                 pipe.run()
             if self.check_module_runnable(module_name):

@@ -10,7 +10,7 @@ class Pipe:
         Raises:
             ValueError: If the source and target modules do not different.
         """
-        if source_module.name == target_module.name:
+        if source_module.module_id == target_module.module_id:
             raise ValueError(f"Source and target modules must be different!")
         if ports is None or len(ports) == 0:
             raise ValueError(f"Ports must be non empty!")
@@ -27,9 +27,9 @@ class Pipe:
         """
         for port in self.ports:
             if port not in self.source_module.outputs:
-                raise KeyError(f"'{port}' is not in the outputs of Module '{self.source_module.name}'")
+                raise KeyError(f"'{port}' is not in the outputs of Module '{self.source_module.module_id}'")
             if port not in self.target_module.inputs:
-                raise KeyError(f"'{port}' is not in the inputs of Module '{self.target_module.name}'")
+                raise KeyError(f"'{port}' is not in the inputs of Module '{self.target_module.module_id}'")
             out_port = self.source_module.outputs[port]
             in_port = self.target_module.inputs[port]
 

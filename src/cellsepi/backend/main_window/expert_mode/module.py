@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from collections import deque
+from enum import Enum
+
 import flet as ft
 from typing import List
 
@@ -32,16 +35,80 @@ class Port:
         else:
             raise TypeError(f"Expected data of type {self.data_type}, got {type(value)}!")
 
+class Categories(Enum):
+    INPUTS = ft.Colors.ORANGE
+    OUTPUTS = ft.Colors.LIGHT_BLUE
+    FILTERS = ft.Colors.PURPLE
+    SEGMENTATION = ft.Colors.YELLOW
+
+class GuiConfig:
+    def __init__(self, name: str, category: Categories, description:str = None):
+        self.name = name
+        self.category = category
+        self.description = description
+
+class IdManager:
+    """
+    Manages the module ID's so every module
+    """
+    def __init__(self):
+        self._free_ids_queue = deque()
+        self.current_id = 0
+
+    def get_id(self) -> int:
+        if len(self._free_ids_queue) > 0:
+            return self._free_ids_queue.popleft()
+        else:
+            id_number = self.current_id
+            self.current_id += 1
+            return id_number
+
+    def free_id(self, id_number: int) -> None:
+        self._free_ids_queue.append(id_number)
+
+
 class Module(ABC):
     """
     Modules are independent processes within the pipeline that perform a specific task.
     The modules should be designed to function independently of other modules,
     as long as the correct inputs are provided.
     """
-    #name for the gui
+
+    @classmethod
+    def get_id(cls) -> int:
+        if not hasattr(cls, "_id_manager"):
+            cls._id_manager = IdManager()
+        return cls._id_manager.get_id()
+
+    @classmethod
+    def free_id(cls, id_number: int):
+        if hasattr(cls, "_id_manager"):
+            cls._id_manager.free_id(id_number)
+
+    @classmethod
+    def destroy_id_manager(cls):
+        if hasattr(cls, "_id_manager"):
+            del cls._id_manager
+
+    @classmethod
+    @abstractmethod
+    def get_gui_config(cls) -> GuiConfig:
+       pass
+
+    @abstractmethod
+    def __init__(self,module_id: str):
+        pass
+
+    def destroy(self):
+        id_number = self.module_id.removeprefix(self.get_gui_config().name)
+        if id_number != "":
+            number = int(id_number)
+            self.free_id(number)
+
+    #module_id for the gui
     @property
     @abstractmethod
-    def name(self) -> str:
+    def module_id(self) -> str:
         pass
 
     #the needed inputs of the module
