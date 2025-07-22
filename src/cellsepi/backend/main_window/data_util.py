@@ -56,15 +56,11 @@ def load_directory(directory, channel_prefix=None, mask_suffix=None,return_type:
     total_steps = 4 if return_type == ReturnTypePath.BOTH_PATHS else 3
     step = 0
 
-    def notifier(process:str,start= False):
+    def notifier(process:str):
         nonlocal step
-        if start:
-            if event_manager is not None:
-                event_manager.notify(event=ProgressEvent(0, process=process))
-        else:
-            step += 1
-            if event_manager is not None:
-                event_manager.notify(event=ProgressEvent(int(step/total_steps*100), process=process))
+        step += 1
+        if event_manager is not None:
+            event_manager.notify(event=ProgressEvent(int(step/total_steps*100), process=process))
 
     if channel_prefix is None:
         channel_prefix = "c"
@@ -72,7 +68,9 @@ def load_directory(directory, channel_prefix=None, mask_suffix=None,return_type:
     if mask_suffix is None:
         mask_suffix = "_seg"
 
-    notifier("Organizing: Listing Directory",True)
+    if event_manager is not None:
+        event_manager.notify(event=ProgressEvent(0, process="Organizing: Listing Directory"))
+
     names = os.listdir(directory)
     paths = [directory / name for name in names]
     file_paths = [path for path in paths if path.is_file()]
@@ -101,6 +99,7 @@ def load_directory(directory, channel_prefix=None, mask_suffix=None,return_type:
                 id_to_mask = organize_files(mask_files, channel_prefix=channel_prefix, mask_suffix=mask_suffix)
                 notifier( "Finished Organizing Files!")
                 return id_to_image, id_to_mask
+    return None
 
 def copy_files_between_directories(source_dir, target_dir, file_types = None, event_manager: EventManager=None):
     file_filter = lambda file_path: file_path.is_file() and (True if file_types is None else file_path.suffix in file_types)

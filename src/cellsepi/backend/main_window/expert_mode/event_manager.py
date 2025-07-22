@@ -25,10 +25,7 @@ class EventManager:
 
     def notify(self,event: Event):
         event_type = type(event)
-        print(event_type)
         if event_type not in self._listeners:
-            print("Listener is not subscribed")
             return
         for listener in self._listeners.get(event_type, []):
-            print("Notifying listener", listener)
             listener.update(event)

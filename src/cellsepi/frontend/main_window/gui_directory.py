@@ -266,15 +266,9 @@ class DirectoryCard(ft.Card):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = {executor.submit(self.convert_tiffs_to_8_bit, path): path for path in tiff_paths}
                 for future in concurrent.futures.as_completed(futures):
-                    path = futures[future]
-                    try:
-                        result = future.result()
-                        if not result:
-                            failed = True
-                    except Exception as e:
-                        print(f"Error converting {path.name}: {e}")
+                    result = future.result()
+                    if not result:
                         failed = True
-
                     converted_count += 1
                     if event_manager is not None:
                         event_manager.notify(

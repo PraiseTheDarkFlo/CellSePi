@@ -15,6 +15,7 @@ class Pipeline:
         self.module_map: Dict[str, Module] = {} #mapping for fast access to the modules
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
+        self.run_order: deque[str] = deque()
         self.event_manager: EventManager = EventManager()
 
     def add_module(self, module_class: Type[Module]) -> Module:
@@ -97,12 +98,12 @@ class Pipeline:
         """
         return {module.module_id: len(self.pipes_in[module.module_id]) for module in self.modules}
 
-    def get_run_order(self) -> List[str]:
+    def get_run_order(self) -> deque[str]:
         """
         Get the topologic orders with Kahn's algorithm.
-        For this the algorithm uses the graph given by the pipes of the pipeline.
+        For this, the algorithm uses the graph given by the pipes of the pipeline.
         """
-        topological_order: List[str] = []
+        topological_order: deque[str] = deque()
         in_degree = self.setup_incoming_degree()
         queue = deque()
         for module_name, degree in in_degree.items():
@@ -122,7 +123,7 @@ class Pipeline:
 
     def check_pipeline_runnable(self) -> bool:
         """
-        Checks if every modules inputs is satisfied.
+        Checks if every module input is satisfied.
         """
         for module in self.modules:
             module_pipes = self.pipes_in[module.module_id]
@@ -140,12 +141,17 @@ class Pipeline:
         else:
             return True
 
-    def run(self):
+    def run(self,resume: bool = False):
         """
         Executes the steps of the Pipeline.
         Skips steps of the Pipeline if min. one of the mandatory inputs is None.
+        Args:
+            resume (bool, optional): Whether to resume the execution of the pipeline. Defaults to False.
         """
-        for module_name in self.get_run_order():
+        if not resume:
+            self.run_order = self.get_run_order()
+        while self.run_order:
+            module_name = self.run_order.popleft()
             module = self.module_map[module_name]
             module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.module_id]
@@ -153,7 +159,9 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
-                    module.run()
+                    stop = module.run() #if the run of a module returns True the module wants to stop the pipeline.
+                    if stop:
+                        return
                 except PipelineRunningException as e:
                     module.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     return
@@ -161,6 +169,9 @@ class Pipeline:
                 continue
 
 class PipelineRunningException(Exception):
+    """
+    Exception raised if a module in the pipeline has an error and the pipeline needs to stop.
+    """
     def __init__(self, error_type: str, description: str):
         self.error_type = error_type
         self.description = description

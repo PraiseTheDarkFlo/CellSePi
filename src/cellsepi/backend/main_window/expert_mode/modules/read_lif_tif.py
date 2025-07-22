@@ -9,7 +9,6 @@ class ReadLifTif(Module,ABC):
         self._module_id = module_id
         self._event_manager: EventManager = None
         self._outputs = {
-            #TODO: check if the type is correct:
             "image_paths": Port("image_paths", dict[str,dict[str,str]]),
             "mask_paths": Port("mask_paths", dict[str,dict[str,str]])
         }
