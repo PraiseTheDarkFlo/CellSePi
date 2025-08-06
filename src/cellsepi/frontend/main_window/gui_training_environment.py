@@ -189,25 +189,25 @@ class Training(ft.Container):
             self.model = updated_value
             self.field_custom_model.value = updated_value
         elif field == "batch_size":
-            self.batch_size = updated_value
+            self.batch_size = int(updated_value)
             self.field_batch.value = updated_value
         elif field == "epochs":
-            self.epochs = updated_value
+            self.epochs = int(updated_value)
             self.field_epoch.value = updated_value
         elif field == "learning_rate":
-            self.learning_rate = updated_value
+            self.learning_rate = float(updated_value)
             self.field_lr.value = updated_value
         elif field == "pre_trained":
             self.pre_trained = updated_value
             self.field_trained.value = updated_value
         elif field == "weight":
-            self.weight = updated_value
+            self.weight = float(updated_value)
             self.field_weights.value = updated_value
         elif field == "model_name":
             self.model_name = updated_value
         else:
             self.diameter_default = False
-            self.diameter = updated_value
+            self.diameter = float(updated_value)
             self.field_diameter.value = updated_value
 
         self.gui.page.update()
