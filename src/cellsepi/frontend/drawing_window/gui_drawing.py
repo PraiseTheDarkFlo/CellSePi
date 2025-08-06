@@ -8,8 +8,6 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPus
     QGraphicsView, QMainWindow, QGraphicsLineItem, QCheckBox
 import sys
 
-
-
 from cellsepi.backend.drawing_window.drawing_util import mask_shifting, bresenham_line, search_free_id, fill_polygon_from_outline, \
     find_border_pixels, trace_contour
 
