@@ -10,6 +10,8 @@ from cellpose import models, io
 from cellpose.io import imread
 
 from cellsepi.backend.main_window.data_util import load_image_to_numpy
+from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
+from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.notifier import Notifier
 from cellsepi.frontend.main_window.gui_mask import reset_mask, handle_mask_update
 
@@ -19,17 +21,23 @@ class BatchImageSegmentation(Notifier):
     This class handles the segmentation of the images.
     """
     def __init__(self,
-                 segmentation,
-                 gui,
-                 device):
-        super().__init__()
-        self.segmentation = segmentation
-        self.gui = gui
-        self.device = device
-        self.segmentation_channel = self.gui.csp.config.get_bf_channel()
-        self.diameter = self.gui.csp.config.get_diameter()
-        self.suffix = self.gui.csp.current_mask_suffix
+                 segmentation = None,
+                 gui = None,
+                 device = "cpu",segmentation_channel:str = "", diameter:float = 125.0,suffix:str = ""):
+        if gui is not None:
+            super().__init__()
+            self.segmentation = segmentation
+            self.gui = gui
+            self.segmentation_channel = self.gui.csp.config.get_bf_channel()
+            self.diameter = self.gui.csp.config.get_diameter()
+            self.suffix = self.gui.csp.current_mask_suffix
+        else:
+            self.segmentation_channel = segmentation_channel
+            self.diameter = diameter
+            self.suffix = suffix
+
         self.masks_backup = {}
+        self.device = device
         self.prev_masks_exist = False
         self.num_seg_images = 0
         self.cancel_now = False
@@ -38,6 +46,7 @@ class BatchImageSegmentation(Notifier):
         self.executor = None
         self.progress_lock = threading.Lock()
         self.progress = 0
+
 
     def backup_masks(self):
         """
@@ -126,34 +135,43 @@ class BatchImageSegmentation(Notifier):
     def resume_action(self):
         self.resume_now = True
 
-    def run(self):
+    def run(self,event_manager: EventManager= None,image_paths = None,mask_paths = None,model_path = None):
         """
         Applies the segmentation model to every image and stores the resulting masks.
         """
-        if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
-            self.backup_masks()
-            self.segmentation_channel = self.gui.csp.config.get_bf_channel()
-            self.diameter = self.gui.csp.config.get_diameter()
-            self.suffix = self.gui.csp.current_mask_suffix
-        if self.cancel_now:
-            self.cancel_now = False
-            self.restore_backup()
-            self.num_seg_images = 0
-            return
-        elif self.pause_now:
-            self.pause_now = False
-            return
-        elif self.resume_now:
-            self.resume_now = False
-            self.segmentation.is_resuming()
+        if event_manager is None:
+            if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
+                self.backup_masks()
+                self.segmentation_channel = self.gui.csp.config.get_bf_channel()
+                self.diameter = self.gui.csp.config.get_diameter()
+                self.suffix = self.gui.csp.current_mask_suffix
+            if self.cancel_now:
+                self.cancel_now = False
+                self.restore_backup()
+                self.num_seg_images = 0
+                return
+            elif self.pause_now:
+                self.pause_now = False
+                return
+            elif self.resume_now:
+                self.resume_now = False
+                self.segmentation.is_resuming()
 
-        self._call_start_listeners()
-        image_paths = self.gui.csp.image_paths
+        if event_manager is None:
+            self._call_start_listeners()
+        if event_manager is None:
+            image_paths = self.gui.csp.image_paths
+
         segmentation_channel = self.segmentation_channel
         diameter = self.diameter
         suffix = self.suffix
 
-        segmentation_model = self.gui.csp.model_path
+        if event_manager is None:
+            segmentation_model = self.gui.csp.model_path
+            print(segmentation_model)
+        else:
+            segmentation_model = model_path
+
         device = torch.device(self.device)  # converts string to device object
 
         n_images = len(image_paths)
@@ -164,17 +182,18 @@ class BatchImageSegmentation(Notifier):
         start_index = self.num_seg_images
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
             if segmentation_channel in image_paths[image_id] and os.path.isfile(image_paths[image_id][segmentation_channel]):
-                if self.cancel_now:
-                    self.cancel_now = False
-                    self.restore_backup()
-                    self.num_seg_images = 0
-                    return
-                elif self.pause_now:
-                    self.pause_now = False
-                    return
-                elif self.resume_now:
-                    self.resume_now = False
-                    self.segmentation.is_resuming()
+                if event_manager is None:
+                    if self.cancel_now:
+                        self.cancel_now = False
+                        self.restore_backup()
+                        self.num_seg_images = 0
+                        return
+                    elif self.pause_now:
+                        self.pause_now = False
+                        return
+                    elif self.resume_now:
+                        self.resume_now = False
+                        self.segmentation.is_resuming()
 
                 image_path = image_paths[image_id][segmentation_channel]
                 image = imread(image_path)
@@ -215,32 +234,50 @@ class BatchImageSegmentation(Notifier):
                         os.rename(default_suffix_path, new_path)
                         if backup_path is not None:
                             os.rename(backup_path, default_suffix_path)
+                if event_manager is None:
+                    if image_id not in self.gui.csp.mask_paths:
+                            self.gui.csp.mask_paths[image_id] = {}
+                else:
+                    if image_id not in mask_paths:
+                        mask_paths[image_id] = {}
 
-                if image_id not in self.gui.csp.mask_paths:
-                    self.gui.csp.mask_paths[image_id] = {}
+                if event_manager is None:
+                    self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
+                else:
+                    mask_paths[image_id][segmentation_channel] = new_path
 
-                self.gui.csp.mask_paths[image_id][segmentation_channel] = new_path
-
-                progress = str(round((iN + 1) / n_images * 100)) + " %"
-                current_image = {"image_id": image_id, "path": image_path}
-                self._call_update_listeners(progress, current_image)
+                percent= round((iN + 1) / n_images * 100)
+                progress = str(percent) + " %"
+                if event_manager is None:
+                    current_image = {"image_id": image_id, "path": image_path}
+                    self._call_update_listeners(progress, current_image)
+                else:
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"{iN+1}/{n_images} segmented."))
                 self.num_seg_images = self.num_seg_images + 1
-                self.gui.directory.update_mask_check(image_id)
-                self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
+                if event_manager is None:
+                    self.gui.directory.update_mask_check(image_id)
+                    self.gui.diameter_text.value = self.gui.average_diameter.get_avg_diameter()
             else:
-                progress = str(round((iN + 1) / n_images * 100)) + " %"
-                current_image = {"image_id": image_id, "path": None}
-                self._call_update_listeners(progress, current_image)
+                percent= round((iN + 1) / n_images * 100)
+                progress = str(percent) + " %"
+                if event_manager is None:
+                    current_image = {"image_id": image_id, "path": None}
+                    self._call_update_listeners(progress, current_image)
+                else:
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"{iN+1}/{n_images} segmented."))
                 self.num_seg_images = self.num_seg_images + 1
 
-        self._call_completion_listeners()
+        if event_manager is None:
+            self._call_completion_listeners()
+        else:
+            event_manager.notify(ProgressEvent(percent=100 ,process=f"All images segmented."))
         # reset variables
         self.num_seg_images = 0
 
-    def run_parallel(self):
-        """
+    """def run_parallel(self):
+        
         Applies the segmentation model to every image in parallel and stores the resulting masks.
-        """
+        
         if self.num_seg_images == 0:  # shouldn't backup again, if it was paused and now resuming
             self.backup_masks()
             self.segmentation_channel = self.gui.csp.config.get_bf_channel()
@@ -289,9 +326,9 @@ class BatchImageSegmentation(Notifier):
         self._call_completion_listeners()
         # reset variables
         self.num_seg_images = 0
-
+    
     def image_segmentation(self,image_id, image_paths, segmentation_channel, diameter, suffix, model):
-        """
+        
         Applies the segmentation model to a single image.
 
         Attributes:
@@ -300,7 +337,7 @@ class BatchImageSegmentation(Notifier):
             segmentation_channel: bright field channel
             suffix: suffix to be applied to the mask filename
             model: cellpose model to be used
-        """
+        
         n_images = len(image_paths)
         if self.cancel_now:
             self.cancel_now = False
@@ -385,7 +422,7 @@ class BatchImageSegmentation(Notifier):
         elif self.resume_now:
             self.resume_now = False
             self.segmentation.is_resuming()
-
+    """
 
 class BatchImageReadout(Notifier):
 

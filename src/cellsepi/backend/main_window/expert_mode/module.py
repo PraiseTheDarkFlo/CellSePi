@@ -154,6 +154,9 @@ class Module(ABC):
 
 
     @abstractmethod
-    def run(self):
+    def run(self) -> bool:
+        """
+        Returns True if the pipeline should stop.
+        """
         pass
 

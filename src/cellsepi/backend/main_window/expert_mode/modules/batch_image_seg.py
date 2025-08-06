@@ -1,22 +1,29 @@
+from os import path
+
 from cellsepi.backend.main_window.data_util import load_directory, ReturnTypePath
 from cellsepi.backend.main_window.expert_mode.module import *
+from cellsepi.backend.main_window.images import BatchImageSegmentation
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
-class ReadLifTif(Module,ABC):
-    _gui_config = ModuleGuiConfig("ReadLifTif",Categories.INPUTS,"")
+class BatchImageSegModule(Module, ABC):
+    _gui_config = ModuleGuiConfig("BatchImageSegModule",Categories.SEGMENTATION,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
+        self._inputs = {
+            "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
+        }
         self._outputs = {
-            "image_paths": Port("image_paths", dict),
-            "mask_paths": Port("mask_paths", dict)
+            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
         }
         self._settings: ft.Container = None #TODO: gui setting for module
         self._directory_path: str = ""
-        self._lif: bool = False
-        self._cp: str = "c"
+        self._segmentation_channel: str = "2"
+        self._diameter: float = 125.0
         self._ms: str = "_seg"
+        self._model_path: path
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -28,7 +35,7 @@ class ReadLifTif(Module,ABC):
 
     @property
     def inputs(self) -> dict[str, Port]:
-        return {}
+        return self._inputs
 
     @property
     def outputs(self) -> dict[str, Port]:
@@ -47,5 +54,5 @@ class ReadLifTif(Module,ABC):
         self._event_manager = value
 
     def run(self):
-        working_directory = DirectoryCard().select_directory_parallel(self._directory_path,self._lif,self._cp,self.event_manager)
-        self._outputs["image_paths"].data,self._outputs["mask_paths"].data= load_directory(working_directory,self._cp,self._ms,ReturnTypePath.BOTH_PATHS,self.event_manager)
+        BatchImageSegmentation(segmentation_channel=self._segmentation_channel,diameter=self._diameter,suffix=self._ms).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data)
+        self._outputs["mask_paths"].data = self.inputs["mask_paths"].data

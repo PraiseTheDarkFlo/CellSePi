@@ -23,7 +23,6 @@ class Pipeline:
         Creates a module of the given class and adds it to the pipeline.
         """
         module = module_class(module_id=module_class.gui_config().name + str(module_class.get_id()))
-        print(f"Adding module {module.module_id}")
         self.modules.append(module)
         self.module_map[module.module_id] = module
         self.pipes_in[module.module_id] = []
@@ -159,7 +158,7 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
-                    stop = module.run() #if the run of a module returns True the module wants to stop the pipeline.
+                    stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
                     if stop:
                         return
                 except PipelineRunningException as e:

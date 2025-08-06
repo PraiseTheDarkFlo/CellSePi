@@ -1,11 +1,15 @@
+from os import path
 from typing import Type
 
 import pytest
 
 from cellsepi.backend.main_window.expert_mode import pipe
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, ProgressEvent, Event
+from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import BatchImageSegModule
 from cellsepi.backend.main_window.expert_mode.modules.read_lif_tif import ReadLifTif
+from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
+
 
 class ReadLifTifListener(EventListener):
     def __init__(self):
@@ -37,3 +41,18 @@ def test_running_module_read_tif():
     mod1 = pipeline.add_module(ReadLifTif)
     mod1._directory_path = "/home/mmdark/Downloads/data (3)/data/04072024_HEK293_CellMaskDR_01"
     pipeline.run()
+
+def test_running_module_batch_image_seg():
+    pipeline = Pipeline()
+    pipeline.event_manager.subscribe(ReadLifTifListener())
+    mod1 = pipeline.add_module(ReadLifTif)
+    mod1._directory_path = "/home/mmdark/Downloads/data (3)/data/HEK293_mTagBFP_mNeonGreen_CellMaskDR_01.lif"
+    mod1._lif = True
+    mod2 = pipeline.add_module(BatchImageSegModule)
+    mod2.model_path = "/home/mmdark/PycharmProjects/CellSePi/src/cellsepi/models/CP_20240715_171241"
+    pipe1to2 = Pipe(mod1,mod2,["image_paths","mask_paths"])
+    pipeline.add_connection(pipe1to2)
+    print(f"inputs{mod2.inputs["mask_paths"].data}")
+    print(f"outputs{mod2.outputs["mask_paths"].data}")
+    pipeline.run()
+    print(mod2.outputs["mask_paths"].data)
