@@ -1,5 +1,23 @@
+import copy
+
 from cellsepi.backend.main_window.expert_mode.module import Module
 from typing import List
+
+
+def copy_data(value):
+    """
+    To take care that no references are transferred between the modules.
+    """
+    if isinstance(value, (int, float, str, bool, type(None))):
+        return value
+
+    if hasattr(value, "copy"):
+        try:
+            return value.copy()
+        except TypeError:
+            pass
+
+    return copy.deepcopy(value)
 
 class Pipe:
     """
@@ -37,4 +55,4 @@ class Pipe:
                 raise TypeError(
                     f"Type mismatch on port '{port}', source_module provided {out_port.data_type}, output_module provided {in_port.data_type}!")
 
-            in_port.data = out_port.data
+            in_port.data = copy_data(out_port.data)

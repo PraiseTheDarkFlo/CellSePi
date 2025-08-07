@@ -23,7 +23,7 @@ class BatchImageSegmentation(Notifier):
     def __init__(self,
                  segmentation = None,
                  gui = None,
-                 device = "cpu",segmentation_channel:str = "", diameter:float = 125.0,suffix:str = ""):
+                 device = "cpu",segmentation_channel:str = "", diameter:float = 125.0,suffix:str = "_seg"):
         if gui is not None:
             super().__init__()
             self.segmentation = segmentation
@@ -157,6 +157,7 @@ class BatchImageSegmentation(Notifier):
                 self.resume_now = False
                 self.segmentation.is_resuming()
 
+
         if event_manager is None:
             self._call_start_listeners()
         if event_manager is None:
@@ -166,15 +167,15 @@ class BatchImageSegmentation(Notifier):
         diameter = self.diameter
         suffix = self.suffix
 
+        n_images = len(image_paths)
+
         if event_manager is None:
             segmentation_model = self.gui.csp.model_path
-            print(segmentation_model)
         else:
             segmentation_model = model_path
+            event_manager.notify(ProgressEvent(0, f"Segmenting Images: 0/{n_images}"))
 
         device = torch.device(self.device)  # converts string to device object
-
-        n_images = len(image_paths)
 
         io.logger_setup()  # configures logging system for Cellpose
         model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
@@ -252,7 +253,7 @@ class BatchImageSegmentation(Notifier):
                     current_image = {"image_id": image_id, "path": image_path}
                     self._call_update_listeners(progress, current_image)
                 else:
-                    event_manager.notify(ProgressEvent(percent=percent,process=f"{iN+1}/{n_images} segmented."))
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images}"))
                 self.num_seg_images = self.num_seg_images + 1
                 if event_manager is None:
                     self.gui.directory.update_mask_check(image_id)
@@ -264,7 +265,7 @@ class BatchImageSegmentation(Notifier):
                     current_image = {"image_id": image_id, "path": None}
                     self._call_update_listeners(progress, current_image)
                 else:
-                    event_manager.notify(ProgressEvent(percent=percent,process=f"{iN+1}/{n_images} segmented."))
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images}"))
                 self.num_seg_images = self.num_seg_images + 1
 
         if event_manager is None:
@@ -430,8 +431,9 @@ class BatchImageReadout(Notifier):
                  mask_paths,
                  segmentation_channel,
                  channel_prefix="c",
-                 directory=None):
-        super().__init__()
+                 directory=None,module:bool = False):
+        if not module:
+            super().__init__()
 
         if directory is None:
             directory = ""
@@ -445,14 +447,18 @@ class BatchImageReadout(Notifier):
     def _channel_name(self, channel_id):
         return self.channel_prefix + str(channel_id)
 
-    def run(self):
-        self._call_start_listeners()
-
+    def run(self,event_manager: EventManager = None):
         image_paths = self.image_paths
+        n_images = len(image_paths)
+
+        if event_manager is None:
+            self._call_start_listeners()
+        else:
+            event_manager.notify(ProgressEvent(0,f"Readout Images: 0/{n_images}"))
+
         mask_paths = self.mask_paths
         segmentation_channel = self.segmentation_channel
 
-        n_images = len(image_paths)
 
         row_entries = []
 
@@ -508,10 +514,16 @@ class BatchImageReadout(Notifier):
 
             kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",
                       "current_image": {"image_id": image_id}}
-            self._call_update_listeners(**kwargs)
+            if event_manager is None:
+                self._call_update_listeners(**kwargs)
+            else:
+                event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),process=f"Readout Images: {iN+1}/{n_images} (Current Image: {image_id})"))
 
         readout_path = os.path.join(self.directory, "readout.xlsx")
         df = pd.DataFrame(row_entries)
         df.to_excel(readout_path, index=False)
         kwargs = {}
-        self._call_completion_listeners(readout=df, readout_path=readout_path, **kwargs)
+        if event_manager is None:
+            self._call_completion_listeners(readout=df, readout_path=readout_path, **kwargs)
+        else:
+            event_manager.notify(ProgressEvent(100,"Completed Readout"))

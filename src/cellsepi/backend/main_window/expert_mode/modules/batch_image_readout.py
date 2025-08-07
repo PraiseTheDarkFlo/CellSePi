@@ -1,13 +1,14 @@
+from os import path
 
 from cellsepi.backend.main_window.data_util import load_directory, ReturnTypePath
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.expert_mode.module import *
-from cellsepi.backend.main_window.images import BatchImageSegmentation
+from cellsepi.backend.main_window.images import BatchImageSegmentation, BatchImageReadout
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
-class BatchImageSegModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageSegModule",Categories.SEGMENTATION,"")
+class BatchImageReadoutModule(Module, ABC):
+    _gui_config = ModuleGuiConfig("BatchImageReadoutModule",Categories.OUTPUTS,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
@@ -15,14 +16,10 @@ class BatchImageSegModule(Module, ABC):
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
             "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
         }
-        self._outputs = {
-            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
-        }
         self._settings: ft.Container = None #TODO: gui setting for module
+        self._directory_path: str = ""
         self._segmentation_channel: str = "2"
-        self._diameter: float = 125.0
-        self._ms: str = "_seg"
-        self._model_path: str = ""
+        self._cp: str = "c"
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -38,7 +35,7 @@ class BatchImageSegModule(Module, ABC):
 
     @property
     def outputs(self) -> dict[str, Port]:
-        return self._outputs
+        return {}
 
     @property
     def settings(self) -> ft.Container:
@@ -53,6 +50,4 @@ class BatchImageSegModule(Module, ABC):
         self._event_manager = value
 
     def run(self):
-        BatchImageSegmentation(segmentation_channel=self._segmentation_channel,diameter=self._diameter,suffix=self._ms).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self._model_path)
-        self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
-
+        BatchImageReadout(self.inputs["image_paths"].data, self.inputs["mask_paths"].data,self._segmentation_channel,self._cp,self._directory_path,True).run(self.event_manager)
