@@ -2,13 +2,22 @@ import multiprocessing
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
+
+import cv2
 import pandas as pd
 
 import torch
+import torchvision.transforms as T
 import numpy as np
+from PIL import Image
 from cellpose import models, io
 from cellpose.io import imread
+from scipy.ndimage import binary_erosion
+from torchvision.models.detection import maskrcnn_resnet50_fpn
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
+from cellsepi.backend.drawing_window.drawing_util import trace_contour
 from cellsepi.backend.main_window.data_util import load_image_to_numpy
 from cellsepi.backend.main_window.notifier import Notifier
 from cellsepi.frontend.main_window.gui_mask import reset_mask, handle_mask_update
@@ -38,6 +47,37 @@ class BatchImageSegmentation(Notifier):
         self.executor = None
         self.progress_lock = threading.Lock()
         self.progress = 0
+
+    def _is_cellpose_model(self, model_path):
+        try:
+            from cellpose import models
+            _ = models.CellposeModel(pretrained_model=model_path, device=torch.device(self.device))
+            return True
+        except Exception:
+            return False
+
+    def get_contour_from_labeled_mask(label_mask):
+        outlines = np.zeros_like(label_mask, dtype=np.uint8)
+        obj_ids = np.unique(label_mask)
+        obj_ids = obj_ids[obj_ids != 0]  # exclude background
+
+        for obj_id in obj_ids:
+            mask = label_mask == obj_id
+            eroded = binary_erosion(mask)
+            outline = mask & (~eroded)
+            outlines[outline] = 255  # or 1 if you want binary outlines
+
+        return outlines
+
+    def masks_to_label_mask(self, masks):
+        N, H, W = masks.shape
+        label_mask = np.zeros((H, W), dtype=np.int32)
+
+        for i in range(N):
+            mask = masks[i].astype(bool)
+            label_mask[mask] = i + 1
+
+        return label_mask
 
     def backup_masks(self):
         """
@@ -159,7 +199,21 @@ class BatchImageSegmentation(Notifier):
         n_images = len(image_paths)
 
         io.logger_setup()  # configures logging system for Cellpose
-        model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
+
+        if self._is_cellpose_model(segmentation_model):
+            model_type = 'cellpose'
+            model = models.CellposeModel(device=device, pretrained_model=segmentation_model)
+        else:
+            model_type = 'pytorch'
+            model = maskrcnn_resnet50_fpn(weights="DEFAULT")
+            in_features = model.roi_heads.box_predictor.cls_score.in_features
+            model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes=2)
+            in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
+            model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask, 256,num_classes=2)
+
+            model.load_state_dict(torch.load(segmentation_model, map_location=self.device))
+            model.to(self.device)
+            model.eval()
 
         start_index = self.num_seg_images
         for iN, image_id in enumerate(list(image_paths)[start_index:], start=start_index):
@@ -188,8 +242,36 @@ class BatchImageSegmentation(Notifier):
                 else:
                     image = np.zeros_like(image)
 
-                res = model.eval(image, diameter=diameter, channels=[0, 0])
-                mask, flow, style = res[:3]
+                # model evaluates image
+                if model_type == 'cellpose':
+                    res = model.eval(image, diameter=diameter, channels=[0, 0])
+                    mask, flow, style = res[:3]
+
+                elif model_type == 'pytorch':
+                    # PyTorch models expect tensor with shape [C, H, W], normalized
+                    if image.ndim == 2:  # grayscale
+                        image = np.stack([image] * 3, axis=-1)
+                    elif image.shape[2] == 1:
+                        image = np.concatenate([image] * 3, axis=-1)
+
+                    pil_img = Image.fromarray((image * 255).astype(np.uint8))
+                    transform = T.ToTensor()
+                    img_tensor = transform(pil_img).to(device)
+
+                    with torch.no_grad():
+                        prediction = model([img_tensor])[0]
+
+                    if 'masks' not in prediction or len(prediction['masks']) == 0:
+                        print('No masks found')
+                        mask = np.zeros_like(image[..., 0], dtype=np.uint16)
+                    else:
+                        print('Found masks')
+                        masks = prediction['masks'] > 0.5
+                        mask = masks.squeeze(1).cpu().numpy()
+
+                        mask = self.masks_to_label_mask(mask)
+
+                    flow, style = None, None
 
                 # Generate the output filename directly using the suffix attribute
                 directory, filename = os.path.split(image_path)
@@ -207,7 +289,16 @@ class BatchImageSegmentation(Notifier):
                             os.remove(backup_path)
                         os.rename(default_suffix_path, backup_path)
                 # Save the segmentation results directly with the default name first
-                io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+                if model_type == 'cellpose':
+                    io.masks_flows_to_seg([image], [mask], [flow], [image_path])
+                else:
+                    H, W = image.shape[:2]
+                    flow0 = np.zeros((H, W, 3), dtype=np.uint8)
+                    flow1 = np.zeros((2, H, W), dtype=np.float32)
+                    flow2 = np.zeros((H, W), dtype=np.float32)
+                    dummy_flow = [flow0, flow1, flow2]
+                    io.masks_flows_to_seg([image], [mask], [dummy_flow], [image_path])
+
                 if default_suffix_path != new_path:
                     if os.path.exists(default_suffix_path):
                         if os.path.exists(new_path):
