@@ -281,10 +281,8 @@ class BatchImageSegmentation(Notifier):
                         prediction = model([img_tensor])[0]
 
                     if 'masks' not in prediction or len(prediction['masks']) == 0:
-                        print('No masks found')
                         mask = np.zeros_like(image[..., 0], dtype=np.uint16)
                     else:
-                        print('Found masks')
                         masks = prediction['masks'] > 0.5
                         mask = masks.squeeze(1).cpu().numpy()
 

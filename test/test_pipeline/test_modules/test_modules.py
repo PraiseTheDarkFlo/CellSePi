@@ -63,7 +63,7 @@ def test_running_module_batch_image_readout():
     mod1._directory_path = "/home/mmdark/Downloads/data (3)/data/HEK293_mTagBFP_mNeonGreen_CellMaskDR_01.lif"
     mod1._lif = True
     mod2 = pipeline.add_module(BatchImageSegModule)
-    mod2._model_path = "/home/mmdark/PycharmProjects/CellSePi/src/cellsepi/models/CP_20240715_171241"
+    mod2._model_path = "/home/mmdark/PycharmProjects/CellSePi/src/cellsepi/models/maskrcnn_cellpose_optuna_1.pth"
     pipe1to2 = Pipe(mod1,mod2,["image_paths","mask_paths"])
     pipeline.add_connection(pipe1to2)
     mod3 = pipeline.add_module(BatchImageReadoutModule)
