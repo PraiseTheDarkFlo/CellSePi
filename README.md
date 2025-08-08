@@ -154,6 +154,7 @@ This command automatically installs all required dependencies as specified in th
 - `bioio==1.2.0`
 - `bioio-lif==1.0.0`
 - `bioio-base==1.0.4`
+- `torchvision==0.23.0`
 
 ## 📚 Citations
 
