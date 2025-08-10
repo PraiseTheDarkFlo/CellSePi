@@ -10,7 +10,7 @@ class ReadLifTif(Module,ABC):
         self._event_manager: EventManager = None
         self._outputs = {
             "image_paths": Port("image_paths", dict),
-            "mask_paths": Port("mask_paths", dict)
+            "mask_paths": Port("mask_paths", dict),
         }
         self._settings: ft.Container = None #TODO: gui setting for module
         self._directory_path: str = ""

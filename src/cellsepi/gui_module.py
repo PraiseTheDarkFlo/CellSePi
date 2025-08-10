@@ -20,18 +20,20 @@ class ModuleGUI(ft.GestureDetector):
         self.top = BUILDER_HEIGHT/2
         self.old_left = None
         self.old_top = None
+        self.port_selection = False
         self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
         self.pipeline_gui.modules[self.module.module_id] = self
         self.color = self.module.gui_config().category.value
+        self.valid = False
         self.click_container = ft.Container(on_click=lambda e: self.add_connection(), height=MODULE_HEIGHT, width=MODULE_WIDTH,
-                                            visible=False,bgcolor=None,disabled=True)
+                                            visible=False,bgcolor=ft.Colors.BLACK12,disabled=True)
         self.on_enter = lambda e: self.on_enter_module()
         self.on_exit = lambda e: self.on_leave_module()
         self.connect = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
                                                       style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
-                                                      ), on_click=lambda e: self.pipeline_gui.connect(self.name),
-                                                      tooltip="Add connection",hover_color=ft.Colors.WHITE12)
+                                                      ), on_click=lambda e: self.connect_clicked(),
+                                                      tooltip="Add connection",hover_color=ft.Colors.WHITE12,visible=self.module.outputs!={})
         self.options = ft.IconButton(icon=ft.Icons.TUNE, icon_color=ft.Colors.WHITE54,
                                                       style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
@@ -43,6 +45,12 @@ class ModuleGUI(ft.GestureDetector):
                                             ],tight=True
                                         ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH,
                                         )
+
+        self.delete_button = ft.IconButton(ft.icons.CLOSE,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
+        self.port_chips = self.get_ports_row()
+        self.connection_ports = ft.Container(
+            self.port_chips,visible=False
+        )
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -62,13 +70,71 @@ class ModuleGUI(ft.GestureDetector):
                     border=ft.border.all(2, ft.Colors.BLACK12),
                     border_radius=ft.border_radius.all(10)
                 )
-        self.content = ft.Stack([
+        self.content = ft.Column([ft.Stack([
                 self.module_container,
-                ft.Container(content=ft.IconButton(ft.icons.CLOSE,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module()),margin=ft.margin.only(top=-7, left=7),alignment=ft.alignment.top_right,width=MODULE_WIDTH,
+                ft.Container(content=self.delete_button,margin=ft.margin.only(top=-7, left=7),alignment=ft.alignment.top_right,width=MODULE_WIDTH,
                              ),
                 self.click_container
         ]
         )
+            ,self.connection_ports
+        ],tight=True
+        )
+
+    def connect_clicked(self):
+        self.pipeline_gui.toggle_all_module_detection(self.name)
+        if not self.port_selection:
+            self.connection_ports.visible = True
+            self.connection_ports.update()
+            self.connect.icon_color = ft.Colors.BLACK38
+            self.connect.update()
+            self.delete_button.visible = False
+            self.delete_button.update()
+            self.port_selection = True
+        else:
+            self.valid = False
+            self.connection_ports.visible = False
+            self.port_chips = self.get_ports_row()
+            self.connection_ports.content = self.port_chips
+            self.connection_ports.update()
+            self.connect.icon_color = ft.Colors.WHITE60
+            self.connect.update()
+            self.delete_button.visible = True
+            self.delete_button.update()
+            self.port_selection = False
+
+
+    def set_valid(self):
+        self.valid = True
+        self.click_container.bgcolor = ft.Colors.TRANSPARENT
+        self.click_container.update()
+
+    def set_invalid(self):
+        self.valid = False
+        self.click_container.bgcolor = ft.Colors.BLACK12
+        self.click_container.update()
+
+    def get_ports_row(self):
+        ports_chips = ft.Row()
+
+        for port_name in self.module.outputs.keys():
+            ports_chips.controls.append(
+                ft.Chip(
+                    label=ft.Text(port_name),
+                    on_select=lambda e: self.select_port(e,port_name),
+                )
+            )
+        return ports_chips
+
+    def select_port(self,e, port_name):
+        if e.control.selected:
+            self.pipeline_gui.transmitting_ports.append(port_name)
+            self.port_chips.update()
+        else:
+            self.pipeline_gui.transmitting_ports.remove(port_name)
+            self.port_chips.update()
+
+        self.pipeline_gui.check_for_valid()
 
     def on_enter_module(self):
         if not self.detection:
@@ -86,16 +152,28 @@ class ModuleGUI(ft.GestureDetector):
             self.mouse_cursor = ft.MouseCursor.CLICK
             self.click_container.disabled = False
             self.click_container.visible = True
+            self.click_container.update()
+            self.delete_button.visible = False
+            self.delete_button.update()
         else:
             self.detection = True
+            self.set_invalid()
             self.mouse_cursor = ft.MouseCursor.MOVE
             self.click_container.disabled = True
+            self.click_container.bg_color = ft.Colors.BLACK12
             self.click_container.visible = False
+            self.click_container.update()
+            self.delete_button.visible = True
+            self.delete_button.update()
+            self.connection_ports.visible = False
+            self.connect.update()
+
+
 
     def add_connection(self):
-        if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection:
-            self.pipeline_gui.pipeline.add_connection(self.pipeline_gui.source_module,self,self.pipeline_gui.transmitting_ports)
-
+        if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection and self.valid:
+            self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
+            self.pipeline_gui.check_for_valid()
 
     def remove_module(self):
         for pipe in list(self.pipeline_gui.pipeline.pipes_in[self.name]):

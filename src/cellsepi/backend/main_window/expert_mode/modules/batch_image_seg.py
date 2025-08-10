@@ -7,7 +7,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
 class BatchImageSegModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageSegModule",Categories.SEGMENTATION,"")
+    _gui_config = ModuleGuiConfig("BatchImageSeg",Categories.SEGMENTATION,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
@@ -16,7 +16,7 @@ class BatchImageSegModule(Module, ABC):
             "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
         }
         self._outputs = {
-            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
         self._settings: ft.Container = None #TODO: gui setting for module
         self._segmentation_channel: str = "2"

@@ -8,13 +8,13 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
 class BatchImageReadoutModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageReadoutModule",Categories.OUTPUTS,"")
+    _gui_config = ModuleGuiConfig("BatchImageReadout",Categories.OUTPUTS,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
         self._inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
-            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
         self._settings: ft.Container = None #TODO: gui setting for module
         self._directory_path: str = ""

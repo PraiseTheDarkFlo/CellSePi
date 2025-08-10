@@ -24,7 +24,7 @@ class PipelineGUI(ft.Stack):
         self.modules = {} #identiefierer is the module_id
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
-        self.source_module: ModuleGUI = None
+        self.source_module: str = ""
         self.transmitting_ports: List[str] = []
         self.controls.append(self.lines_gui)
 
@@ -47,14 +47,23 @@ class PipelineGUI(ft.Stack):
         self.controls.remove(self.modules.pop(module_id))
         self.update()
 
-    def connect(self,module_id: str):
+    def toggle_all_module_detection(self,module_id: str):
+        self.source_module = module_id
+        self.transmitting_ports = []
         for module in self.modules.values():
             if module.name != module_id:
                 module.toggle_detection()
                 self.update()
-            else:
-                pass
 
+    def check_for_valid(self):
+        for target_module_gui in self.modules.values():
+            if target_module_gui.name != self.source_module:
+                if all(k in target_module_gui.module.inputs for k in self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(self.source_module, target_module_gui.name):
+                    print("valid")
+                    print(self.source_module, target_module_gui.name)
+                    target_module_gui.set_valid()
+                else:
+                    target_module_gui.set_invalid()
 
 class LinesGUI(canvas.Canvas):
     def __init__(self, pipeline_gui: PipelineGUI):

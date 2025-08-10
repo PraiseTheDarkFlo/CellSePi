@@ -84,12 +84,23 @@ class Pipeline:
         if pipe.target_module not in self.modules:
             raise ModuleNotFoundError(f"Target module '{pipe.target_module.module_id}' not found in the pipeline.")
 
-        for existing_pipe in self.pipes_in[pipe.target_module.module_id]:
-            if existing_pipe.source_module.module_id == pipe.source_module.module_id:
+        if self.check_connections(pipe.source_module.module_id, pipe.target_module.module_id):
                 raise ValueError(f"Pipe between source module '{pipe.source_module.module_id}' and target module '{pipe.target_module.module_id}' already exists.")
 
         self.pipes_in[pipe.target_module.module_id].append(pipe)
         self.pipes_out[pipe.source_module.module_id].append(pipe)
+
+    def check_connections(self,source_module_id:str,target_module_id:str) -> bool:
+        """
+        Checks if a pipe between the source and target modules exist in the pipeline.
+        """
+        for existing_pipe in self.pipes_in[target_module_id]:
+            if existing_pipe.source_module.module_id == source_module_id:
+                return True
+        for existing_pipe in self.pipes_out[source_module_id]:
+            if existing_pipe.target_module.module_id == target_module_id:
+                return True
+        return False
 
     def setup_incoming_degree(self) -> Dict[str, int]:
         """
