@@ -59,8 +59,6 @@ class PipelineGUI(ft.Stack):
         for target_module_gui in self.modules.values():
             if target_module_gui.name != self.source_module:
                 if all(k in target_module_gui.module.inputs for k in self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(self.source_module, target_module_gui.name):
-                    print("valid")
-                    print(self.source_module, target_module_gui.name)
                     target_module_gui.set_valid()
                 else:
                     target_module_gui.set_invalid()
@@ -95,7 +93,7 @@ class LinesGUI(canvas.Canvas):
         Removes a line between two modules.
         """
         if (source_module_gui.name, target_module_gui.name) in self.edges:
-            self.shapes.remove(self.edges[(source_module_gui.name, target_module_gui.name)])
+            self.shapes.remove(self.edges.pop((source_module_gui.name, target_module_gui.name)))
             self.update()
 
     def update_lines(self,module_gui: ModuleGUI):

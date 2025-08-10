@@ -26,9 +26,8 @@ class ModuleGUI(ft.GestureDetector):
         self.color = self.module.gui_config().category.value
         self.valid = False
         self.click_container = ft.Container(on_click=lambda e: self.add_connection(), height=MODULE_HEIGHT, width=MODULE_WIDTH,
-                                            visible=False,bgcolor=ft.Colors.BLACK12,disabled=True)
-        self.on_enter = lambda e: self.on_enter_module()
-        self.on_exit = lambda e: self.on_leave_module()
+                                            visible=False,bgcolor=ft.Colors.BLACK12,disabled=True,border_radius=ft.border_radius.all(10))
+        self.click_gesture = ft.GestureDetector(visible=False,disabled=True,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
         self.connect = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
                                                       style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
@@ -37,7 +36,7 @@ class ModuleGUI(ft.GestureDetector):
         self.options = ft.IconButton(icon=ft.Icons.TUNE, icon_color=ft.Colors.WHITE54,
                                                       style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
-                                                      ), on_click=lambda e: self.on_enter_module(),
+                                                      ), on_click=lambda e: self.add_connection(),
                                                       tooltip="Options",hover_color=ft.Colors.WHITE12,)
         self.tools = ft.Container(ft.Row(
                                             [
@@ -74,12 +73,23 @@ class ModuleGUI(ft.GestureDetector):
                 self.module_container,
                 ft.Container(content=self.delete_button,margin=ft.margin.only(top=-7, left=7),alignment=ft.alignment.top_right,width=MODULE_WIDTH,
                              ),
-                self.click_container
+                self.click_gesture
         ]
         )
             ,self.connection_ports
         ],tight=True
         )
+
+    def on_enter_click_module(self):
+        if self.valid:
+            self.click_container.bgcolor = ft.Colors.WHITE24
+            self.click_container.update()
+
+    def on_exit_click_module(self):
+        if self.valid:
+            self.click_container.bgcolor = ft.Colors.TRANSPARENT
+            self.click_container.update()
+
 
     def connect_clicked(self):
         self.pipeline_gui.toggle_all_module_detection(self.name)
@@ -107,11 +117,15 @@ class ModuleGUI(ft.GestureDetector):
     def set_valid(self):
         self.valid = True
         self.click_container.bgcolor = ft.Colors.TRANSPARENT
+        self.module_container.border = ft.border.all(2, ft.Colors.WHITE38)
+        self.module_container.update()
         self.click_container.update()
 
     def set_invalid(self):
         self.valid = False
         self.click_container.bgcolor = ft.Colors.BLACK12
+        self.module_container.border = ft.border.all(2, ft.Colors.BLACK12)
+        self.module_container.update()
         self.click_container.update()
 
     def get_ports_row(self):
@@ -136,33 +150,27 @@ class ModuleGUI(ft.GestureDetector):
 
         self.pipeline_gui.check_for_valid()
 
-    def on_enter_module(self):
-        if not self.detection:
-            self.click_container.bg_color = ft.Colors.BLACK12
-            self.module_container.border_color = ft.Colors.ORANGE_700
-
-    def on_leave_module(self):
-        if not self.detection:
-            self.click_container.bg_color = None
-            self.module_container.border_color = ft.Colors.ORANGE_700
-
     def toggle_detection(self):
         if self.detection:
             self.detection = False
-            self.mouse_cursor = ft.MouseCursor.CLICK
             self.click_container.disabled = False
             self.click_container.visible = True
             self.click_container.update()
+            self.click_gesture.disabled = False
+            self.click_gesture.visible = True
+            self.click_gesture.update()
             self.delete_button.visible = False
             self.delete_button.update()
         else:
             self.detection = True
             self.set_invalid()
-            self.mouse_cursor = ft.MouseCursor.MOVE
             self.click_container.disabled = True
             self.click_container.bg_color = ft.Colors.BLACK12
             self.click_container.visible = False
             self.click_container.update()
+            self.click_gesture.disabled = True
+            self.click_gesture.visible = False
+            self.click_gesture.update()
             self.delete_button.visible = True
             self.delete_button.update()
             self.connection_ports.visible = False
