@@ -117,7 +117,7 @@ class ModuleGUI(ft.GestureDetector):
     def set_valid(self):
         self.valid = True
         self.click_container.bgcolor = ft.Colors.TRANSPARENT
-        self.module_container.border = ft.border.all(2, ft.Colors.WHITE38)
+        self.module_container.border = ft.border.all(4, ft.Colors.WHITE38)
         self.module_container.update()
         self.click_container.update()
 
@@ -135,7 +135,7 @@ class ModuleGUI(ft.GestureDetector):
             ports_chips.controls.append(
                 ft.Chip(
                     label=ft.Text(port_name),
-                    on_select=lambda e: self.select_port(e,port_name),
+                    on_select=lambda e,name = port_name: self.select_port(e,name),
                 )
             )
         return ports_chips

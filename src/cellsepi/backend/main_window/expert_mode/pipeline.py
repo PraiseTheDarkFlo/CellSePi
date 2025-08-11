@@ -102,6 +102,13 @@ class Pipeline:
                 return True
         return False
 
+    def check_ports_occupied(self,module_id: str,ports:List[str]) -> bool:
+        for port in ports:
+            for pipe in self.pipes_in[module_id]:
+                if port in pipe.ports:
+                    return True
+        return False
+
     def setup_incoming_degree(self) -> Dict[str, int]:
         """
         Returns a dictionary mapping module names to incoming degree (incoming degree is how many pipes are going into a module).
