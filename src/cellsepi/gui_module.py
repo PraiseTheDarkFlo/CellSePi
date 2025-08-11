@@ -26,7 +26,7 @@ class ModuleGUI(ft.GestureDetector):
         self.color = self.module.gui_config().category.value
         self.valid = False
         self.click_container = ft.Container(on_click=lambda e: self.add_connection(), height=MODULE_HEIGHT, width=MODULE_WIDTH,
-                                            visible=False,bgcolor=ft.Colors.BLACK12,disabled=True,border_radius=ft.border_radius.all(10))
+                                            visible=False,bgcolor=INVALID_COLOR,disabled=True,border_radius=ft.border_radius.all(10))
         self.click_gesture = ft.GestureDetector(visible=False,disabled=True,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
         self.connect = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
                                                       style=ft.ButtonStyle(
@@ -82,7 +82,7 @@ class ModuleGUI(ft.GestureDetector):
 
     def on_enter_click_module(self):
         if self.valid:
-            self.click_container.bgcolor = ft.Colors.WHITE24
+            self.click_container.bgcolor = VALID_COLOR
             self.click_container.update()
 
     def on_exit_click_module(self):
@@ -123,7 +123,7 @@ class ModuleGUI(ft.GestureDetector):
 
     def set_invalid(self):
         self.valid = False
-        self.click_container.bgcolor = ft.Colors.BLACK12
+        self.click_container.bgcolor = INVALID_COLOR
         self.module_container.border = ft.border.all(2, ft.Colors.BLACK12)
         self.module_container.update()
         self.click_container.update()

@@ -1,14 +1,14 @@
+import math
 from enum import Enum
 from typing import List, Tuple
 
 import flet as ft
 import flet.canvas as canvas
+from PyQt5.QtCore import QPointF
 
+from cellsepi.backend.drawing_window.drawing_util import bresenham_line
 from cellsepi.gui_module import ModuleGUI
 from cellsepi.add_module import AddModule
-from cellsepi.backend.main_window.expert_mode.modules.batch_image_readout import BatchImageReadoutModule
-from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import BatchImageSegModule
-from cellsepi.backend.main_window.expert_mode.modules.read_lif_tif import ReadLifTif
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.expert_constants import *
@@ -63,11 +63,30 @@ class PipelineGUI(ft.Stack):
                 else:
                     target_module_gui.set_invalid()
 
+def calc_angle(x1, y1, x2, y2):
+    """
+    Calculate the angle between two points in radiant.
+    """
+    delta_x = x2 - x1
+    delta_y = y2 - y1
+    return math.atan2(delta_y, delta_x)
+
+def calc_start_point_arrow(pixels:List[int],target_x,target_y):
+    min_x = target_x-(MODULE_WIDTH/2+ARROW_PADDING)
+    max_x = target_x+(MODULE_WIDTH/2+ARROW_PADDING)
+    min_y = target_y-(MODULE_HEIGHT/2+ARROW_PADDING)
+    max_y = target_y+(MODULE_HEIGHT/2+ARROW_PADDING)
+    for x,y in reversed(pixels):
+        if x < min_x or x > max_x or y < min_y or y > max_y:
+            return x,y
+    return target_x,target_y
+
 class LinesGUI(canvas.Canvas):
     def __init__(self, pipeline_gui: PipelineGUI):
         super().__init__()
         self.shapes = []
         self.edges = {} #identiefier Tuple of source name and target name
+        self.arrows = {} #identiefier Tuple of source name and target name
         self.pipeline_gui = pipeline_gui
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
@@ -78,15 +97,48 @@ class LinesGUI(canvas.Canvas):
         """
         if (source_module_gui.name,target_module_gui.name) in self.edges:
             self.shapes.remove(self.edges[(source_module_gui.name,target_module_gui.name)])
+            self.shapes.remove(self.arrows[(source_module_gui.name,target_module_gui.name)])
 
+        source_x = source_module_gui.left + (MODULE_WIDTH / 2)
+        source_y = source_module_gui.top + (MODULE_HEIGHT / 2)
+        target_x = target_module_gui.left + (MODULE_WIDTH / 2)
+        target_y = target_module_gui.top+ (MODULE_HEIGHT / 2)
         edge = canvas.Line(
-            x1=source_module_gui.left + (MODULE_WIDTH / 2), y1=source_module_gui.top + (MODULE_HEIGHT / 2),
-            x2=target_module_gui.left + (MODULE_WIDTH / 2), y2=target_module_gui.top+ (MODULE_HEIGHT / 2),
+            x1=source_x, y1=source_y,
+            x2=target_x, y2=target_y,
             paint=ft.Paint(stroke_width=3, color="black")
         )
+        edge_angle = calc_angle(source_x,source_y,target_x,target_y)
+
+        pixels_edge = bresenham_line(QPointF(source_x,source_y), QPointF(target_x,target_y))
+
+
+
+        arrow_x,arrow_y = calc_start_point_arrow(pixels_edge,target_x,target_y)
+
+        arrow_line_x1 = arrow_x - ARROW_LENGTH * math.cos(edge_angle - ARROW_ANGLE)
+        arrow_line_y1 = arrow_y - ARROW_LENGTH * math.sin(edge_angle - ARROW_ANGLE)
+
+        arrow_line_x2 = arrow_x - ARROW_LENGTH * math.cos(edge_angle + ARROW_ANGLE)
+        arrow_line_y2 = arrow_y - ARROW_LENGTH * math.sin(edge_angle + ARROW_ANGLE)
+
+        arrow = canvas.Path(
+                [
+                    canvas.Path.MoveTo(arrow_x,arrow_y),
+                    canvas.Path.LineTo(arrow_line_x1,arrow_line_y1),
+                    canvas.Path.LineTo(arrow_line_x2, arrow_line_y2),
+                ],
+                paint=ft.Paint(
+                    style=ft.PaintingStyle.FILL,
+                ),
+            )
+
         self.shapes.append(edge)
+        self.shapes.append(arrow)
         self.edges[(source_module_gui.name,target_module_gui.name)] = edge
+        self.arrows[(source_module_gui.name,target_module_gui.name)] = arrow
         self.update()
+
 
     def remove_line(self, source_module_gui: ModuleGUI, target_module_gui: ModuleGUI):
         """

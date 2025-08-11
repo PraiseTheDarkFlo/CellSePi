@@ -1,4 +1,6 @@
+import math
 from enum import Enum
+import flet as ft
 
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_readout import BatchImageReadoutModule
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import BatchImageSegModule
@@ -8,6 +10,11 @@ BUILDER_WIDTH = 1000
 BUILDER_HEIGHT = 500
 MODULE_WIDTH = 235
 MODULE_HEIGHT = 80
+ARROW_LENGTH = 23
+ARROW_ANGLE = math.radians(40)
+ARROW_PADDING = -1
+INVALID_COLOR = ft.Colors.BLACK54
+VALID_COLOR = ft.Colors.WHITE30
 
 class ModuleType(Enum):
     BATCH_IMAGE_READOUT = BatchImageReadoutModule
