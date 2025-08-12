@@ -31,20 +31,41 @@ class PipelineGUI(ft.Stack):
         self.controls.append(self.lines_gui)
         self.delete_stack = ft.Stack(width=self.width, height=self.height)
         self.controls.append(self.delete_stack)
+        self.expand = True
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports))
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
+        target_module_gui.update_port_icons()
 
     def remove_connection(self,source_module_gui,target_module_gui):
         self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
+        self.check_for_valid()
+        target_module_gui.update_port_icons()
 
-    def add_module(self,module_type: ModuleType):
-        module_gui = ModuleGUI(self,module_type)
+    def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
+        module_gui = ModuleGUI(self,module_type,x,y)
         self.controls.append(module_gui)
         self.update()
         return module_gui
+
+    def set_in_background(self, module_gui:ModuleGUI):
+        """
+        Move a Module from it current position in the stack to the deepest intended level.
+        """
+        if module_gui in self.controls:
+            self.controls.remove(module_gui)
+            self.controls.insert(2, module_gui)
+            self.update()
+
+    def set_in_foreground(self, module_gui:ModuleGUI):
+        """
+        Move a Module from it current position in the stack to the highest level.
+        """
+        for module in self.modules.values():
+            if module.name != module_gui.name:
+                self.set_in_background(module)
 
     def remove_module(self,module_id: str):
         self.pipeline.remove_module(self.modules[module_id].module)
@@ -104,6 +125,7 @@ class LinesGUI(canvas.Canvas):
         self.pipeline_gui = pipeline_gui
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
+        self.expand = True
 
     def update_line(self,source_module_gui: ModuleGUI ,target_module_gui: ModuleGUI,ports: List[str]):
         """
@@ -214,6 +236,8 @@ class Builder:
         self.old_show_ports = False
 
     def delete_button(self):
+        #for module in self.pipeline_gui.modules.values():
+        #    print(module.name,module.left,module.top)
         if self.pipeline_gui.show_delete_button:
             self.pipeline_gui.show_delete_button = False
             self.pipeline_gui.show_ports = self.old_show_ports
@@ -226,8 +250,8 @@ class Builder:
 
     def setup(self):
         self.page.add(
-            ft.Column(
-             [self.pipeline_gui,
+            ft.Column([
+                self.pipeline_gui,
                 self.add_module,
                 ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button()),
              ]
@@ -237,10 +261,10 @@ class Builder:
 def main(page: ft.Page):
     builder = Builder(page)
     pipeline_gui = builder.pipeline_gui
-    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF_TIF)
-    module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG)
-    module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT)
-    module_gui4 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT)
+    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF_TIF,491.0,262.0)
+    module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG,60.0,259.0)
+    module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,66.0,33.0)
+    module_gui4 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,351.0,30.0)
     pipeline_gui.add_connection(module_gui1,module_gui2,["image_paths","mask_paths"])
     pipeline_gui.add_connection(module_gui2,module_gui3,["mask_paths"])
     pipeline_gui.add_connection(module_gui2, module_gui4, ["mask_paths"])

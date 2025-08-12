@@ -149,6 +149,17 @@ class Pipeline:
                 return False
         return True
 
+    def check_module_satisfied(self,module_id: str) -> bool:
+        """
+        Checks if a modules inputs are satisfied.
+        """
+        module_pipes = self.pipes_in[module_id]
+        delivered_ports = set(chain.from_iterable(pipe.ports for pipe in module_pipes))
+        if not all(port_name in delivered_ports for port_name in self.module_map[module_id].get_mandatory_inputs()):
+            return False
+        else:
+            return True
+
     def check_module_runnable(self,module_name: str) -> bool:
         """
         Checks if the module input port data from the given module_name is not None.

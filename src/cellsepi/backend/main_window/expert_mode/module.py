@@ -36,6 +36,10 @@ class Port:
             raise TypeError(f"Expected data of type {self.data_type}, got {type(value)}!")
 
 class Categories(Enum):
+    """
+    Categories of the different modules, each with its own color.
+    It is forbidden to use red or green, as they are reserved to indicate specific statuses.
+    """
     INPUTS = ft.Colors.ORANGE
     OUTPUTS = ft.Colors.LIGHT_BLUE
     FILTERS = ft.Colors.PURPLE

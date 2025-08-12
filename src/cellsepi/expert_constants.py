@@ -7,7 +7,7 @@ from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import Bat
 from cellsepi.backend.main_window.expert_mode.modules.read_lif_tif import ReadLifTif
 
 BUILDER_WIDTH = 1000
-BUILDER_HEIGHT = 500
+BUILDER_HEIGHT = 400
 MODULE_WIDTH = 235
 MODULE_HEIGHT = 80
 ARROW_LENGTH = 23
