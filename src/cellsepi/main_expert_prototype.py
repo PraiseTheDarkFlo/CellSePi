@@ -5,6 +5,7 @@ from typing import List, Tuple
 import flet as ft
 import flet.canvas as canvas
 from PyQt5.QtCore import QPointF
+from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
 from cellsepi.gui_module import ModuleGUI
@@ -232,31 +233,67 @@ class Builder:
         self.page = page
         self.pipeline_gui = PipelineGUI()
         self.add_module = AddModule(self)
+        self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
+                                                 style=ft.ButtonStyle(
+                                              shape=ft.RoundedRectangleBorder(radius=12),),
+                                                 tooltip="Show Delete Buttons", hover_color=ft.Colors.WHITE12)
+        self.port_button = ft.IconButton(icon=ft.Icons.VISIBILITY, on_click=lambda e: self.port_button_click(),
+                                           icon_color=WHITE60,
+                                           style=ft.ButtonStyle(
+                                               shape=ft.RoundedRectangleBorder(radius=12), ),
+                                           tooltip="Show which Ports get transferred", hover_color=ft.Colors.WHITE12)
+        self.tools = ft.Container(ft.Container(ft.Column(
+            [
+                self.delete_button,self.port_button, self.add_module
+            ], tight=True
+        ), bgcolor=ft.Colors.BLACK54, expand=True,width=40
+        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+        bottom=5,left=5,)
         self.setup()
-        self.old_show_ports = False
 
-    def delete_button(self):
+    def delete_button_click(self):
         #for module in self.pipeline_gui.modules.values():
         #    print(module.name,module.left,module.top)
         if self.pipeline_gui.show_delete_button:
+            self.delete_button.icon_color = WHITE60
+            self.delete_button.tooltip = f"Hide Delete Buttons"
             self.pipeline_gui.show_delete_button = False
-            self.pipeline_gui.show_ports = self.old_show_ports
             self.pipeline_gui.lines_gui.update_all()
         else:
-            self.old_show_ports = self.pipeline_gui.show_ports
+            self.delete_button.icon_color = ft.Colors.BLUE_400
+            self.delete_button.tooltip = f"Show Delete Buttons"
             self.pipeline_gui.show_delete_button = True
-            self.pipeline_gui.show_ports = False
+            if self.pipeline_gui.show_ports:
+                self.port_button_click()
             self.pipeline_gui.lines_gui.update_all()
 
+        self.delete_button.update()
+
+    def port_button_click(self):
+        if self.pipeline_gui.show_ports:
+            self.port_button.icon_color = WHITE60
+            self.port_button.tooltip = f"Show which Ports get transferred"
+            self.pipeline_gui.show_ports = False
+            self.pipeline_gui.lines_gui.update_all()
+        else:
+            self.port_button.icon_color = ft.Colors.BLUE_400
+            self.port_button.tooltip = f"Hide which Ports get transferred"
+            self.pipeline_gui.show_ports = True
+            if self.pipeline_gui.show_delete_button:
+                self.delete_button_click()
+            self.pipeline_gui.lines_gui.update_all()
+
+        self.port_button.update()
+
+
     def setup(self):
-        self.page.add(
-            ft.Column([
-                self.pipeline_gui,
-                self.add_module,
-                ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button()),
-             ]
+            self.page.add(
+                ft.Stack([
+                    self.pipeline_gui,
+                    self.tools,
+                 ]
+                )
             )
-        )
 
 def main(page: ft.Page):
     builder = Builder(page)

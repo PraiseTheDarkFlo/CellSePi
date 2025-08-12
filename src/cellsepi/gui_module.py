@@ -147,6 +147,8 @@ class ModuleGUI(ft.GestureDetector):
             self.in_ports_icons[port].update()
             self.in_ports_icons_occupied[port].update()
 
+            self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
+            self.module_container.update()
             self.warning_satisfied.visible = not self.pipeline_gui.pipeline.check_module_satisfied(self.name)
             self.warning_satisfied.update()
 
