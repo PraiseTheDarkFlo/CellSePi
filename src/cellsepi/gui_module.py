@@ -7,28 +7,33 @@ from cellsepi.expert_constants import *
 
 
 class ModuleGUI(ft.GestureDetector):
-    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None):
+    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False):
         super().__init__()
         self.pipeline_gui = pipeline_gui
         self.detection: bool = True
         self.module_type = module_type
         self.mouse_cursor = ft.MouseCursor.MOVE
+        self.show_mode = show_mode
         self.drag_interval = 5
         self.on_pan_start = self.start_drag
         self.on_pan_update = self.drag
         self.on_pan_end = self.drop
+        self.show_offset_y = y
         self.left = BUILDER_WIDTH/2 if x is None else x
         self.top = BUILDER_HEIGHT/2 if y is None else y
         self.old_left = None
         self.old_top = None
         self.port_selection = False
         self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
-        self.pipeline_gui.modules[self.module.module_id] = self
+        if show_mode:
+            self.pipeline_gui.show_room_modules.append(self)
+        else:
+            self.pipeline_gui.modules[self.module.module_id] = self
         self.color = self.module.gui_config().category.value
         self.valid = False
         self.click_container = ft.Container(on_click=lambda e: self.add_connection(), height=MODULE_HEIGHT, width=MODULE_WIDTH,
-                                            visible=False,bgcolor=INVALID_COLOR,disabled=True,border_radius=ft.border_radius.all(10))
-        self.click_gesture = ft.GestureDetector(visible=False,disabled=True,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
+                                            visible=False if not show_mode else True,bgcolor=INVALID_COLOR if not show_mode else ft.Colors.TRANSPARENT,disabled=True if not show_mode else False,border_radius=ft.border_radius.all(10))
+        self.click_gesture = ft.GestureDetector(visible=False if not show_mode else True,disabled=True if not show_mode else False,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
         self.connect_button = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
                                             style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
@@ -55,7 +60,7 @@ class ModuleGUI(ft.GestureDetector):
                                         ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH,
                                         )
 
-        self.delete_button = ft.IconButton(ft.icons.CLOSE,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
+        self.delete_button = ft.IconButton(ft.icons.CLOSE,visible=True if not show_mode else False,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
         self.port_chips = self.get_ports_row()
         self.connection_ports = ft.Container(
             self.port_chips,visible=False
@@ -83,7 +88,7 @@ class ModuleGUI(ft.GestureDetector):
             control_list_ports.append(output_text)
             control_list_ports.append(out_ports)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name),width=40,height=40,top=-5,left=MODULE_WIDTH-65)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=40,height=40,top=-5,left=MODULE_WIDTH-65)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -100,7 +105,7 @@ class ModuleGUI(ft.GestureDetector):
                                     tight=True)
                     ,bgcolor=self.color,width=MODULE_WIDTH
                     ,height=MODULE_HEIGHT,
-                    border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12),
+                    border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode else ft.Colors.BLACK12),
                     border_radius=ft.border_radius.all(10)
                 )
         self.ports_container = ft.Container(
@@ -252,7 +257,6 @@ class ModuleGUI(ft.GestureDetector):
             self.detection = True
             self.set_invalid()
             self.click_container.disabled = True
-            self.click_container.bg_color = ft.Colors.BLACK12
             self.click_container.visible = False
             self.click_container.update()
             self.click_gesture.disabled = True
@@ -317,6 +321,31 @@ class ModuleGUI(ft.GestureDetector):
                 self.pipeline_gui.lines_gui.update_lines(self)
                 e.control.update()
                 return
+
+        overlap_show_room = not (
+                self.left + MODULE_WIDTH  < self.pipeline_gui.show_room_container.left or
+                self.left > self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width or
+                self.top + MODULE_HEIGHT < self.pipeline_gui.show_room_container.top or
+                self.top > self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height
+        ) and self.show_mode
+
+        if overlap_show_room:
+            self.bounce_back()
+            e.control.update()
+            return
+        elif self.show_mode:
+            self.show_mode = False
+            self.pipeline_gui.modules[self.name] = self
+            self.pipeline_gui.show_room_modules.remove(self)
+            self.pipeline_gui.refill_show_room(self)
+            self.click_container.disabled = True
+            self.click_container.bgcolor = INVALID_COLOR
+            self.click_container.visible = False
+            self.click_gesture.disabled = True
+            self.click_gesture.visible = False
+            self.delete_button.visible = True
+            self.click_container.update()
+            self.click_gesture.update()
 
         e.control.update()
         self.pipeline_gui.lines_gui.update_lines(self)

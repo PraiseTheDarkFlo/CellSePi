@@ -9,7 +9,6 @@ from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
 from cellsepi.gui_module import ModuleGUI
-from cellsepi.add_module import AddModule
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.expert_constants import *
@@ -17,11 +16,14 @@ from cellsepi.expert_constants import *
 
 
 class PipelineGUI(ft.Stack):
-    def __init__(self):
+    def __init__(self,page:ft.Page):
         super().__init__()
         self.controls = []
         self.pipeline = Pipeline()
+        self.page = page
         self.modules = {} #identiefierer is the module_id
+        self.show_room_size = len(ModuleType)*2+1
+        self.show_room_modules = []
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
         self.source_module: str = ""
@@ -30,7 +32,9 @@ class PipelineGUI(ft.Stack):
         self.transmitting_ports: List[str] = []
         self.lines_gui = LinesGUI(self)
         self.controls.append(self.lines_gui)
-        self.delete_stack = ft.Stack(width=self.width, height=self.height)
+        self.show_room_container = None
+        self.build_show_room()
+        self.delete_stack = ft.Stack()
         self.controls.append(self.delete_stack)
         self.expand = True
 
@@ -44,6 +48,34 @@ class PipelineGUI(ft.Stack):
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
         self.check_for_valid()
         self.update_all_port_icons()
+
+    def add_show_room_module(self,module_type:ModuleType,x:float,y:float):
+        module_gui = ModuleGUI(self, module_type, x, y,True)
+        self.controls.append(module_gui)
+        return module_gui
+
+    def refill_show_room(self,module_gui:ModuleGUI):
+        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + 50),y=module_gui.show_offset_y, show_mode=True)
+        self.controls.append(new_module_gui)
+        self.update()
+        self.update_all_port_icons()
+
+    def build_show_room(self):
+        x = self.page.window.width - (MODULE_WIDTH + 50)
+        y = SHOWROOM_PADDING_Y
+        self.show_room_container = ft.Container(top=y-SHOWROOM_PADDING_Y/2,left=x-SHOWROOM_PADDING_X/2,width=MODULE_WIDTH+SHOWROOM_PADDING_X,height=(((self.show_room_size-1)/2)*MODULE_HEIGHT)+(((self.show_room_size-1)/2)*SHOWROOM_PADDING_Y),bgcolor=ft.Colors.BLACK54,border_radius=ft.border_radius.all(10))
+        self.controls.append(self.show_room_container)
+        for module_type in ModuleType:
+            self.add_show_room_module(module_type,x,y)
+            self.add_show_room_module(module_type,x,y)
+            y += MODULE_HEIGHT + SHOWROOM_PADDING_Y
+
+    def update_show_room(self):
+        self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + 50) - SHOWROOM_PADDING_X/2
+        self.show_room_container.top = SHOWROOM_PADDING_Y - SHOWROOM_PADDING_Y/2
+        for module in self.show_room_modules:
+            module.left = self.page.window.width - (MODULE_WIDTH + 50)
+            module.update()
 
     def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
         module_gui = ModuleGUI(self,module_type,x,y)
@@ -62,6 +94,8 @@ class PipelineGUI(ft.Stack):
             if behind_delete:
                 self.controls.insert(1, module_gui)
             else:
+                self.controls.remove(self.delete_stack)
+                self.controls.insert(1, self.delete_stack)
                 self.controls.insert(2, module_gui)
             self.update()
 
@@ -241,8 +275,7 @@ class LinesGUI(canvas.Canvas):
 class Builder:
     def __init__(self,page: ft.Page):
         self.page = page
-        self.pipeline_gui = PipelineGUI()
-        self.add_module = AddModule(self)
+        self.pipeline_gui = PipelineGUI(page)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -254,11 +287,11 @@ class Builder:
                                            tooltip="Show which Ports get transferred", hover_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
             [
-                self.delete_button,self.port_button, self.add_module
+                self.delete_button,self.port_button
             ], tight=True
         ), bgcolor=ft.Colors.BLACK54, expand=True,width=40
         ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-        bottom=5,left=5,)
+        bottom=20,left=5,)
         self.setup()
 
     def delete_button_click(self):
@@ -297,13 +330,33 @@ class Builder:
 
 
     def setup(self):
-            self.page.add(
-                ft.Stack([
-                    self.pipeline_gui,
-                    self.tools,
-                 ]
-                )
+        work_area = ft.Container(
+            content=self.pipeline_gui,
+            width=10000,
+            height=10000,
+            bgcolor=ft.Colors.TRANSPARENT,
+        )
+
+        scroll_area = ft.Container(
+            content=ft.Column([work_area], scroll=ft.ScrollMode.ALWAYS),
+            height=self.page.window.height,
+            expand=True,
+        )
+
+        def on_resize(e: ft.WindowResizeEvent):
+            scroll_area.height = e.height
+            self.pipeline_gui.update_show_room()
+            scroll_area.update()
+
+        self.page.on_resized = on_resize
+
+        self.page.add(
+            ft.Stack([
+                scroll_area,
+                self.tools,
+             ]
             )
+        )
 
 def main(page: ft.Page):
     builder = Builder(page)
