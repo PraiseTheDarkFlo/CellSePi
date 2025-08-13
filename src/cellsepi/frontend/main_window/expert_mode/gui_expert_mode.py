@@ -1,6 +1,4 @@
 import flet as ft
-from PIL.ImageChops import offset
-from jeepney.low_level import padding
 
 
 class ExpertMode(ft.Container):
