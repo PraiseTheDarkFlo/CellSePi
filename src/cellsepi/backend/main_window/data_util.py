@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image
 from bioio import BioImage
 import bioio_lif
+from tifffile import tifffile
 
 from cellsepi.backend.main_window.expert_mode.event_manager import *
 
@@ -138,6 +139,63 @@ def copy_files_between_directories(source_dir, target_dir, file_types = None, ev
         event_manager.notify(
             event=ProgressEvent(100, process="Finished copy Files!"))
 
+def load_lif3d_bioimage(lif3d_path):
+    lif3d_path = pathlib.Path(lif3d_path)
+    # See Readme at https://github.com/bioio-devs/bioio
+    bio_img = BioImage(lif3d_path)
+
+    # test_data = np.squeeze(bio_img.get_stack(), axis=1)
+    images = []
+    series_ids = []
+    for scene in bio_img.scenes:
+        bio_img.set_scene(scene)
+        cur_data = bio_img.data
+        shape = cur_data.shape
+
+        if shape[-1] != 1024 or shape[-2] != 1024:
+            # Special case of a single series in a .lif file having a resolution of 512 x 512
+            continue
+
+        cur_data = cur_data.reshape((shape[0], -1, shape[-2], shape[-1])).reshape(shape[0], shape[2], shape[1],
+                                                                                  shape[-2], shape[-1])
+        shape = cur_data.shape
+        series_ids.append(scene)
+        images.append(cur_data)
+        # fig, axes = plt.subplots(ncols=shape[2], nrows=shape[1], sharex=True, sharey=True)
+        # for iR in range(shape[1]):
+        #    for iC in range(shape[2]):
+        #        axes[iR, iC].imshow(test_data[0, iR, iC])
+        # plt.tight_layout()
+        # plt.show()
+    images = np.stack(images)
+    images = np.squeeze(images)
+    return series_ids, images
+
+
+def extract_from_lif3d_file(lif3d_path, target_dir, channel_prefix, event_manager: EventManager = None):
+    series_ids, images = load_lif3d_bioimage(lif3d_path)
+
+    target_dir = pathlib.Path(target_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    total_scenes = len(series_ids)
+    if event_manager is not None:
+        event_manager.notify(
+            event=ProgressEvent(0, process=f"Extracting Series: {0}/{total_scenes}"))
+    for s_idx, series in enumerate(images):
+        series_id = series_ids[s_idx]
+        for c_idx, channel_3d in enumerate(series):
+            file_name = f"{series_id}{channel_prefix}{c_idx + 1}.tif"
+            target_path = target_dir / file_name
+            tifffile.imwrite(target_path, channel_3d)
+            if event_manager is not None:
+                event_manager.notify(event=ProgressEvent(int((s_idx + 1) / total_scenes * 100),
+                                                         process=f"Extracted Series: {s_idx + 1}/{total_scenes}"))
+    if event_manager is not None:
+        event_manager.notify(
+            event=ProgressEvent(100, process=f"Finished extracting Series!"))
+
+
 def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: EventManager=None):
     """
     Extracts all series from the lif file using the bioio-lif library and
@@ -151,6 +209,12 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: Eve
     target_dir = pathlib.Path(target_dir)
     if lif_path.suffix == ".lif":
         bio_image = BioImage(lif_path,reader=bioio_lif.Reader)  # Specify the backend explicitly
+        data = np.squeeze(bio_image.data)
+        is_3d = (data.ndim >= 4 and data.shape[1] > 1)
+
+        if is_3d:
+            extract_from_lif3d_file(lif_path, target_dir, channel_prefix, event_manager)
+            return
 
         # Create the target directory if it doesn't exist
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -160,7 +224,7 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: Eve
         total_scenes = len(scenes)
         if event_manager is not None:
             event_manager.notify(
-                event=ProgressEvent(0, process=f"Extracting Scenes: {0}/{total_scenes}"))
+                event=ProgressEvent(0, process=f"Extracting Series: {0}/{total_scenes}"))
 
         for index,scene_id in enumerate(scenes):
             scene= scene_id
@@ -200,10 +264,13 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: Eve
                     continue
             if event_manager is not None:
                 event_manager.notify(event=ProgressEvent(int((index+1) / total_scenes * 100),
-                                                         process=f"Extracted Files: {index+1}/{total_scenes}"))
+                                                         process=f"Extracted Series: {index+1}/{total_scenes}"))
         if event_manager is not None:
             event_manager.notify(
-                event=ProgressEvent(100, process=f"Finished extracting Scenes!"))
+                event=ProgressEvent(100, process=f"Finished extracting Series!"))
+
+
+
 
 
 def load_image_to_numpy(path):
