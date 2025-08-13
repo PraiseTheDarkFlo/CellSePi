@@ -83,7 +83,7 @@ class ModuleGUI(ft.GestureDetector):
             control_list_ports.append(output_text)
             control_list_ports.append(out_ports)
 
-        self.warning_satisfied = ft.IconButton(ft.Icons.WARNING_AMBER_ROUNDED,icon_size=35,top=-7,left=MODULE_WIDTH-65,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name))
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name),width=40,height=40,top=-5,left=MODULE_WIDTH-65)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -100,7 +100,7 @@ class ModuleGUI(ft.GestureDetector):
                                     tight=True)
                     ,bgcolor=self.color,width=MODULE_WIDTH
                     ,height=MODULE_HEIGHT,
-                    border=ft.border.all(2, ft.Colors.BLACK12),
+                    border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12),
                     border_radius=ft.border_radius.all(10)
                 )
         self.ports_container = ft.Container(
@@ -158,7 +158,7 @@ class ModuleGUI(ft.GestureDetector):
             if self.show_ports:
                 self.ports_in_out_clicked(False)
             if update:
-                self.pipeline_gui.set_in_background(self)
+                self.pipeline_gui.set_in_background(self,True)
             self.connection_ports.visible = True
             self.connect_button.icon_color = ft.Colors.BLACK38
             self.delete_button.visible = False
@@ -211,7 +211,7 @@ class ModuleGUI(ft.GestureDetector):
     def set_invalid(self):
         self.valid = False
         self.click_container.bgcolor = INVALID_COLOR
-        self.module_container.border = ft.border.all(2, ft.Colors.BLACK12)
+        self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
         self.module_container.update()
         self.click_container.update()
 

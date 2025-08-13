@@ -37,13 +37,13 @@ class PipelineGUI(ft.Stack):
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports))
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
-        target_module_gui.update_port_icons()
+        self.update_all_port_icons()
 
     def remove_connection(self,source_module_gui,target_module_gui):
         self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
         self.check_for_valid()
-        target_module_gui.update_port_icons()
+        self.update_all_port_icons()
 
     def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
         module_gui = ModuleGUI(self,module_type,x,y)
@@ -51,13 +51,18 @@ class PipelineGUI(ft.Stack):
         self.update()
         return module_gui
 
-    def set_in_background(self, module_gui:ModuleGUI):
+    def set_in_background(self, module_gui:ModuleGUI,behind_delete=False):
         """
         Move a Module from it current position in the stack to the deepest intended level.
+        Attribute:
+            behind_delete: if the module should be render behind the delete buttons.
         """
         if module_gui in self.controls:
             self.controls.remove(module_gui)
-            self.controls.insert(2, module_gui)
+            if behind_delete:
+                self.controls.insert(1, module_gui)
+            else:
+                self.controls.insert(2, module_gui)
             self.update()
 
     def set_in_foreground(self, module_gui:ModuleGUI):
@@ -88,6 +93,11 @@ class PipelineGUI(ft.Stack):
                     target_module_gui.set_valid()
                 else:
                     target_module_gui.set_invalid()
+
+    def update_all_port_icons(self):
+        for module_gui in self.modules.values():
+            module_gui.update_port_icons()
+
 
 
 def calc_angle(x1, y1, x2, y2):
