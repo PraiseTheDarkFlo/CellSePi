@@ -44,7 +44,7 @@ class ModuleGUI(ft.GestureDetector):
                                             style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
                                                       ), on_click=lambda e: self.add_connection(),
-                                            tooltip="Options", hover_color=ft.Colors.WHITE12, )
+                                            tooltip="Options", hover_color=ft.Colors.WHITE12, visible=True if self.module.settings != {} else False,)
 
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,

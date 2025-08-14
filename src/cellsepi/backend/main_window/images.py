@@ -174,7 +174,7 @@ class BatchImageSegmentation(Notifier):
     def resume_action(self):
         self.resume_now = True
 
-    def run(self,event_manager: EventManager= None,image_paths = None,mask_paths = None,model_path = None):
+    def run(self, event_manager: EventManager= None, image_paths = None, mask_paths=None, model_path = None):
         """
         Applies the segmentation model to every image and stores the resulting masks.
         """
@@ -566,6 +566,11 @@ class BatchImageReadout(Notifier):
 
             cell_ids = np.unique(mask)
             if len(cell_ids) == 1:
+                if event_manager is None:
+                    self._call_update_listeners(**kwargs)
+                else:
+                    event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),
+                                                       process=f"Readout Images: {iN + 1}/{n_images} (Current Image: {image_id})"))
                 continue
             cell_ids = cell_ids[1:]
 
@@ -606,6 +611,7 @@ class BatchImageReadout(Notifier):
                 self._call_update_listeners(**kwargs)
             else:
                 event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),process=f"Readout Images: {iN+1}/{n_images} (Current Image: {image_id})"))
+
 
         readout_path = os.path.join(self.directory, "readout.xlsx")
         df = pd.DataFrame(row_entries)

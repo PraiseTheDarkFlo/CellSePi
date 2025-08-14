@@ -188,9 +188,9 @@ def extract_from_lif3d_file(lif3d_path, target_dir, channel_prefix, event_manage
             file_name = f"{series_id}{channel_prefix}{c_idx + 1}.tif"
             target_path = target_dir / file_name
             tifffile.imwrite(target_path, channel_3d)
-            if event_manager is not None:
-                event_manager.notify(event=ProgressEvent(int((s_idx + 1) / total_scenes * 100),
-                                                         process=f"Extracted Series: {s_idx + 1}/{total_scenes}"))
+        if event_manager is not None:
+            event_manager.notify(event=ProgressEvent(int((s_idx + 1) / total_scenes * 100),
+                                                     process=f"Extracted Series: {s_idx + 1}/{total_scenes}"))
     if event_manager is not None:
         event_manager.notify(
             event=ProgressEvent(100, process=f"Finished extracting Series!"))

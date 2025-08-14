@@ -7,6 +7,7 @@ from cellsepi.backend.main_window.expert_mode import pipe
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, ProgressEvent, Event
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_readout import BatchImageReadoutModule
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import BatchImageSegModule
+from cellsepi.backend.main_window.expert_mode.modules.project_3d_to_2d import Project3dTo2d
 from cellsepi.backend.main_window.expert_mode.modules.read_lif_tif import ReadLifTif
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
@@ -74,3 +75,24 @@ def test_running_module_batch_image_readout():
     pipeline.add_connection(pipe2to3)
     pipeline.run()
     print(f"outputs{mod3.inputs["mask_paths"].data}")
+
+def test_running_module_batch_image_readout():
+    pipeline = Pipeline()
+    pipeline.event_manager.subscribe(ReadLifTifListener())
+    mod1 = pipeline.add_module(ReadLifTif)
+    mod1._directory_path = "/home/mmdark/Downloads/0,5 uM 1.lif"
+    mod1._lif = True
+    mod4 = pipeline.add_module(Project3dTo2d)
+    pipe1to4 = Pipe(mod1, mod4, ["image_paths"])
+    pipeline.add_connection(pipe1to4)
+    mod2 = pipeline.add_module(BatchImageSegModule)
+    mod2._model_path = "/home/mmdark/PycharmProjects/CellSePi/src/cellsepi/models/CP_20240715_171241h"
+    pipe4to2 = Pipe(mod4,mod2,["image_paths"])
+    pipeline.add_connection(pipe4to2)
+    mod3 = pipeline.add_module(BatchImageReadoutModule)
+    mod3._directory_path = "/home/mmdark/Downloads/output"
+    pipe4to3 = Pipe(mod4,mod3,["image_paths"])
+    pipe2to3 = Pipe(mod2,mod3,["mask_paths"])
+    pipeline.add_connection(pipe4to3)
+    pipeline.add_connection(pipe2to3)
+    pipeline.run()

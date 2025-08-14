@@ -13,7 +13,7 @@ class BatchImageSegModule(Module, ABC):
         self._event_manager: EventManager = None
         self._inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
-            "mask_paths": Port("mask_paths", dict) #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict,opt=True), #dict[str,dict[str,str]]
         }
         self._outputs = {
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
@@ -53,6 +53,8 @@ class BatchImageSegModule(Module, ABC):
         self._event_manager = value
 
     def run(self):
+        if self.inputs["mask_paths"].data is None:
+            self.inputs["mask_paths"].data = {}
         BatchImageSegmentation(segmentation_channel=self._segmentation_channel,diameter=self._diameter,suffix=self._ms).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self._model_path)
         self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
 
