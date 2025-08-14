@@ -8,10 +8,16 @@ from typing import List
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 
 class FilePath:
+    """
+    Type to specify FilePath's
+    """
     def __init__(self, path: str = ""):
         self.path = path
 
 class DirectoryPath:
+    """
+    Type to specify DirectoryPath's
+    """
     def __init__(self, path: str = ""):
         self.path = path
 
@@ -83,6 +89,9 @@ class Module(ABC):
     Modules are independent processes within the pipeline that perform a specific task.
     The modules should be designed to function independently of other modules,
     as long as the correct inputs are provided.
+
+    You can specify user attributes with 'user_' as prefix.
+    With these automatic overlay gets created if settings is None.
     """
 
     @classmethod
@@ -148,7 +157,7 @@ class Module(ABC):
     @abstractmethod
     def settings(self) -> ft.CupertinoBottomSheet:
         """
-        The settings window of the module in the gui.
+        The settings overlay of the module in the gui.
         """
         pass
 

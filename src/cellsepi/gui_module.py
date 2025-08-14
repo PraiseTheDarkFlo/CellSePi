@@ -9,6 +9,9 @@ from cellsepi.frontend.main_window.gui_directory import format_directory_path
 
 
 class ModuleGUI(ft.GestureDetector):
+    """
+    Manages the GUI parts of the module.
+    """
     def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False):
         super().__init__()
         self.pipeline_gui = pipeline_gui
@@ -27,7 +30,8 @@ class ModuleGUI(ft.GestureDetector):
         self.old_top = None
         self.port_selection = False
         self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
-        self.module._settings = self.generate_options_overlay()
+        if self.module.settings is None:
+            self.module._settings = self.generate_options_overlay()
         if show_mode:
             self.pipeline_gui.show_room_modules.append(self)
         else:
@@ -134,16 +138,25 @@ class ModuleGUI(ft.GestureDetector):
         )
 
     def on_enter_click_module(self):
+        """
+        Handles if the mouse enters hovering over the module to connect.
+        """
         if self.valid:
             self.click_container.bgcolor = VALID_COLOR
             self.click_container.update()
 
     def on_exit_click_module(self):
+        """
+        Handles if the mouse exits hovering over the module to connect.
+        """
         if self.valid:
             self.click_container.bgcolor = ft.Colors.TRANSPARENT
             self.click_container.update()
 
     def update_port_icons(self):
+        """
+        Updates all ports_icons of the show ports tab.
+        """
         for port in self.module.inputs.keys():
             if self.pipeline_gui.pipeline.check_ports_occupied(self.name, [port]):
                 self.in_ports_icons[port].visible = False
@@ -161,6 +174,9 @@ class ModuleGUI(ft.GestureDetector):
             self.warning_satisfied.update()
 
     def connect_clicked(self,update:bool=True):
+        """
+        Handles the event when the connection button gets pressed.
+        """
         self.pipeline_gui.toggle_all_module_detection(self.name)
         if not self.port_selection:
             if self.show_ports:
@@ -188,6 +204,9 @@ class ModuleGUI(ft.GestureDetector):
         self.content.update()
 
     def ports_in_out_clicked(self,update:bool=True):
+        """
+        Handles the event when the show ports button gets pressed.
+        """
         if not self.show_ports:
             if self.port_selection:
                 self.connect_clicked(False)
@@ -210,6 +229,9 @@ class ModuleGUI(ft.GestureDetector):
 
 
     def set_valid(self):
+        """
+        Sets a module valid to connect.
+        """
         self.valid = True
         self.click_container.bgcolor = ft.Colors.TRANSPARENT
         self.module_container.border = ft.border.all(4, ft.Colors.WHITE38)
@@ -217,6 +239,9 @@ class ModuleGUI(ft.GestureDetector):
         self.click_container.update()
 
     def set_invalid(self):
+        """
+        Sets a module to invalid to connect.
+        """
         self.valid = False
         self.click_container.bgcolor = INVALID_COLOR
         self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
@@ -224,6 +249,9 @@ class ModuleGUI(ft.GestureDetector):
         self.click_container.update()
 
     def get_ports_row(self):
+        """
+        Creates the chip row for the different ports of a module.
+        """
         ports_chips = ft.Row()
 
         for port_name in self.module.outputs.keys():
@@ -236,6 +264,9 @@ class ModuleGUI(ft.GestureDetector):
         return ports_chips
 
     def select_port(self,e, port_name):
+        """
+        Handles the event if a port gets selected for connecting.
+        """
         if e.control.selected:
             self.pipeline_gui.transmitting_ports.append(port_name)
             self.port_chips.update()
@@ -246,6 +277,9 @@ class ModuleGUI(ft.GestureDetector):
         self.pipeline_gui.check_for_valid()
 
     def toggle_detection(self):
+        """
+        Toggles between the module state 'only moveable' and  'normal mode'
+        """
         if self.detection:
             self.detection = False
             self.click_container.disabled = False
@@ -272,11 +306,17 @@ class ModuleGUI(ft.GestureDetector):
 
 
     def add_connection(self):
+        """
+        Handles the last step of the adding event when the target gets selected.
+        """
         if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection and self.valid:
             self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
             self.pipeline_gui.check_for_valid()
 
     def remove_module(self):
+        """
+        Removes a module and all its connections.
+        """
         for pipe in list(self.pipeline_gui.pipeline.pipes_in[self.name]):
             self.pipeline_gui.remove_connection(self.pipeline_gui.modules[pipe.source_module.module_id],self)
         for pipe in list(self.pipeline_gui.pipeline.pipes_out[self.name]):
@@ -287,6 +327,9 @@ class ModuleGUI(ft.GestureDetector):
 
     @property
     def name(self):
+        """
+        Returns the module id of the module.
+        """
         return self.module.module_id
 
     def bounce_back(self):
@@ -296,18 +339,27 @@ class ModuleGUI(ft.GestureDetector):
         self.update()
 
     def start_drag(self, e: ft.DragStartEvent):
+        """
+        Handles the start of the drag event to save old location to make it possible to bounce back.
+        """
         self.old_left = self.left
         self.old_top = self.top
         self.pipeline_gui.lines_gui.update_lines(self)
         self.update()
 
     def drag(self, e: ft.DragUpdateEvent):
+        """
+        Handles the drag event.
+        """
         self.top = max(0, self.top + e.delta_y)
         self.left = max(0, self.left + e.delta_x)
         self.pipeline_gui.lines_gui.update_lines(self)
         self.update()
 
     def drop(self,e: ft.DragEndEvent):
+        """
+        Handles the drop event.
+        """
         for module in self.pipeline_gui.modules.values():
             if module is self:
                 continue
@@ -354,6 +406,9 @@ class ModuleGUI(ft.GestureDetector):
         self.pipeline_gui.lines_gui.update_lines(self)
 
     def generate_options_overlay(self):
+        """
+        Generates with the user attributes tagged with the prefix 'user_' a gui overlay.
+        """
         user_attributes = self.module.get_user_attributes
         if len(user_attributes) != 0:
             return ft.CupertinoBottomSheet(ft.Card(
@@ -375,6 +430,15 @@ class ModuleGUI(ft.GestureDetector):
             return None
 
     def create_attribute_list(self,attributes=None):
+        """
+        Creates a text field for each user attribute and combines them into a single list.
+        Allowed types are:
+            int
+            float
+            string
+            FilePath
+            DirectoryPath
+        """
         items = []
         for attribute_name in attributes:
             value = getattr(self.module, attribute_name)
@@ -436,6 +500,9 @@ class ModuleGUI(ft.GestureDetector):
         return items
 
     def on_select_file(self,e,attr_name,text):
+        """
+        Handles if a file is selected.
+        """
         if e.files is not None:
             setattr(self.module, attr_name, FilePath(e.files[0].path))
             text.value = format_directory_path(e.files[0].path,50)
@@ -443,19 +510,19 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.update()
 
     def on_select_dir(self,e,attr_name,text):
+        """
+        Handles if a directory is selected.
+        """
         if e.path is not None:
             setattr(self.module, attr_name, FilePath(e.path))
             text.value = format_directory_path(e.path,50)
             text.update()
             self.pipeline_gui.page.update()
 
-    def on_change_bool(self,e,attr_name):
-        if int(e.data) == 1:
-            setattr(self.module, attr_name, True)
-        else:
-            setattr(self.module, attr_name, False)
-
     def on_change(self,e,attr_name,reference,typ:type):
+        """
+        Handles changes to the attribute for different types.
+        """
         try:
             setattr(self.module, attr_name, typ(e.control.value))
             reference.current.color = None
