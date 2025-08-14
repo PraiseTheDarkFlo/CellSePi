@@ -432,7 +432,7 @@ class ModuleGUI(ft.GestureDetector):
                     )
                 ]))
             else:
-                pass
+                raise ValueError(f"Unsupported 'user_' attribute file type: {typ}")
         return items
 
     def on_select_file(self,e,attr_name,text):
