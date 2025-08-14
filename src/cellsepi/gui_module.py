@@ -30,7 +30,7 @@ class ModuleGUI(ft.GestureDetector):
         self.old_top = None
         self.port_selection = False
         self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
-        if self.module.settings is None:
+        if self.module.settings is None and hasattr(self.module, "_settings"):
             self.module._settings = self.generate_options_overlay()
         if show_mode:
             self.pipeline_gui.show_room_modules.append(self)
@@ -47,10 +47,10 @@ class ModuleGUI(ft.GestureDetector):
                                                       ), on_click=lambda e: self.connect_clicked(),
                                             tooltip="Add connection", hover_color=ft.Colors.WHITE12, visible=self.module.outputs!={})
 
-        self.options_button = ft.IconButton(icon=ft.Icons.TUNE, icon_color=ft.Colors.WHITE54,
+        self.options_button = ft.IconButton(icon=ft.Icons.TUNE, icon_color=ft.Colors.WHITE60,
                                             style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
-                                                      ), on_click=lambda e: e.control.page.open(self.module.settings),
+                                                      ), on_click=lambda e: self.open_options(e),
                                             tooltip="Options", hover_color=ft.Colors.WHITE12, visible=True if self.module.settings is not None else False,)
 
         self.show_ports = False
@@ -218,7 +218,7 @@ class ModuleGUI(ft.GestureDetector):
             self.show_ports = True
         else:
             self.ports_container.visible = False
-            self.ports_in_out_button.icon_color = ft.Colors.WHITE38
+            self.ports_in_out_button.icon_color = ft.Colors.WHITE60
             self.content.height = self.module_container.height
             self.show_ports = False
 
@@ -410,6 +410,9 @@ class ModuleGUI(ft.GestureDetector):
         Generates with the user attributes tagged with the prefix 'user_' a gui overlay.
         """
         user_attributes = self.module.get_user_attributes
+
+        height = 72* len(user_attributes) + 10 * (len(user_attributes)-1)+10 #72 because 60 only apples on the inner measurements
+        calc_height = height>260
         if len(user_attributes) != 0:
             return ft.CupertinoBottomSheet(ft.Card(
                 content=ft.Column(
@@ -417,15 +420,15 @@ class ModuleGUI(ft.GestureDetector):
                         controls=self.create_attribute_list(user_attributes),
                         width=500,
                         spacing=10,
-                        height=250,
+                        height=260 if height>260 else height,
                         padding=10,
                     )],
                     alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                ),width=550,height=300,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),width=550,height=300 if calc_height else height+40
             )
             ,height=300
-            ,padding=ft.padding.only(top=6))
+            ,padding=ft.padding.only(top=6),on_dismiss=lambda e: self.close_options(e))
         else:
             return None
 
@@ -532,6 +535,15 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.snack_bar.open = True
             reference.current.color = ft.colors.RED
             self.pipeline_gui.page.update()
+
+    def open_options(self,e):
+        e.control.page.open(self.module.settings)
+        self.options_button.icon_color = ft.Colors.BLACK38
+        self.options_button.update()
+
+    def close_options(self,e):
+        self.options_button.icon_color = ft.Colors.WHITE60
+        self.options_button.update()
 
 
 
