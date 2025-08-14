@@ -154,10 +154,9 @@ def calc_line_point_outside_module(pixels:List[int], module_x, module_y,target:b
             return x,y
     return module_x,module_y
 
-def calc_mid_outside(pixels:List[int],source_x, source_y,target_x, target_y):
+def calc_mid_outside(pixels:List[int],source_x, source_y,arrow_end_x, arrow_end_y):
     start_point_x,start_point_y = calc_line_point_outside_module(pixels,source_x,source_y,False)
-    end_point_x,end_point_y = calc_line_point_outside_module(pixels,target_x,target_y,True)
-    return (start_point_x+end_point_x)/2, (start_point_y + end_point_y)/2
+    return (start_point_x+arrow_end_x)/2, (start_point_y + arrow_end_y)/2
 
 class LinesGUI(canvas.Canvas):
     def __init__(self, pipeline_gui: PipelineGUI):
@@ -199,15 +198,15 @@ class LinesGUI(canvas.Canvas):
 
         arrow_x,arrow_y = calc_line_point_outside_module(pixels_edge, target_x, target_y,True)
 
-        port_x,port_y = calc_mid_outside(pixels_edge, source_x, source_y,target_x, target_y)
-
-
-
         arrow_line_x1 = arrow_x - ARROW_LENGTH * math.cos(edge_angle - ARROW_ANGLE)
         arrow_line_y1 = arrow_y - ARROW_LENGTH * math.sin(edge_angle - ARROW_ANGLE)
 
         arrow_line_x2 = arrow_x - ARROW_LENGTH * math.cos(edge_angle + ARROW_ANGLE)
         arrow_line_y2 = arrow_y - ARROW_LENGTH * math.sin(edge_angle + ARROW_ANGLE)
+
+        arrow_end_x = (arrow_line_x1 + arrow_line_x2)/2 #End is the Flat side of the Arrow
+        arrow_end_y = (arrow_line_y1 + arrow_line_y2)/2
+        port_x,port_y = calc_mid_outside(pixels_edge, source_x, source_y,arrow_end_x, arrow_end_y)
 
         arrow = canvas.Path(
                 [
