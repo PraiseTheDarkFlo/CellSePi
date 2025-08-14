@@ -531,7 +531,8 @@ class ModuleGUI(ft.GestureDetector):
             reference.current.color = None
             self.pipeline_gui.page.update()
         except ValueError:
-            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"{attr_name.removeprefix("user_")} only allows {typ.__name__}'s."))
+            attribute_name_without_prefix = attr_name.removeprefix("user_")
+            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s."))
             self.pipeline_gui.page.snack_bar.open = True
             reference.current.value = getattr(self.module, attr_name)
             reference.current.color = ft.colors.RED
