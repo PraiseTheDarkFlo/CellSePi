@@ -7,6 +7,13 @@ from typing import List
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 
+class FilePath:
+    def __init__(self, path: str = ""):
+        self.path = path
+
+class DirectoryPath:
+    def __init__(self, path: str = ""):
+        self.path = path
 
 class Port:
     """
@@ -139,12 +146,18 @@ class Module(ABC):
 
     @property
     @abstractmethod
-    def settings(self) -> ft.Container:
+    def settings(self) -> ft.CupertinoBottomSheet:
         """
         The settings window of the module in the gui.
         """
         pass
 
+    @property
+    def get_user_attributes(self) -> list[str]:
+        """
+        Returns the list of attributes of the module's user attributes.
+        """
+        return [k for k in self.__dict__ if k.startswith("user_")]
 
     @property
     @abstractmethod

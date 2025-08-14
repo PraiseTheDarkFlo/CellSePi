@@ -16,10 +16,10 @@ class BatchImageReadoutModule(Module, ABC):
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
-        self._settings: ft.Container = None #TODO: gui setting for module
-        self._directory_path: str = ""
-        self._segmentation_channel: str = "2"
-        self._cp: str = "c"
+        self._settings: ft.CupertinoBottomSheet = None
+        self.user_directory_path: DirectoryPath = DirectoryPath()
+        self.user_segmentation_channel: str = "2"
+        self.user_channel_prefix: str = "c"
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -38,7 +38,7 @@ class BatchImageReadoutModule(Module, ABC):
         return {}
 
     @property
-    def settings(self) -> ft.Container:
+    def settings(self) -> ft.CupertinoBottomSheet:
         return self._settings
 
     @property

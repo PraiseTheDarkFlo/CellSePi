@@ -3,7 +3,9 @@ import flet as ft
 from flet_core.cupertino_colors import WHITE
 from sympy.printing.tree import print_node
 
+from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
 from cellsepi.expert_constants import *
+from cellsepi.frontend.main_window.gui_directory import format_directory_path
 
 
 class ModuleGUI(ft.GestureDetector):
@@ -25,6 +27,7 @@ class ModuleGUI(ft.GestureDetector):
         self.old_top = None
         self.port_selection = False
         self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
+        self.module._settings = self.generate_options_overlay()
         if show_mode:
             self.pipeline_gui.show_room_modules.append(self)
         else:
@@ -43,8 +46,8 @@ class ModuleGUI(ft.GestureDetector):
         self.options_button = ft.IconButton(icon=ft.Icons.TUNE, icon_color=ft.Colors.WHITE54,
                                             style=ft.ButtonStyle(
                                                           shape=ft.RoundedRectangleBorder(radius=12),
-                                                      ), on_click=lambda e: self.add_connection(),
-                                            tooltip="Options", hover_color=ft.Colors.WHITE12, visible=True if self.module.settings != {} else False,)
+                                                      ), on_click=lambda e: e.control.page.open(self.module.settings),
+                                            tooltip="Options", hover_color=ft.Colors.WHITE12, visible=True if self.module.settings is not None else False,)
 
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
@@ -349,3 +352,121 @@ class ModuleGUI(ft.GestureDetector):
 
         e.control.update()
         self.pipeline_gui.lines_gui.update_lines(self)
+
+    def generate_options_overlay(self):
+        user_attributes = self.module.get_user_attributes
+        if len(user_attributes) != 0:
+            return ft.CupertinoBottomSheet(ft.Card(
+                content=ft.Column(
+                    [ft.ListView(
+                        controls=self.create_attribute_list(user_attributes),
+                        width=500,
+                        spacing=10,
+                        height=250,
+                        padding=10,
+                    )],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),width=550,height=300,
+            )
+            ,height=300
+            ,padding=ft.padding.only(top=6))
+        else:
+            return None
+
+    def create_attribute_list(self,attributes=None):
+        items = []
+        for attribute_name in attributes:
+            value = getattr(self.module, attribute_name)
+            typ = type(value)
+            if typ in (int, float, str):
+                ref = ft.Ref[ft.Text]()
+                items.append(ft.TextField(
+                            label=attribute_name.removeprefix("user_"),
+                            border_color=ft.colors.BLUE_ACCENT,
+                            value=value,
+                            ref=ref,
+                            on_blur=lambda e,attr_name= attribute_name,reference=ref,type_atr = typ: self.on_change(e,attr_name,reference,type_atr),
+                            height=60,
+                        ))
+            elif typ == FilePath:
+                text_field = ft.TextField(
+                    label=attribute_name.removeprefix("user_"),
+                    border_color=ft.colors.BLUE_ACCENT,
+                    value=format_directory_path(value.path,50),
+                    height=60,
+                    read_only=True,
+                    disabled=True
+                )
+                file_picker = ft.FilePicker(on_result=lambda a,attr_name= attribute_name,text=text_field: self.on_select_file(a,attr_name,text))
+                self.pipeline_gui.page.overlay.extend([file_picker])
+                items.append(ft.Stack([text_field,ft.Container(
+                                content=ft.IconButton(
+                                    icon=ft.icons.UPLOAD_FILE,
+                                    tooltip="Pick File",
+                                    on_click=lambda e: file_picker.pick_files(allow_multiple=False),
+                                ),
+                                alignment=ft.alignment.top_right
+                            ,right=10,top=5)
+                    ]))
+            elif typ == DirectoryPath:
+                text_field = ft.TextField(
+                    label=attribute_name.removeprefix("user_"),
+                    border_color=ft.colors.BLUE_ACCENT,
+                    value=format_directory_path(value.path, 50),
+                    height=60,
+                    read_only=True,
+                    disabled=True
+                )
+                dir_picker = ft.FilePicker(
+                    on_result=lambda a, attr_name=attribute_name, text=text_field: self.on_select_dir(a, attr_name,
+                                                                                                       text))
+                self.pipeline_gui.page.overlay.extend([dir_picker])
+                items.append(ft.Stack([text_field, ft.Container(
+                        content=ft.IconButton(
+                            icon=ft.icons.FOLDER_OPEN,
+                            tooltip="Open Directory",
+                            on_click=lambda e: dir_picker.get_directory_path(),
+                        ),
+                        alignment=ft.alignment.top_right,right=10,top=5
+                    )
+                ]))
+            else:
+                pass
+        return items
+
+    def on_select_file(self,e,attr_name,text):
+        if e.files is not None:
+            setattr(self.module, attr_name, FilePath(e.files[0].path))
+            text.value = format_directory_path(e.files[0].path,50)
+            text.update()
+            self.pipeline_gui.page.update()
+
+    def on_select_dir(self,e,attr_name,text):
+        if e.path is not None:
+            setattr(self.module, attr_name, FilePath(e.path))
+            text.value = format_directory_path(e.path,50)
+            text.update()
+            self.pipeline_gui.page.update()
+
+    def on_change_bool(self,e,attr_name):
+        if int(e.data) == 1:
+            setattr(self.module, attr_name, True)
+        else:
+            setattr(self.module, attr_name, False)
+
+    def on_change(self,e,attr_name,reference,typ:type):
+        try:
+            setattr(self.module, attr_name, typ(e.control.value))
+            reference.current.color = None
+            self.pipeline_gui.page.update()
+        except ValueError:
+            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"{attr_name.removeprefix("user_")} only allows {typ.__name__}'s."))
+            self.pipeline_gui.page.snack_bar.open = True
+            reference.current.color = ft.colors.RED
+            self.pipeline_gui.page.update()
+
+
+
+
+

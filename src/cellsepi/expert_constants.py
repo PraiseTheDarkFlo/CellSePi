@@ -5,7 +5,8 @@ import flet as ft
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_readout import BatchImageReadoutModule
 from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import BatchImageSegModule
 from cellsepi.backend.main_window.expert_mode.modules.project_3d_to_2d import Project3dTo2d
-from cellsepi.backend.main_window.expert_mode.modules.read_lif_tif import ReadLifTif
+from cellsepi.backend.main_window.expert_mode.modules.read_lif import ReadLif
+from cellsepi.backend.main_window.expert_mode.modules.read_tif import ReadTif
 
 BUILDER_WIDTH = 1000
 BUILDER_HEIGHT = 400
@@ -19,9 +20,11 @@ ARROW_PADDING = -1
 ARROW_COLOR = ft.Colors.CYAN_900
 INVALID_COLOR = ft.Colors.BLACK54
 VALID_COLOR = ft.Colors.WHITE30
+MENU_COLOR = ft.Colors.BLACK54
 
 class ModuleType(Enum):
     BATCH_IMAGE_READOUT = BatchImageReadoutModule
     BATCH_IMAGE_SEG = BatchImageSegModule
-    READ_LIF_TIF = ReadLifTif
+    READ_LIF = ReadLif
+    READ_TIF = ReadTif
     PROJECTION_3D_TO_2D = Project3dTo2d

@@ -41,8 +41,8 @@ class Project3dTo2d(Module, ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.Container:
-        return {}
+    def settings(self) -> ft.CupertinoBottomSheet:
+        return None
 
     @property
     def event_manager(self) -> EventManager:

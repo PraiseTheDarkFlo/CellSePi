@@ -3,8 +3,8 @@ from cellsepi.backend.main_window.expert_mode.module import *
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
-class ReadLifTif(Module,ABC):
-    _gui_config = ModuleGuiConfig("ReadLifTif",Categories.INPUTS,"")
+class ReadTif(Module,ABC):
+    _gui_config = ModuleGuiConfig("ReadTif",Categories.INPUTS,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
@@ -12,11 +12,10 @@ class ReadLifTif(Module,ABC):
             "image_paths": Port("image_paths", dict),
             "mask_paths": Port("mask_paths", dict),
         }
-        self._settings: ft.Container = None #TODO: gui setting for module
-        self._directory_path: str = ""
-        self._lif: bool = False
-        self._cp: str = "c"
-        self._ms: str = "_seg"
+        self._settings: ft.CupertinoBottomSheet = None
+        self.user_directory_path: DirectoryPath = DirectoryPath()
+        self.user_channel_prefix: str = "c"
+        self.user_mask_suffix: str = "_seg"
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -35,7 +34,7 @@ class ReadLifTif(Module,ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.Container:
+    def settings(self) -> ft.CupertinoBottomSheet:
         return self._settings
 
     @property
@@ -47,5 +46,5 @@ class ReadLifTif(Module,ABC):
         self._event_manager = value
 
     def run(self):
-        working_directory = DirectoryCard().select_directory_parallel(self._directory_path,self._lif,self._cp,self.event_manager)
-        self._outputs["image_paths"].data,self._outputs["mask_paths"].data= load_directory(working_directory,self._cp,self._ms,ReturnTypePath.BOTH_PATHS,self.event_manager)
+        working_directory = DirectoryCard().select_directory_parallel(self.user_directory_path, False, self.user_channel_prefix, self.event_manager)
+        self._outputs["image_paths"].data,self._outputs["mask_paths"].data= load_directory(working_directory, self.user_channel_prefix, self.user_mask_suffix, ReturnTypePath.BOTH_PATHS, self.event_manager)

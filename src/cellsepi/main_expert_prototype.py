@@ -63,7 +63,7 @@ class PipelineGUI(ft.Stack):
     def build_show_room(self):
         x = self.page.window.width - (MODULE_WIDTH + 50)
         y = SHOWROOM_PADDING_Y
-        self.show_room_container = ft.Container(top=y-SHOWROOM_PADDING_Y/2,left=x-SHOWROOM_PADDING_X/2,width=MODULE_WIDTH+SHOWROOM_PADDING_X,height=(((self.show_room_size-1)/2)*MODULE_HEIGHT)+(((self.show_room_size-1)/2)*SHOWROOM_PADDING_Y),bgcolor=ft.Colors.BLACK54,border_radius=ft.border_radius.all(10))
+        self.show_room_container = ft.Container(top=y-SHOWROOM_PADDING_Y/2,left=x-SHOWROOM_PADDING_X/2,width=MODULE_WIDTH+SHOWROOM_PADDING_X,height=(((self.show_room_size-1)/2)*MODULE_HEIGHT)+(((self.show_room_size-1)/2)*SHOWROOM_PADDING_Y),bgcolor=MENU_COLOR,border_radius=ft.border_radius.all(10))
         self.controls.append(self.show_room_container)
         for module_type in ModuleType:
             self.add_show_room_module(module_type,x,y)
@@ -289,7 +289,7 @@ class Builder:
             [
                 self.delete_button,self.port_button
             ], tight=True
-        ), bgcolor=ft.Colors.BLACK54, expand=True,width=40
+        ), bgcolor=MENU_COLOR, expand=True,width=40
         ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
         bottom=20,left=5,)
         self.setup()
@@ -361,7 +361,7 @@ class Builder:
 def main(page: ft.Page):
     builder = Builder(page)
     pipeline_gui = builder.pipeline_gui
-    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF_TIF,491.0,262.0)
+    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF,491.0,262.0)
     module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG,60.0,259.0)
     module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,66.0,33.0)
     module_gui4 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,351.0,30.0)

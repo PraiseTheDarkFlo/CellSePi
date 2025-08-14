@@ -1,28 +1,22 @@
-
 from cellsepi.backend.main_window.data_util import load_directory, ReturnTypePath
-from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.expert_mode.module import *
-from cellsepi.backend.main_window.images import BatchImageSegmentation
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
-class BatchImageSegModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageSeg",Categories.SEGMENTATION,"")
+class ReadLif(Module,ABC):
+    _gui_config = ModuleGuiConfig("ReadLif",Categories.INPUTS,"")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
-        self._inputs = {
-            "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
-            "mask_paths": Port("mask_paths", dict,opt=True), #dict[str,dict[str,str]]
-        }
         self._outputs = {
-            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
+            "image_paths": Port("image_paths", dict),
+            "mask_paths": Port("mask_paths", dict),
         }
         self._settings: ft.CupertinoBottomSheet = None
-        self.user_model_path: FilePath = FilePath()
-        self.user_segmentation_channel: str = "2"
-        self.user_diameter: float = 125.0
+        self.user_file_path: FilePath = FilePath()
+        self.user_channel_prefix: str = "c"
         self.user_mask_suffix: str = "_seg"
+
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -34,7 +28,7 @@ class BatchImageSegModule(Module, ABC):
 
     @property
     def inputs(self) -> dict[str, Port]:
-        return self._inputs
+        return {}
 
     @property
     def outputs(self) -> dict[str, Port]:
@@ -53,8 +47,5 @@ class BatchImageSegModule(Module, ABC):
         self._event_manager = value
 
     def run(self):
-        if self.inputs["mask_paths"].data is None:
-            self.inputs["mask_paths"].data = {}
-        BatchImageSegmentation(segmentation_channel=self._segmentation_channel,diameter=self._diameter,suffix=self._ms).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self._model_path)
-        self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
-
+        working_directory = DirectoryCard().select_directory_parallel(self.user_directory_path, True, self.user_channel_prefix, self.event_manager)
+        self._outputs["image_paths"].data,self._outputs["mask_paths"].data= load_directory(working_directory, self.user_channel_prefix, self.user_mask_suffix, ReturnTypePath.BOTH_PATHS, self.event_manager)
