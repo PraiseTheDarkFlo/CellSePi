@@ -7,7 +7,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
 class BatchImageSegModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageSeg",Categories.SEGMENTATION,"")
+    _gui_config = ModuleGuiConfig("BatchImageSeg",Categories.SEGMENTATION,"This module handles the segmentation of cells for each series on the given segmentation_channel with the provided model in model_path.")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None

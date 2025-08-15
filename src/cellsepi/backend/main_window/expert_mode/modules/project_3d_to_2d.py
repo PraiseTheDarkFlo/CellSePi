@@ -13,7 +13,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
 class Project3dTo2d(Module, ABC):
-    _gui_config = ModuleGuiConfig("Project3Dto2D",Categories.FILTERS,"")
+    _gui_config = ModuleGuiConfig("Project3Dto2D",Categories.FILTERS,"This modules handles the conversion from 3D data to 2D data based on an max z projection.")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None

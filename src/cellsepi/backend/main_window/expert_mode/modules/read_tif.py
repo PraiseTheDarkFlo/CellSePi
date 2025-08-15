@@ -4,7 +4,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
 class ReadTif(Module,ABC):
-    _gui_config = ModuleGuiConfig("ReadTif",Categories.INPUTS,"")
+    _gui_config = ModuleGuiConfig("ReadTif",Categories.INPUTS,"This module handles the read in of .tif/.tiff files and if available reads in the mask of the images.")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager = None
