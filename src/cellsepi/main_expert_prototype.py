@@ -279,12 +279,12 @@ class Builder:
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
-                                                 tooltip="Show Delete Buttons", hover_color=ft.Colors.WHITE12)
+                                                 tooltip="Show delete buttons", hover_color=ft.Colors.WHITE12)
         self.port_button = ft.IconButton(icon=ft.Icons.VISIBILITY, on_click=lambda e: self.port_button_click(),
                                            icon_color=WHITE60,
                                            style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                           tooltip="Show which Ports get transferred", hover_color=ft.Colors.WHITE12)
+                                           tooltip="Show which ports get transferred", hover_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
             [
                 self.delete_button,self.port_button

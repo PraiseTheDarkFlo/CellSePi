@@ -1,7 +1,6 @@
 
 import flet as ft
 from flet_core.cupertino_colors import WHITE
-from sympy.printing.tree import print_node
 
 from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
 from cellsepi.expert_constants import *
@@ -52,19 +51,29 @@ class ModuleGUI(ft.GestureDetector):
                                                           shape=ft.RoundedRectangleBorder(radius=12),
                                                       ), on_click=lambda e: self.open_options(e),
                                             tooltip="Options", hover_color=ft.Colors.WHITE12, visible=True if self.module.settings is not None else False,)
+        self.copy_button = ft.IconButton(icon=ft.Icons.CONTENT_COPY, icon_color=ft.Colors.WHITE60,
+                                            style=ft.ButtonStyle(
+                                                          shape=ft.RoundedRectangleBorder(radius=12),
+                                                      ), on_click=lambda e: self.copy_module(),
+                                            tooltip="Copy module", hover_color=ft.Colors.WHITE12,)
+        self.start_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, icon_color=ft.Colors.BLACK12,disabled=True,
+                                         style=ft.ButtonStyle(
+                                             shape=ft.RoundedRectangleBorder(radius=12),
+                                         ), on_click=lambda e: self.copy_module(),
+                                         tooltip="Start pipeline from here", hover_color=ft.Colors.WHITE12, )
 
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.ports_in_out_clicked(),
-                                                 tooltip="View Ports", hover_color=ft.Colors.WHITE12)
+                                                 tooltip="View ports", hover_color=ft.Colors.WHITE12)
 
         self.tools = ft.Container(ft.Row(
                                             [
-                                                self.connect_button,self.options_button,self.ports_in_out_button
-                                            ],tight=True
-                                        ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH,
+                                                self.connect_button,self.options_button,self.ports_in_out_button,self.copy_button,self.start_button,
+                                            ],tight=True,spacing=7
+                                        ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH
                                         )
 
         self.delete_button = ft.IconButton(ft.icons.CLOSE,visible=True if not show_mode else False,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
@@ -547,7 +556,17 @@ class ModuleGUI(ft.GestureDetector):
         self.options_button.icon_color = ft.Colors.WHITE60
         self.options_button.update()
 
-
+    def copy_module(self):
+        self.copy_button.icon_color = ft.Colors.BLACK38
+        self.copy_button.update()
+        copy = self.pipeline_gui.add_module(ModuleType(type(self.module)),self.left+20,self.top+20)
+        user_attributes = copy.module.get_user_attributes
+        for attr_name in user_attributes:
+            setattr(copy.module,attr_name,getattr(self.module, attr_name))
+        if hasattr(copy.module, "_settings"):
+            copy.module._settings = copy.generate_options_overlay()
+        self.copy_button.icon_color = ft.Colors.WHITE60
+        self.copy_button.update()
 
 
 
