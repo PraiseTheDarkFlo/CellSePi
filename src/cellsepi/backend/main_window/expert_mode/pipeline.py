@@ -16,6 +16,7 @@ class Pipeline:
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
         self.run_order: deque[str] = deque()
+        self.found: bool = False
         self.event_manager: EventManager = EventManager()
 
     def add_module(self, module_class: Type[Module]) -> Module:
@@ -183,6 +184,31 @@ class Pipeline:
             self.run_order = self.get_run_order()
         while self.run_order:
             module_name = self.run_order.popleft()
+            module = self.module_map[module_name]
+            module.event_manager = self.event_manager
+            module_pipes = self.pipes_in[module.module_id]
+            for pipe in module_pipes:
+                pipe.run()
+            if self.check_module_runnable(module_name):
+                try:
+                    stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
+                    if stop:
+                        return
+                except PipelineRunningException as e:
+                    module.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    return
+            else:
+                continue
+
+    def skip_and_run(self,module_id: str,resume:bool = False):
+        if not resume:
+            self.run_order = self.get_run_order()
+            self.found = False
+        while self.run_order:
+            module_name = self.run_order.popleft()
+            if module_name != module_id and not self.found:
+                continue
+            self.found = True
             module = self.module_map[module_name]
             module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.module_id]
