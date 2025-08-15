@@ -37,7 +37,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.modules[self.module.module_id] = self
         self.color = self.module.gui_config().category.value
         self.valid = False
-        self.click_container = ft.Container(on_click=lambda e: self.add_connection(),tooltip=self.module.gui_config().description, height=MODULE_HEIGHT, width=MODULE_WIDTH,
+        self.click_container = ft.Container(on_click=lambda e: self.add_connection(),tooltip=self.module.gui_config().description if self.show_mode else None, height=MODULE_HEIGHT, width=MODULE_WIDTH,
                                             visible=False if not show_mode else True,bgcolor=INVALID_COLOR if not show_mode else ft.Colors.TRANSPARENT,disabled=True if not show_mode else False,border_radius=ft.border_radius.all(10))
         self.click_gesture = ft.GestureDetector(visible=False if not show_mode else True,disabled=True if not show_mode else False,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
         self.connect_button = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
