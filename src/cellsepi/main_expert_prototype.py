@@ -39,7 +39,8 @@ class PipelineGUI(ft.Stack):
         self.expand = True
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
-        self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports))
+        ports_copy = list(ports)
+        self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports_copy))
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
         self.update_all_port_icons()
 
