@@ -60,6 +60,9 @@ class Pipeline:
         if pipe is None:
             raise ValueError(f"Pipe between source module '{source_id}' and target module '{target_id}' does not exist.")
 
+        for port in pipe.ports:
+            pipe.target_module.inputs[port].data = None
+
         self.pipes_in[target_id].remove(pipe)
         self.pipes_out[source_id].remove(pipe)
 

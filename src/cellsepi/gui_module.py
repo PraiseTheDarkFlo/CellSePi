@@ -316,12 +316,7 @@ class ModuleGUI(ft.GestureDetector):
     def remove_module(self):
         """
         Removes a module and all its connections.
-        Also sets the ports they delivered over the connections to None.
         """
-        for pipe in self.pipeline_gui.pipeline.pipes_out[self.name]:
-            for port in pipe.ports:
-                pipe.target_module.inputs[port].data = None
-
         for pipe in list(self.pipeline_gui.pipeline.pipes_in[self.name]):
             self.pipeline_gui.remove_connection(self.pipeline_gui.modules[pipe.source_module.module_id],self)
         for pipe in list(self.pipeline_gui.pipeline.pipes_out[self.name]):
