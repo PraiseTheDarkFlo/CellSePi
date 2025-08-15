@@ -33,10 +33,12 @@ class PipelineGUI(ft.Stack):
         self.lines_gui = LinesGUI(self)
         self.controls.append(self.lines_gui)
         self.show_room_container = None
-        self.build_show_room()
+        self.page_stack = None
         self.delete_stack = ft.Stack()
         self.controls.append(self.delete_stack)
         self.expand = True
+        self.offset_x = 0
+        self.offset_y = 0
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
@@ -52,21 +54,23 @@ class PipelineGUI(ft.Stack):
 
     def add_show_room_module(self,module_type:ModuleType,x:float,y:float):
         module_gui = ModuleGUI(self, module_type, x, y,True)
-        self.controls.append(module_gui)
+        self.page_stack.controls.append(module_gui)
         return module_gui
 
     def refill_show_room(self,module_gui:ModuleGUI):
         new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + 50),y=module_gui.show_offset_y, show_mode=True)
-        self.controls.append(new_module_gui)
-        self.update()
+        self.page_stack.controls.append(new_module_gui)
+        self.page_stack.update()
         self.update_all_port_icons()
 
-    def build_show_room(self):
+    def build_show_room(self,page_stack:ft.Stack):
+        self.page_stack = page_stack
         x = self.page.window.width - (MODULE_WIDTH + 50)
         y = SHOWROOM_PADDING_Y
         self.show_room_container = ft.Container(top=y-SHOWROOM_PADDING_Y/2,left=x-SHOWROOM_PADDING_X/2,width=MODULE_WIDTH+SHOWROOM_PADDING_X,height=(((self.show_room_size-1)/2)*MODULE_HEIGHT)+(((self.show_room_size-1)/2)*SHOWROOM_PADDING_Y),bgcolor=MENU_COLOR,border_radius=ft.border_radius.all(10))
-        self.controls.append(self.show_room_container)
+        self.page_stack.controls.append(self.show_room_container)
         for module_type in ModuleType:
+            print(module_type)
             self.add_show_room_module(module_type,x,y)
             self.add_show_room_module(module_type,x,y)
             y += MODULE_HEIGHT + SHOWROOM_PADDING_Y
@@ -74,6 +78,7 @@ class PipelineGUI(ft.Stack):
     def update_show_room(self):
         self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + 50) - SHOWROOM_PADDING_X/2
         self.show_room_container.top = SHOWROOM_PADDING_Y - SHOWROOM_PADDING_Y/2
+        self.show_room_container.update()
         for module in self.show_room_modules:
             module.left = self.page.window.width - (MODULE_WIDTH + 50)
             module.update()
@@ -275,6 +280,7 @@ class LinesGUI(canvas.Canvas):
 class Builder:
     def __init__(self,page: ft.Page):
         self.page = page
+        self.page_stack = None
         self.pipeline_gui = PipelineGUI(page)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
@@ -293,6 +299,8 @@ class Builder:
         ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
         bottom=20,left=5,)
         self.setup()
+        self.pipeline_gui.build_show_room(self.page_stack)
+        self.page_stack.update()
 
     def delete_button_click(self):
         #for module in self.pipeline_gui.modules.values():
@@ -337,25 +345,38 @@ class Builder:
             bgcolor=ft.Colors.TRANSPARENT,
         )
 
+        def on_horizontal_scroll(e:ft.OnScrollEvent):
+            self.pipeline_gui.offset_x = e.pixels
+
+        scroll_vertical = ft.Row(
+            [work_area], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_horizontal_scroll)
+
+        def on_vertical_scroll(e:ft.OnScrollEvent):
+            self.pipeline_gui.offset_y = e.pixels
+
         scroll_area = ft.Container(
-            content=ft.Column([work_area], scroll=ft.ScrollMode.ALWAYS),
+            content=ft.Column([scroll_vertical], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_vertical_scroll),
             height=self.page.window.height,
+            width=self.page.window.width,
             expand=True,
         )
 
+
         def on_resize(e: ft.WindowResizeEvent):
             scroll_area.height = e.height
+            scroll_area.width = e.width
             self.pipeline_gui.update_show_room()
             scroll_area.update()
 
         self.page.on_resized = on_resize
 
-        self.page.add(
-            ft.Stack([
+        self.page_stack = ft.Stack([
                 scroll_area,
                 self.tools,
              ]
             )
+        self.page.add(
+            self.page_stack,
         )
 
 def main(page: ft.Page):

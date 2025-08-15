@@ -373,11 +373,15 @@ class ModuleGUI(ft.GestureDetector):
             if module is self:
                 continue
 
+            #calc the left and top values in the pipeline_gui
+            check_left = self.left if not self.show_mode else self.left+self.pipeline_gui.offset_x
+            check_top = self.top if not self.show_mode else self.top+self.pipeline_gui.offset_y
+
             overlap = not (
-                    self.left + MODULE_WIDTH < module.left or
-                    self.left > module.left + MODULE_WIDTH or
-                    self.top + MODULE_HEIGHT < module.top or
-                    self.top > module.top + MODULE_HEIGHT
+                    check_left + MODULE_WIDTH < module.left or
+                    check_left > module.left + MODULE_WIDTH or
+                    check_top + MODULE_HEIGHT < module.top or
+                    check_top > module.top + MODULE_HEIGHT
             )
 
             if overlap:
@@ -386,6 +390,7 @@ class ModuleGUI(ft.GestureDetector):
                 e.control.update()
                 return
 
+        #no need to calc cords because show_room_container and module with self.show_mode are in the same page_stack
         overlap_show_room = not (
                 self.left + MODULE_WIDTH  < self.pipeline_gui.show_room_container.left or
                 self.left > self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width or
@@ -402,6 +407,10 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.modules[self.name] = self
             self.pipeline_gui.show_room_modules.remove(self)
             self.pipeline_gui.refill_show_room(self)
+            self.pipeline_gui.page_stack.controls.remove(self)
+            self.left += self.pipeline_gui.offset_x
+            self.top += self.pipeline_gui.offset_y
+            self.pipeline_gui.controls.append(self)
             self.click_container.disabled = True
             self.click_container.bgcolor = INVALID_COLOR
             self.click_container.visible = False
@@ -409,8 +418,7 @@ class ModuleGUI(ft.GestureDetector):
             self.click_gesture.disabled = True
             self.click_gesture.visible = False
             self.delete_button.visible = True
-            self.click_container.update()
-            self.click_gesture.update()
+            self.pipeline_gui.page.update()
 
         e.control.update()
         self.pipeline_gui.lines_gui.update_lines(self)
