@@ -58,29 +58,29 @@ class PipelineGUI(ft.Stack):
         return module_gui
 
     def refill_show_room(self,module_gui:ModuleGUI):
-        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + 50),y=module_gui.show_offset_y, show_mode=True)
+        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X),y=module_gui.show_offset_y, show_mode=True)
         self.page_stack.controls.append(new_module_gui)
         self.page_stack.update()
         self.update_all_port_icons()
 
     def build_show_room(self,page_stack:ft.Stack):
         self.page_stack = page_stack
-        x = self.page.window.width - (MODULE_WIDTH + 50)
-        y = SHOWROOM_PADDING_Y
-        self.show_room_container = ft.Container(top=y-SHOWROOM_PADDING_Y/2,left=x-SHOWROOM_PADDING_X/2,width=MODULE_WIDTH+SHOWROOM_PADDING_X,height=(((self.show_room_size-1)/2)*MODULE_HEIGHT)+(((self.show_room_size-1)/2)*SHOWROOM_PADDING_Y),bgcolor=MENU_COLOR,border_radius=ft.border_radius.all(10))
+        x = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X)
+        y = SHOWROOM_SPACING_Y
+        self.show_room_container = ft.Container(top=y - SHOWROOM_SPACING_Y / 2, left=x - SHOWROOM_SPACING_X / 2, width=MODULE_WIDTH + SHOWROOM_SPACING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SHOWROOM_SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10))
         self.page_stack.controls.append(self.show_room_container)
         for module_type in ModuleType:
             print(module_type)
             self.add_show_room_module(module_type,x,y)
             self.add_show_room_module(module_type,x,y)
-            y += MODULE_HEIGHT + SHOWROOM_PADDING_Y
+            y += MODULE_HEIGHT + SHOWROOM_SPACING_Y
 
     def update_show_room(self):
-        self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + 50) - SHOWROOM_PADDING_X/2
-        self.show_room_container.top = SHOWROOM_PADDING_Y - SHOWROOM_PADDING_Y/2
+        self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X) - SHOWROOM_SPACING_X / 2
+        self.show_room_container.top = SHOWROOM_SPACING_Y - SHOWROOM_SPACING_Y / 2
         self.show_room_container.update()
         for module in self.show_room_modules:
-            module.left = self.page.window.width - (MODULE_WIDTH + 50)
+            module.left = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X)
             module.update()
 
     def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
@@ -291,16 +291,31 @@ class Builder:
                                            style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                            tooltip="Show which ports get transferred", hover_color=ft.Colors.WHITE12)
+
+        self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e))
+        self.horizontal_scroll_bar = ft.Container(ft.Container(ft.Column(
+            [self.slider_horizontal,
+            ]
+        ), bgcolor=MENU_COLOR, expand=True
+        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+        bottom=20,left=self.page.window.width/2-400/2,width=400,height=40)
+
         self.tools = ft.Container(ft.Container(ft.Column(
             [
                 self.delete_button,self.port_button
             ], tight=True
         ), bgcolor=MENU_COLOR, expand=True,width=40
-        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(100),
         bottom=20,left=5,)
+        self.scroll_horizontal_row = None
+        self.work_area = None
         self.setup()
         self.pipeline_gui.build_show_room(self.page_stack)
         self.page_stack.update()
+
+    def scroll_horizontal(self,e):
+        self.scroll_horizontal_row.scroll_to(self.work_area.width*e.control.value, duration=1000)
+        self.scroll_horizontal_row.update()
 
     def delete_button_click(self):
         #for module in self.pipeline_gui.modules.values():
@@ -338,24 +353,23 @@ class Builder:
 
 
     def setup(self):
-        work_area = ft.Container(
+        self.work_area = ft.Container(
             content=self.pipeline_gui,
             width=10000,
             height=10000,
             bgcolor=ft.Colors.TRANSPARENT,
         )
-
         def on_horizontal_scroll(e:ft.OnScrollEvent):
             self.pipeline_gui.offset_x = e.pixels
 
-        scroll_vertical = ft.Row(
-            [work_area], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_horizontal_scroll)
+        self.scroll_horizontal_row = ft.Row(
+            [self.work_area], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_horizontal_scroll)
 
         def on_vertical_scroll(e:ft.OnScrollEvent):
             self.pipeline_gui.offset_y = e.pixels
 
         scroll_area = ft.Container(
-            content=ft.Column([scroll_vertical], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_vertical_scroll),
+            content=ft.Column([self.scroll_horizontal_row], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_vertical_scroll),
             height=self.page.window.height,
             width=self.page.window.width,
             expand=True,
@@ -365,6 +379,8 @@ class Builder:
         def on_resize(e: ft.WindowResizeEvent):
             scroll_area.height = e.height
             scroll_area.width = e.width
+            self.horizontal_scroll_bar.left = e.width/2 - self.horizontal_scroll_bar.width/2
+            self.horizontal_scroll_bar.update()
             self.pipeline_gui.update_show_room()
             scroll_area.update()
 
@@ -373,6 +389,7 @@ class Builder:
         self.page_stack = ft.Stack([
                 scroll_area,
                 self.tools,
+                self.horizontal_scroll_bar,
              ]
             )
         self.page.add(
