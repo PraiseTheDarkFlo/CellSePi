@@ -9,6 +9,7 @@ from attr.validators import disabled
 from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
+from cellsepi.frontend.main_window.gui_directory import format_directory_path
 from cellsepi.gui_module import ModuleGUI
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
@@ -296,6 +297,63 @@ class Builder:
         self.page = page
         self.page_stack = None
         self.pipeline_gui = PipelineGUI(page)
+        self.save_dir = ""
+        self.name = ""
+        file_picker = ft.FilePicker(
+            on_result=lambda a: self.on_select_file(a))
+        self.pipeline_gui.page.overlay.extend([file_picker])
+        self.load_button = ft.IconButton(icon=ft.Icons.UPLOAD_FILE, on_click=lambda e: file_picker.pick_files(allow_multiple=False),
+                                         icon_color=WHITE60,
+                                         style=ft.ButtonStyle(
+                                             shape=ft.RoundedRectangleBorder(radius=12), ),
+                                         tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
+
+        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.save_button_click(),
+                                           icon_color=WHITE60,
+                                           style=ft.ButtonStyle(
+                                               shape=ft.RoundedRectangleBorder(radius=12), ),
+                                           tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+        ref = ft.Ref[ft.Text]()
+        choose_name = ft.TextField(
+            label="Pipeline name",
+            border_color=ft.Colors.BLUE_ACCENT,
+            value="",
+            color=ft.Colors.WHITE60,
+            ref=ref,
+            on_blur=lambda e, reference=ref: self.on_change(e,reference),label_style=ft.TextStyle(color=ft.Colors.WHITE60),
+            height=60,width=185
+        )
+        text_field = ft.TextField(
+            label="Save directory",
+            border_color=ft.Colors.WHITE60,
+            value=None,
+            height=60,
+            color=ft.Colors.WHITE60,width=250,
+            read_only=True,label_style=ft.TextStyle(color=ft.Colors.WHITE60),
+        )
+        dir_picker = ft.FilePicker(
+            on_result=lambda a, text=text_field: self.on_select_dir(a,text))
+        self.page.overlay.extend([dir_picker])
+        directory_stack = ft.Stack([text_field, ft.Container(
+            content=ft.IconButton(
+                icon=ft.Icons.FOLDER_OPEN,icon_color=ft.Colors.BLUE_400,
+                tooltip="Choose directory",hover_color=ft.Colors.WHITE12,
+                on_click=lambda e: dir_picker.get_directory_path(),
+            ),
+            alignment=ft.alignment.top_right, right=10, top=5
+        )
+        ])
+        save_row = ft.Row([choose_name, ft.TextButton("Save",style=ft.ButtonStyle(
+                color=ft.Colors.BLUE_400,
+                overlay_color=ft.Colors.WHITE12,
+            ),)],tight=True)
+        self.save_menu = ft.Container(ft.Container(ft.Column(
+                [
+                    directory_stack,save_row,
+                ], tight=True,spacing=2
+            ), bgcolor=MENU_COLOR, expand=True,padding=10
+            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+            bottom=20,left=60,visible=False)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -315,7 +373,7 @@ class Builder:
         bottom=20,left=self.page.window.width/2-400/2,width=400,height=40)
         self.tools = ft.Container(ft.Container(ft.Column(
                 [
-                    self.delete_button,self.port_button
+                    self.load_button, self.save_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True,width=40
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
@@ -349,6 +407,40 @@ class Builder:
         self.page_stack.controls.append(self.switch_pages)
         self.page_stack.update()
 
+
+    def on_change(self,e,reference):
+        """
+        Handles if the name to save gets changed.
+        """
+        try:
+            self.name = str(e.control.value)
+            reference.current.color = ft.Colors.WHITE60
+            self.pipeline_gui.page.update()
+        except ValueError:
+            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"Pipeline name only allows str's."))
+            self.pipeline_gui.page.snack_bar.open = True
+            reference.current.value = self.name
+            reference.current.color = ft.Colors.RED
+            self.pipeline_gui.page.update()
+
+    def on_select_file(self, e):
+        """
+        Handles if a file is selected.
+        """
+        if e.files is not None:
+            #TODO: LOAD FILE with path
+            pass
+
+    def on_select_dir(self,e,text):
+        """
+        Handles if a directory is selected.
+        """
+        if e.path is not None:
+            self.save_dir = e.path
+            text.value = format_directory_path(e.path,20)
+            text.update()
+            self.page.update()
+
     def press_page_up(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
         if self.pipeline_gui.show_room_page_number > 0:
@@ -375,17 +467,31 @@ class Builder:
         self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
         self.scroll_horizontal_row.update()
 
+    def save_button_click(self):
+        if self.save_menu.visible:
+            self.save_button.icon_color = WHITE60
+            self.save_button.tooltip = f"Show save menu"
+            self.save_button.update()
+            self.save_menu.visible = False
+            self.save_menu.update()
+        else:
+            self.save_button.icon_color = ft.Colors.BLUE_400
+            self.save_button.tooltip = f"Hide save menu"
+            self.save_button.update()
+            self.save_menu.visible = True
+            self.save_menu.update()
+
     def delete_button_click(self):
         #for module in self.pipeline_gui.modules.values():
         #    print(module.name,module.left,module.top)
         if self.pipeline_gui.show_delete_button:
             self.delete_button.icon_color = WHITE60
-            self.delete_button.tooltip = f"Hide Delete Buttons"
+            self.delete_button.tooltip = f"Show delete buttons"
             self.pipeline_gui.show_delete_button = False
             self.pipeline_gui.lines_gui.update_all()
         else:
             self.delete_button.icon_color = ft.Colors.BLUE_400
-            self.delete_button.tooltip = f"Show Delete Buttons"
+            self.delete_button.tooltip = f"Hide delete buttons"
             self.pipeline_gui.show_delete_button = True
             if self.pipeline_gui.show_ports:
                 self.port_button_click()
@@ -396,12 +502,12 @@ class Builder:
     def port_button_click(self):
         if self.pipeline_gui.show_ports:
             self.port_button.icon_color = WHITE60
-            self.port_button.tooltip = f"Show which Ports get transferred"
+            self.port_button.tooltip = f"Show which ports get transferred"
             self.pipeline_gui.show_ports = False
             self.pipeline_gui.lines_gui.update_all()
         else:
             self.port_button.icon_color = ft.Colors.BLUE_400
-            self.port_button.tooltip = f"Hide which Ports get transferred"
+            self.port_button.tooltip = f"Hide which ports get transferred"
             self.pipeline_gui.show_ports = True
             if self.pipeline_gui.show_delete_button:
                 self.delete_button_click()
@@ -453,6 +559,7 @@ class Builder:
         self.page_stack = ft.Stack([
                 scroll_area,
                 self.tools,
+                self.save_menu,
                 self.horizontal_scroll_bar,
              ]
             )

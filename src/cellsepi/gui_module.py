@@ -493,7 +493,7 @@ class ModuleGUI(ft.GestureDetector):
                 items.append(ft.Stack([text_field,ft.Container(
                                 content=ft.IconButton(
                                     icon=ft.Icons.UPLOAD_FILE,
-                                    tooltip="Pick File",
+                                    tooltip="Pick file",
                                     on_click=lambda e: file_picker.pick_files(allow_multiple=False),
                                 ),
                                 alignment=ft.alignment.top_right
@@ -515,7 +515,7 @@ class ModuleGUI(ft.GestureDetector):
                 items.append(ft.Stack([text_field, ft.Container(
                         content=ft.IconButton(
                             icon=ft.Icons.FOLDER_OPEN,
-                            tooltip="Open Directory",
+                            tooltip="Choose directory",
                             on_click=lambda e: dir_picker.get_directory_path(),
                         ),
                         alignment=ft.alignment.top_right,right=10,top=5
