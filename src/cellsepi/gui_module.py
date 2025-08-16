@@ -11,7 +11,7 @@ class ModuleGUI(ft.GestureDetector):
     """
     Manages the GUI parts of the module.
     """
-    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False):
+    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False,visible=True,index:int=None):
         super().__init__()
         self.pipeline_gui = pipeline_gui
         self.detection: bool = True
@@ -19,6 +19,7 @@ class ModuleGUI(ft.GestureDetector):
         self.mouse_cursor = ft.MouseCursor.MOVE
         self.show_mode = show_mode
         self.drag_interval = 5
+        self.visible = visible
         self.on_pan_start = self.start_drag
         self.on_pan_update = self.drag
         self.on_pan_end = self.drop
@@ -32,7 +33,10 @@ class ModuleGUI(ft.GestureDetector):
         if self.module.settings is None and hasattr(self.module, "_settings"):
             self.module._settings = self.generate_options_overlay()
         if show_mode:
-            self.pipeline_gui.show_room_modules.append(self)
+            if index is None:
+                self.pipeline_gui.show_room_modules.append(self)
+            else:
+                self.pipeline_gui.show_room_modules.insert(index,self)
         else:
             self.pipeline_gui.modules[self.module.module_id] = self
         self.color = self.module.gui_config().category.value
@@ -56,11 +60,11 @@ class ModuleGUI(ft.GestureDetector):
                                                           shape=ft.RoundedRectangleBorder(radius=12),
                                                       ), on_click=lambda e: self.copy_module(),
                                             tooltip="Copy module", hover_color=ft.Colors.WHITE12,)
-        self.start_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, icon_color=ft.Colors.BLACK12,disabled=True,
-                                         style=ft.ButtonStyle(
+        self.start_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, icon_color=DISABLED_BUTTONS_COLOR, disabled=True,
+                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12),
                                          ), on_click=lambda e: self.copy_module(),
-                                         tooltip="Start pipeline from here", hover_color=ft.Colors.WHITE12, )
+                                          tooltip="Start pipeline from here", hover_color=ft.Colors.WHITE12, )
 
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
@@ -405,8 +409,9 @@ class ModuleGUI(ft.GestureDetector):
         elif self.show_mode:
             self.show_mode = False
             self.pipeline_gui.modules[self.name] = self
+            index = self.pipeline_gui.show_room_modules.index(self)
             self.pipeline_gui.show_room_modules.remove(self)
-            self.pipeline_gui.refill_show_room(self)
+            self.pipeline_gui.refill_show_room(self,self.visible,index)
             self.pipeline_gui.page_stack.controls.remove(self)
             self.left += self.pipeline_gui.offset_x
             self.top += self.pipeline_gui.offset_y

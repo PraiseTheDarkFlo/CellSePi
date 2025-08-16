@@ -5,6 +5,7 @@ from typing import List, Tuple
 import flet as ft
 import flet.canvas as canvas
 from PyQt5.QtCore import QPointF
+from attr.validators import disabled
 from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
@@ -22,7 +23,7 @@ class PipelineGUI(ft.Stack):
         self.pipeline = Pipeline()
         self.page = page
         self.modules = {} #identiefierer is the module_id
-        self.show_room_size = len(ModuleType)*2+1
+        self.show_room_size = SHOWROOM_MODULE_COUNT*2+1
         self.show_room_modules = []
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
@@ -33,6 +34,8 @@ class PipelineGUI(ft.Stack):
         self.lines_gui = LinesGUI(self)
         self.controls.append(self.lines_gui)
         self.show_room_container = None
+        self.show_room_page_number: int = 0
+        self.show_room_max_page_number: int = 0
         self.page_stack = None
         self.delete_stack = ft.Stack()
         self.controls.append(self.delete_stack)
@@ -52,13 +55,13 @@ class PipelineGUI(ft.Stack):
         self.check_for_valid()
         self.update_all_port_icons()
 
-    def add_show_room_module(self,module_type:ModuleType,x:float,y:float):
-        module_gui = ModuleGUI(self, module_type, x, y,True)
+    def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True):
+        module_gui = ModuleGUI(self, module_type, x, y,True,visible)
         self.page_stack.controls.append(module_gui)
         return module_gui
 
-    def refill_show_room(self,module_gui:ModuleGUI):
-        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X),y=module_gui.show_offset_y, show_mode=True)
+    def refill_show_room(self,module_gui:ModuleGUI,visible:bool=True,index:int=None):
+        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X),y=module_gui.show_offset_y, show_mode=True,visible=visible,index=index)
         self.page_stack.controls.append(new_module_gui)
         self.page_stack.update()
         self.update_all_port_icons()
@@ -69,11 +72,22 @@ class PipelineGUI(ft.Stack):
         y = SHOWROOM_SPACING_Y
         self.show_room_container = ft.Container(top=y - SHOWROOM_SPACING_Y / 2, left=x - SHOWROOM_SPACING_X / 2, width=MODULE_WIDTH + SHOWROOM_SPACING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SHOWROOM_SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10))
         self.page_stack.controls.append(self.show_room_container)
-        for module_type in ModuleType:
-            print(module_type)
-            self.add_show_room_module(module_type,x,y)
-            self.add_show_room_module(module_type,x,y)
-            y += MODULE_HEIGHT + SHOWROOM_SPACING_Y
+        self.show_room_max_page_number = math.ceil(len(ModuleType) / SHOWROOM_MODULE_COUNT)
+        for i,module_type in enumerate(ModuleType):
+            visible = i < SHOWROOM_MODULE_COUNT
+            y_module = y+ (MODULE_HEIGHT + SHOWROOM_SPACING_Y) * (i%SHOWROOM_MODULE_COUNT)
+            self.add_show_room_module(module_type,x,y_module,visible)
+            self.add_show_room_module(module_type,x,y_module,visible)
+
+    def change_page(self,page_number:int):
+        self.show_room_page_number = page_number
+        for i,module in enumerate(self.show_room_modules):
+            module_page = (i//2) // SHOWROOM_MODULE_COUNT
+            if module_page == self.show_room_page_number:
+                module.visible = True
+            else:
+                module.visible = False
+            module.update()
 
     def update_show_room(self):
         self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X) - SHOWROOM_SPACING_X / 2
@@ -299,19 +313,63 @@ class Builder:
         ), bgcolor=MENU_COLOR, expand=True
         ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
         bottom=20,left=self.page.window.width/2-400/2,width=400,height=40)
-
         self.tools = ft.Container(ft.Container(ft.Column(
-            [
-                self.delete_button,self.port_button
-            ], tight=True
-        ), bgcolor=MENU_COLOR, expand=True,width=40
-        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(100),
-        bottom=20,left=5,)
+                [
+                    self.delete_button,self.port_button
+                ], tight=True,spacing=2
+            ), bgcolor=MENU_COLOR, expand=True,width=40
+            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+            bottom=20,left=5)
         self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
         self.pipeline_gui.build_show_room(self.page_stack)
+
+
+        self.page_up = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_up(),
+                                     icon_color=ft.Colors.BLUE_400,
+                                     style=ft.ButtonStyle(
+                                         shape=ft.RoundedRectangleBorder(radius=12), ),
+                                     visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False,
+                                     tooltip="Page up", hover_color=ft.Colors.WHITE12)
+        self.page_down = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_down(),
+                                       icon_color=ft.Colors.WHITE60,
+                                       style=ft.ButtonStyle(
+                                           shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
+                                       tooltip="Page down", hover_color=ft.Colors.WHITE12,visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
+
+        self.switch_pages = ft.Container(ft.Container(ft.Row(
+                    [
+                        self.page_down, self.page_up,
+                    ], tight=True,spacing=2
+                ), bgcolor=MENU_COLOR, expand=True, height=40
+                ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
+                    top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
+                    left=self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width-82, )
+        self.page_stack.controls.append(self.switch_pages)
         self.page_stack.update()
+
+    def press_page_up(self):
+        self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
+        if self.pipeline_gui.show_room_page_number > 0:
+            self.page_down.icon_color = ft.Colors.BLUE_400
+            self.page_down.disabled = False
+            self.page_down.update()
+        if self.pipeline_gui.show_room_page_number >= self.pipeline_gui.show_room_max_page_number-1:
+            self.page_up.icon_color = ft.Colors.WHITE60
+            self.page_up.disabled = True
+            self.page_up.update()
+
+    def press_page_down(self):
+        self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number-1)
+        if self.pipeline_gui.show_room_page_number == 0:
+            self.page_down.icon_color = ft.Colors.WHITE60
+            self.page_down.disabled = True
+            self.page_down.update()
+        if self.pipeline_gui.show_room_page_number < self.pipeline_gui.show_room_max_page_number-1:
+            self.page_up.icon_color = ft.Colors.BLUE_400
+            self.page_up.disabled = False
+            self.page_up.update()
 
     def scroll_horizontal(self,e):
         self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
@@ -361,10 +419,9 @@ class Builder:
         )
         def on_horizontal_scroll(e:ft.OnScrollEvent):
             new_slider_value = e.pixels/(self.work_area.width-self.page.window.width)
-            if new_slider_value < 0 or new_slider_value > 1:
-                return
-            self.slider_horizontal.value = new_slider_value
-            self.slider_horizontal.update()
+            if not(new_slider_value < 0 or new_slider_value > 1):
+                self.slider_horizontal.value = new_slider_value
+                self.slider_horizontal.update()
             self.pipeline_gui.offset_x = e.pixels
 
         self.scroll_horizontal_row = ft.Row(
@@ -387,6 +444,8 @@ class Builder:
             self.horizontal_scroll_bar.left = e.width/2 - self.horizontal_scroll_bar.width/2
             self.horizontal_scroll_bar.update()
             self.pipeline_gui.update_show_room()
+            self.switch_pages.left = self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width - 82
+            self.switch_pages.update()
             scroll_area.update()
 
         self.page.on_resized = on_resize
