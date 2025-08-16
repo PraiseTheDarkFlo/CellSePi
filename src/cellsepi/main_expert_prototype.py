@@ -292,7 +292,7 @@ class Builder:
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                            tooltip="Show which ports get transferred", hover_color=ft.Colors.WHITE12)
 
-        self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e))
+        self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
         self.horizontal_scroll_bar = ft.Container(ft.Container(ft.Column(
             [self.slider_horizontal,
             ]
@@ -314,7 +314,7 @@ class Builder:
         self.page_stack.update()
 
     def scroll_horizontal(self,e):
-        self.scroll_horizontal_row.scroll_to(self.work_area.width*e.control.value, duration=1000)
+        self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
         self.scroll_horizontal_row.update()
 
     def delete_button_click(self):
@@ -360,6 +360,11 @@ class Builder:
             bgcolor=ft.Colors.TRANSPARENT,
         )
         def on_horizontal_scroll(e:ft.OnScrollEvent):
+            new_slider_value = e.pixels/(self.work_area.width-self.page.window.width)
+            if new_slider_value < 0 or new_slider_value > 1:
+                return
+            self.slider_horizontal.value = new_slider_value
+            self.slider_horizontal.update()
             self.pipeline_gui.offset_x = e.pixels
 
         self.scroll_horizontal_row = ft.Row(
@@ -392,6 +397,7 @@ class Builder:
                 self.horizontal_scroll_bar,
              ]
             )
+
         self.page.add(
             self.page_stack,
         )

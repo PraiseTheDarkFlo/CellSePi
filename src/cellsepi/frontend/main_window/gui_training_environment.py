@@ -20,7 +20,7 @@ class Training(ft.Container):
             ),
             on_click=lambda e: self.change_environment(e),
         )
-        self.switch_icon = ft.Icon(ft.icons.MODEL_TRAINING)
+        self.switch_icon = ft.Icon(ft.Icons.MODEL_TRAINING)
         self.button_training_environment_menu = ft.PopupMenuButton(
             items=[self.button_event],
             content=self.switch_icon,
@@ -32,7 +32,7 @@ class Training(ft.Container):
         self.alignment = ft.alignment.top_right
         self.start_button = ft.ElevatedButton(
             text="Start",
-            icon=ft.icons.PLAY_CIRCLE,
+            icon=ft.Icons.PLAY_CIRCLE,
             tooltip="Start the training epochs",
             disabled=True,
             on_click=self.start_training,
@@ -48,7 +48,7 @@ class Training(ft.Container):
         self.weight = 1e-4  # standard value for the weight
         self.model_name = "new_model"
         self.re_train_model_name = None
-        self.color = ft.colors.BLUE_400
+        self.color = ft.Colors.BLUE_400
         self.progress_bar_text = ft.Text("")
 
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -63,7 +63,7 @@ class Training(ft.Container):
                 ft.dropdown.Option("cyto"),
                 ft.dropdown.Option("cyto2"),
                 ft.dropdown.Option("cyto3")
-            ],border_color=ft.colors.BLUE_400,
+            ],border_color=ft.Colors.BLUE_400,
             on_change=lambda e: self.changed_input("modeltype", e),expand=True,
         )
         self.re_train_model = ft.Checkbox(value=False, label="Retrain Model",on_change=lambda e: self.change_re_train_model())
@@ -83,14 +83,14 @@ class Training(ft.Container):
                 self.gui.csp.re_train_model_path = e.files[0].path
                 self.field_model_name.value = e.files[0].name
                 self.re_train_model_name = e.files[0].name
-                self.field_model_name.color = ft.colors.BLUE_400
+                self.field_model_name.color = ft.Colors.BLUE_400
                 self.gui.page.update()
 
         pick_model_dialog = ft.FilePicker(on_result=pick_model_result)
         self.gui.page.overlay.extend([pick_model_dialog])
 
         self.re_train_model_chooser = ft.IconButton(
-                icon=ft.icons.UPLOAD_FILE,
+                icon=ft.Icons.UPLOAD_FILE,
                 tooltip="Choose model to retrain",
                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False,
                                                                 initial_directory=self.model_directory),disabled=True
@@ -118,7 +118,7 @@ class Training(ft.Container):
         self.directory_stack = ft.Stack([self.field_directory,ft.Container(
                             content=ft.Container(
                                 content=ft.IconButton(
-                                    icon=ft.icons.COPY,
+                                    icon=ft.Icons.COPY,
                                     tooltip="Copy to clipboard",
                                     on_click=lambda e: copy_to_clipboard(self.gui.page,self.model_directory,"Model directory")
                                 ),
@@ -141,7 +141,7 @@ class Training(ft.Container):
             self.model_dropdown.visible = False
             if self.re_train_model_name is not None:
                 self.field_model_name.value = self.re_train_model_name
-                self.field_model_name.color = ft.colors.BLUE_400
+                self.field_model_name.color = ft.Colors.BLUE_400
             else:
                 self.field_model_name.value = None
         else:
@@ -234,7 +234,7 @@ class Training(ft.Container):
 
         text = ft.Text("Training")
         title = ft.ListTile(
-            leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
+            leading=ft.Icon(name=ft.Icons.HUB_OUTLINED),
             title=text,
         )
         pick_model_row = ft.Row(

@@ -76,24 +76,24 @@ class ModuleGUI(ft.GestureDetector):
                                         ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH
                                         )
 
-        self.delete_button = ft.IconButton(ft.icons.CLOSE,visible=True if not show_mode else False,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
+        self.delete_button = ft.IconButton(ft.Icons.CLOSE,visible=True if not show_mode else False,icon_color=ft.Colors.WHITE,hover_color=ft.Colors.WHITE12,tooltip="Delete Module",on_click=lambda e:self.remove_module())
         self.port_chips = self.get_ports_row()
         self.connection_ports = ft.Container(
             self.port_chips,visible=False
         )
 
         control_list_ports = []
-        self.in_ports_icons = {}
-        self.in_ports_icons_occupied = {}
+        self.in_ports_Icons = {}
+        self.in_ports_Icons_occupied = {}
         for port in self.module.inputs.values():
             if not port.opt:
-                self.in_ports_icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
-                self.in_ports_icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and is satisfied.")],alignment=ft.alignment.center,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and is satisfied.")],alignment=ft.alignment.center,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
             else:
-                self.in_ports_icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and has no incoming pipe.")],alignment=ft.alignment.center,opacity=0.2,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
-                self.in_ports_icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and is satisfied.")],alignment=ft.alignment.center,opacity=0.2,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and has no incoming pipe.")],alignment=ft.alignment.center,opacity=0.2,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and is satisfied.")],alignment=ft.alignment.center,opacity=0.2,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
 
-        in_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE),self.in_ports_icons[port.name],self.in_ports_icons_occupied[port.name]]) for port in self.module.inputs.values()],spacing=0)
+        in_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE),self.in_ports_Icons[port.name],self.in_ports_Icons_occupied[port.name]]) for port in self.module.inputs.values()],spacing=0)
         out_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE)]) for port in self.module.outputs.values()])
         input_text=ft.Text("Inputs:",size=20,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE)
         output_text=ft.Text("Outputs:",size=20,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE)
@@ -164,18 +164,18 @@ class ModuleGUI(ft.GestureDetector):
 
     def update_port_icons(self):
         """
-        Updates all ports_icons of the show ports tab.
+        Updates all ports_Icons of the show ports tab.
         """
         for port in self.module.inputs.keys():
             if self.pipeline_gui.pipeline.check_ports_occupied(self.name, [port]):
-                self.in_ports_icons[port].visible = False
-                self.in_ports_icons_occupied[port].visible = True
+                self.in_ports_Icons[port].visible = False
+                self.in_ports_Icons_occupied[port].visible = True
             else:
-                self.in_ports_icons[port].visible = True
-                self.in_ports_icons_occupied[port].visible = False
+                self.in_ports_Icons[port].visible = True
+                self.in_ports_Icons_occupied[port].visible = False
 
-            self.in_ports_icons[port].update()
-            self.in_ports_icons_occupied[port].update()
+            self.in_ports_Icons[port].update()
+            self.in_ports_Icons_occupied[port].update()
 
             self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
             self.module_container.update()
@@ -468,7 +468,7 @@ class ModuleGUI(ft.GestureDetector):
                 ref = ft.Ref[ft.Text]()
                 items.append(ft.TextField(
                             label=attribute_name.removeprefix("user_"),
-                            border_color=ft.colors.BLUE_ACCENT,
+                            border_color=ft.Colors.BLUE_ACCENT,
                             value=value,
                             ref=ref,
                             on_blur=lambda e,attr_name= attribute_name,reference=ref,type_atr = typ: self.on_change(e,attr_name,reference,type_atr),
@@ -477,7 +477,7 @@ class ModuleGUI(ft.GestureDetector):
             elif typ == FilePath:
                 text_field = ft.TextField(
                     label=attribute_name.removeprefix("user_"),
-                    border_color=ft.colors.BLUE_ACCENT,
+                    border_color=ft.Colors.BLUE_ACCENT,
                     value=format_directory_path(value.path,50),
                     height=60,
                     read_only=True,
@@ -487,7 +487,7 @@ class ModuleGUI(ft.GestureDetector):
                 self.pipeline_gui.page.overlay.extend([file_picker])
                 items.append(ft.Stack([text_field,ft.Container(
                                 content=ft.IconButton(
-                                    icon=ft.icons.UPLOAD_FILE,
+                                    icon=ft.Icons.UPLOAD_FILE,
                                     tooltip="Pick File",
                                     on_click=lambda e: file_picker.pick_files(allow_multiple=False),
                                 ),
@@ -497,7 +497,7 @@ class ModuleGUI(ft.GestureDetector):
             elif typ == DirectoryPath:
                 text_field = ft.TextField(
                     label=attribute_name.removeprefix("user_"),
-                    border_color=ft.colors.BLUE_ACCENT,
+                    border_color=ft.Colors.BLUE_ACCENT,
                     value=format_directory_path(value.path, 50),
                     height=60,
                     read_only=True,
@@ -509,7 +509,7 @@ class ModuleGUI(ft.GestureDetector):
                 self.pipeline_gui.page.overlay.extend([dir_picker])
                 items.append(ft.Stack([text_field, ft.Container(
                         content=ft.IconButton(
-                            icon=ft.icons.FOLDER_OPEN,
+                            icon=ft.Icons.FOLDER_OPEN,
                             tooltip="Open Directory",
                             on_click=lambda e: dir_picker.get_directory_path(),
                         ),
@@ -553,7 +553,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s."))
             self.pipeline_gui.page.snack_bar.open = True
             reference.current.value = getattr(self.module, attr_name)
-            reference.current.color = ft.colors.RED
+            reference.current.color = ft.Colors.RED
             self.pipeline_gui.page.update()
 
     def open_options(self,e):

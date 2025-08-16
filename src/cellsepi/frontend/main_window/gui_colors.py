@@ -41,12 +41,12 @@ class ColorSelection:
         color_mask = rgb_to_hex(self.config.get_mask_color())
         color_outline = rgb_to_hex(self.config.get_outline_color())
         self.color_picker = ColorPicker(color=color_mask, width=430)
-        self.color_picker.hex.border_color=ft.colors.BLUE_ACCENT
-        self.color_picker.r.border_color=ft.colors.BLUE_ACCENT
-        self.color_picker.g.border_color=ft.colors.BLUE_ACCENT
-        self.color_picker.b.border_color=ft.colors.BLUE_ACCENT
-        self.color_icon_mask = ft.IconButton(icon=ft.icons.BRIGHTNESS_1_ROUNDED,icon_color=color_mask, on_click=self.open_color_picker_mask)
-        self.color_icon_outline = ft.IconButton(icon=ft.icons.BRIGHTNESS_1_ROUNDED, icon_color=color_outline, on_click=self.open_color_picker_outline)
+        self.color_picker.hex.border_color=ft.Colors.BLUE_ACCENT
+        self.color_picker.r.border_color=ft.Colors.BLUE_ACCENT
+        self.color_picker.g.border_color=ft.Colors.BLUE_ACCENT
+        self.color_picker.b.border_color=ft.Colors.BLUE_ACCENT
+        self.color_icon_mask = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED,icon_color=color_mask, on_click=self.open_color_picker_mask)
+        self.color_icon_outline = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED, icon_color=color_outline, on_click=self.open_color_picker_outline)
         self.color_type = None
         self.dialog = ft.CupertinoBottomSheet(
             content=ft.Column([ft.Card(content=ft.Stack([ft.Container(ft.ListTile(height=370,width=430),padding=10),ft.Container(ft.Column(

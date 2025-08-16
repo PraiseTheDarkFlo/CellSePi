@@ -130,7 +130,7 @@ class DirectoryCard(ft.Card):
             self.icon_x = {}
 
     def create_path_list_tile(self):
-        return ft.ListTile(leading=ft.Icon(name=ft.icons.FOLDER_OPEN),
+        return ft.ListTile(leading=ft.Icon(name=ft.Icons.FOLDER_OPEN),
                     title=self.formatted_path,
                     subtitle=self.count_results_txt
                     )
@@ -384,7 +384,7 @@ class DirectoryCard(ft.Card):
                 self.selected_images_visualise[image_id][channel_id] = ft.Container(
                     width=154,
                     height=154,
-                    border=ft.border.all(4, ft.colors.ORANGE_700),
+                    border=ft.border.all(4, ft.Colors.ORANGE_700),
                     alignment=ft.alignment.center,
                     visible=False,
                     padding=5
@@ -453,7 +453,7 @@ class DirectoryCard(ft.Card):
         [
             ft.ElevatedButton(
                 "Open Directory",
-                icon=ft.icons.FOLDER_OPEN,
+                icon=ft.Icons.FOLDER_OPEN,
                 on_click=lambda _: self.get_directory_dialog.get_directory_path(),
                 disabled=self.gui.page.web,
             ),
@@ -467,7 +467,7 @@ class DirectoryCard(ft.Card):
         [
             ft.ElevatedButton(
                 "Pick File",
-                icon=ft.icons.UPLOAD_FILE,
+                icon=ft.Icons.UPLOAD_FILE,
                 on_click=lambda _: self.pick_files_dialog.pick_files(allow_multiple=False),
             )
         ], alignment=ft.MainAxisAlignment.START  # Change alignment to extend fully to the left
@@ -515,7 +515,7 @@ class DirectoryCard(ft.Card):
                         ft.Container(
                             content=ft.Container(
                                 content=ft.IconButton(
-                                    icon=ft.icons.COPY,
+                                    icon=ft.Icons.COPY,
                                     tooltip="Copy to clipboard",
                                     on_click=lambda e: copy_to_clipboard(self.gui.page,self.gui.directory.directory_path.value,"Directory path")
                                 ),

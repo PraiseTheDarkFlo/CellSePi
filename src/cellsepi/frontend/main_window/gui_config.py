@@ -146,7 +146,7 @@ class GUIConfig:
                     width=200,
                     on_blur=lambda e,i=i:self.text_field_written(e,i),
                     visible = False,
-                    border_color=ft.colors.BLUE_ACCENT,
+                    border_color=ft.Colors.BLUE_ACCENT,
                 ),
                 "button": ft.TextButton(
                     content=ft.Text(profile, size=20),
@@ -272,13 +272,13 @@ class GUIConfig:
                         self.name_items[i]["textfield"],
                         self.name_items[i]["button"],
                         ft.IconButton(
-                            icon=ft.icons.DELETE,
-                            icon_color=ft.colors.RED,
+                            icon=ft.Icons.DELETE,
+                            icon_color=ft.Colors.RED,
                             on_click=lambda e, i=i: self.remove_profile(e, i),
                         ),
                         ft.IconButton(
-                            icon=ft.icons.DRAW,
-                            icon_color=ft.colors.BLUE,
+                            icon=ft.Icons.DRAW,
+                            icon_color=ft.Colors.BLUE,
                             on_click=lambda e, i=i: self.text_field_activate(e, i),
                         ),
                     ],
@@ -293,8 +293,8 @@ class GUIConfig:
                         self.name_items[i]["textfield"],
                         self.name_items[i]["button"],
                         ft.IconButton(
-                            icon=ft.icons.DRAW,
-                            icon_color=ft.colors.BLUE,
+                            icon=ft.Icons.DRAW,
+                            icon_color=ft.Colors.BLUE,
                             on_click=lambda e, i=i: self.text_field_activate(e, i),
                         ),
                     ],
@@ -328,7 +328,7 @@ class GUIConfig:
         except ValueError:
             self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel must be not empty!"))
             self.page.snack_bar.open = True
-            self.txt_bf_ref.current.color = ft.colors.RED
+            self.txt_bf_ref.current.color = ft.Colors.RED
             self.page.update()
 
     def ms_updater(self, e):
@@ -349,7 +349,7 @@ class GUIConfig:
         else:
             self.page.snack_bar = ft.SnackBar(ft.Text("Mask suffix must be not empty!"))
             self.page.snack_bar.open = True
-            self.txt_ms_ref.current.color = ft.colors.RED
+            self.txt_ms_ref.current.color = ft.Colors.RED
             self.page.update()
 
     def cp_updater(self,e):
@@ -370,7 +370,7 @@ class GUIConfig:
         else:
             self.page.snack_bar = ft.SnackBar(ft.Text("Channel prefix must be not empty!"))
             self.page.snack_bar.open = True
-            self.txt_cp_ref.current.color = ft.colors.RED
+            self.txt_cp_ref.current.color = ft.Colors.RED
             self.page.update()
 
     def d_updater(self,e):
@@ -391,7 +391,7 @@ class GUIConfig:
         except ValueError:
             self.page.snack_bar = ft.SnackBar(ft.Text("Diameter only allows decimals numbers, greater than 0!"))
             self.page.snack_bar.open = True
-            self.txt_d_ref.current.color = ft.colors.RED
+            self.txt_d_ref.current.color = ft.Colors.RED
             self.page.update()
 
     def create_profile_container(self):
@@ -415,7 +415,7 @@ class GUIConfig:
         #creates the TextFields for the diffrent attributes of a profile
         tf_bf = ft.TextField(
             label="Bright-Field Channel:",
-            border_color=ft.colors.BLUE_ACCENT,
+            border_color=ft.Colors.BLUE_ACCENT,
             value=self.config_class.get_bf_channel(),
             ref=self.txt_bf_ref,
             on_blur=lambda e: self.bf_updater(e),
@@ -425,7 +425,7 @@ class GUIConfig:
 
         tf_ms = ft.TextField(
             label="Mask Suffix:",
-            border_color=ft.colors.BLUE_ACCENT,
+            border_color=ft.Colors.BLUE_ACCENT,
             value=self.config_class.get_mask_suffix(),
             ref=self.txt_ms_ref,
             on_blur=lambda e: self.ms_updater(e),
@@ -435,7 +435,7 @@ class GUIConfig:
 
         tf_cp = ft.TextField(
             label="Channel Prefix:",
-            border_color=ft.colors.BLUE_ACCENT,
+            border_color=ft.Colors.BLUE_ACCENT,
             value=self.config_class.get_channel_prefix(),
             ref= self.txt_cp_ref,
             on_blur=lambda e: self.cp_updater(e),
@@ -445,7 +445,7 @@ class GUIConfig:
 
         tf_d = ft.TextField(
             label="Diameter:",
-            border_color=ft.colors.BLUE_ACCENT,
+            border_color=ft.Colors.BLUE_ACCENT,
             value=self.config_class.get_diameter(),
             ref=self.txt_d_ref,
             on_blur=lambda e: self.d_updater(e),
@@ -463,7 +463,7 @@ class GUIConfig:
                 ft.Text("Profile:", size=18),
                 ft.TextButton(
                     content=ft.Text(self.config_class.get_selected_profile_name(), size=18, ref=self.profile_ref),
-                    style=ft.ButtonStyle(color=ft.colors.BLUE),
+                    style=ft.ButtonStyle(color=ft.Colors.BLUE),
                     on_click=lambda e: e.control.page.open(
                         self.profile_chooser_overlay
                     ),

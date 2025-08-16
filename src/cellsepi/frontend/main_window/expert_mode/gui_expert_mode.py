@@ -16,7 +16,7 @@ class ExpertMode(ft.Container):
             ),
             on_click=lambda e: self.change_environment(e),
         )
-        self.switch_icon = ft.Icon(ft.icons.HANDYMAN)
+        self.switch_icon = ft.Icon(ft.Icons.HANDYMAN)
         self.button_training_environment_menu = ft.PopupMenuButton(
             items=[self.button_event],
             content=self.switch_icon,

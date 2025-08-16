@@ -85,11 +85,11 @@ class GUI:
         self.auto_brightness_contrast = ft.IconButton(icon=ft.Icons.AUTO_FIX_HIGH,icon_color=ft.Colors.GREY_700,style=ft.ButtonStyle(
                     shape=ft.RoundedRectangleBorder(radius=12),
                 ),on_click=lambda e: self.auto_image_tuning.pressed(),tooltip="Auto brightness and contrast")
-        self.brightness_icon = ft.Icon(name=ft.icons.SUNNY,tooltip="Brightness")
-        self.contrast_icon = ft.Icon(name=ft.icons.CONTRAST,tooltip="Contrast")
+        self.brightness_icon = ft.Icon(name=ft.Icons.SUNNY,tooltip="Brightness")
+        self.contrast_icon = ft.Icon(name=ft.Icons.CONTRAST,tooltip="Contrast")
         self.diameter_text = ft.Text("0.00", size=14, weight=ft.FontWeight.BOLD,tooltip="Copy to clipboard")
         self.diameter_display = ft.Container(
-            content=ft.Row([ft.Icon(name=ft.icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), ft.GestureDetector(content=self.diameter_text,on_tap=lambda e: copy_to_clipboard(page=self.page,value=str(self.diameter_text.value),name="Average diameter"),on_enter=lambda e:self.on_enter_diameter(),on_exit=lambda e:self.on_exit_diameter()),]),
+            content=ft.Row([ft.Icon(name=ft.Icons.STRAIGHTEN_ROUNDED, tooltip="Average diameter"), ft.GestureDetector(content=self.diameter_text,on_tap=lambda e: copy_to_clipboard(page=self.page,value=str(self.diameter_text.value),name="Average diameter"),on_enter=lambda e:self.on_enter_diameter(),on_exit=lambda e:self.on_exit_diameter()),]),
             border_radius=12,
             padding=8,
             opacity=0.5,

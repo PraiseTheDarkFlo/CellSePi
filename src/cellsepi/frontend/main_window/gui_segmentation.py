@@ -36,20 +36,20 @@ class GUISegmentation():
         # creating all the necessary buttons and their initial properties
         start_button = ft.ElevatedButton( # button to start the segmentation calculation
             text="Start",
-            icon=ft.icons.PLAY_CIRCLE,
+            icon=ft.Icons.PLAY_CIRCLE,
             tooltip="Start the segmentation",
             disabled=True,
             on_click=None
         )
         pause_button = ft.ElevatedButton( # button to pause the segmentation calculation while it is running
             text="Pause",
-            icon=ft.icons.PAUSE_CIRCLE,
+            icon=ft.Icons.PAUSE_CIRCLE,
             visible=False,
             on_click=None,
         )
         cancel_button = ft.ElevatedButton( # button to completely cancel the currently running segmentation calculation
             text="Cancel",
-            icon=ft.icons.CANCEL,
+            icon=ft.Icons.CANCEL,
             visible=False,
             on_click=None,
             color=ft.Colors.RED,
@@ -57,7 +57,7 @@ class GUISegmentation():
         )
         resume_button = ft.ElevatedButton( # button to resume the segmentation calculation after it has been paused
             text="Resume",
-            icon=ft.icons.PLAY_CIRCLE,
+            icon=ft.Icons.PLAY_CIRCLE,
             visible=False,
             on_click=None,
         )
@@ -77,7 +77,7 @@ class GUISegmentation():
                 subprocess.run(["open", file_path] if sys.platform == "darwin" else ["xdg-open", file_path])
 
         open_button = ft.IconButton(
-            icon=ft.icons.OPEN_IN_NEW_ROUNDED,
+            icon=ft.Icons.OPEN_IN_NEW_ROUNDED,
             tooltip = "Open fluorescence file",
             on_click=open_readout,
             visible= False
@@ -369,7 +369,7 @@ class GUISegmentation():
         )
         model_text = ft.Text("Choose Model")
         model_title = ft.ListTile(
-                                        leading=ft.Icon(name=ft.icons.HUB_OUTLINED),
+                                        leading=ft.Icon(name=ft.Icons.HUB_OUTLINED),
                                         title= model_text,
                                     )
 
@@ -386,7 +386,7 @@ class GUISegmentation():
 
         model_chooser = ft.Container(
                             content=ft.IconButton(
-                                icon=ft.icons.UPLOAD_FILE,
+                                icon=ft.Icons.UPLOAD_FILE,
                                 tooltip="Choose model",
                                 on_click=lambda _: pick_model_dialog.pick_files(allow_multiple=False, initial_directory=model_directory),
                             ), alignment=ft.alignment.bottom_right,

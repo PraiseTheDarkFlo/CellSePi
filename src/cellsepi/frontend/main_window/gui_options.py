@@ -21,7 +21,7 @@ class Options(ft.Container):
         self.color_opacity= ColorOpacity(gui)
         self.menu_button = ft.PopupMenuButton(
             items=self.create_appbar_items(),
-            content=ft.Icon(ft.icons.MENU),
+            content=ft.Icon(ft.Icons.MENU),
             tooltip="Options",
             on_open=self.check_current_theme,
         )
