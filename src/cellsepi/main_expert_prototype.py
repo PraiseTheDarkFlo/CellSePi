@@ -43,6 +43,11 @@ class PipelineGUI(ft.Stack):
         self.expand = True
         self.offset_x = 0
         self.offset_y = 0
+        self.save_dir = ""
+        self.name = ""
+
+    def save(self):
+        pass
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
@@ -297,8 +302,6 @@ class Builder:
         self.page = page
         self.page_stack = None
         self.pipeline_gui = PipelineGUI(page)
-        self.save_dir = ""
-        self.name = ""
         file_picker = ft.FilePicker(
             on_result=lambda a: self.on_select_file(a))
         self.pipeline_gui.page.overlay.extend([file_picker])
@@ -336,7 +339,7 @@ class Builder:
         self.page.overlay.extend([dir_picker])
         directory_stack = ft.Stack([text_field, ft.Container(
             content=ft.IconButton(
-                icon=ft.Icons.FOLDER_OPEN,icon_color=ft.Colors.BLUE_400,
+                icon=ft.Icons.FOLDER_OPEN,icon_color=ft.Colors.WHITE60,
                 tooltip="Choose directory",hover_color=ft.Colors.WHITE12,
                 on_click=lambda e: dir_picker.get_directory_path(),
             ),
@@ -344,16 +347,16 @@ class Builder:
         )
         ])
         save_row = ft.Row([choose_name, ft.TextButton("Save",style=ft.ButtonStyle(
-                color=ft.Colors.BLUE_400,
+                color=ft.Colors.WHITE60,
                 overlay_color=ft.Colors.WHITE12,
-            ),)],tight=True)
+            ),on_click=lambda e:self.pipeline_gui.save())],tight=True)
         self.save_menu = ft.Container(ft.Container(ft.Column(
                 [
                     directory_stack,save_row,
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True,padding=10
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=60,visible=False)
+            bottom=20,left=50,visible=False)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -384,21 +387,21 @@ class Builder:
         self.pipeline_gui.build_show_room(self.page_stack)
 
 
-        self.page_up = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_up(),
-                                     icon_color=ft.Colors.BLUE_400,
-                                     style=ft.ButtonStyle(
+        self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_up(),
+                                          icon_color=ft.Colors.WHITE60,
+                                          style=ft.ButtonStyle(
                                          shape=ft.RoundedRectangleBorder(radius=12), ),
-                                     visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False,
-                                     tooltip="Page up", hover_color=ft.Colors.WHITE12)
-        self.page_down = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_down(),
-                                       icon_color=ft.Colors.WHITE60,
-                                       style=ft.ButtonStyle(
+                                          visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False,
+                                          tooltip="Get to the next page", hover_color=ft.Colors.WHITE12)
+        self.page_backward = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_down(),
+                                           icon_color=ft.Colors.WHITE24,
+                                           style=ft.ButtonStyle(
                                            shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
-                                       tooltip="Page down", hover_color=ft.Colors.WHITE12,visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
+                                           tooltip="Return to the last page", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
 
         self.switch_pages = ft.Container(ft.Container(ft.Row(
                     [
-                        self.page_down, self.page_up,
+                        self.page_backward, self.page_forward,
                     ], tight=True,spacing=2
                 ), bgcolor=MENU_COLOR, expand=True, height=40
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
@@ -413,7 +416,7 @@ class Builder:
         Handles if the name to save gets changed.
         """
         try:
-            self.name = str(e.control.value)
+            self.pipeline_gui.name = str(e.control.value)
             reference.current.color = ft.Colors.WHITE60
             self.pipeline_gui.page.update()
         except ValueError:
@@ -436,7 +439,7 @@ class Builder:
         Handles if a directory is selected.
         """
         if e.path is not None:
-            self.save_dir = e.path
+            self.pipeline_gui.save_dir = e.path
             text.value = format_directory_path(e.path,20)
             text.update()
             self.page.update()
@@ -444,24 +447,24 @@ class Builder:
     def press_page_up(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
         if self.pipeline_gui.show_room_page_number > 0:
-            self.page_down.icon_color = ft.Colors.BLUE_400
-            self.page_down.disabled = False
-            self.page_down.update()
+            self.page_backward.icon_color = ft.Colors.WHITE60
+            self.page_backward.disabled = False
+            self.page_backward.update()
         if self.pipeline_gui.show_room_page_number >= self.pipeline_gui.show_room_max_page_number-1:
-            self.page_up.icon_color = ft.Colors.WHITE60
-            self.page_up.disabled = True
-            self.page_up.update()
+            self.page_forward.icon_color = ft.Colors.WHITE24
+            self.page_forward.disabled = True
+            self.page_forward.update()
 
     def press_page_down(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number-1)
         if self.pipeline_gui.show_room_page_number == 0:
-            self.page_down.icon_color = ft.Colors.WHITE60
-            self.page_down.disabled = True
-            self.page_down.update()
+            self.page_backward.icon_color = ft.Colors.WHITE24
+            self.page_backward.disabled = True
+            self.page_backward.update()
         if self.pipeline_gui.show_room_page_number < self.pipeline_gui.show_room_max_page_number-1:
-            self.page_up.icon_color = ft.Colors.BLUE_400
-            self.page_up.disabled = False
-            self.page_up.update()
+            self.page_forward.icon_color = ft.Colors.WHITE60
+            self.page_forward.disabled = False
+            self.page_forward.update()
 
     def scroll_horizontal(self,e):
         self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
