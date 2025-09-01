@@ -50,4 +50,4 @@ class BatchImageReadoutModule(Module, ABC):
         self._event_manager = value
 
     def run(self):
-        BatchImageReadout(self.inputs["image_paths"].data, self.inputs["mask_paths"].data,self._segmentation_channel,self._cp,self._directory_path,True).run(self.event_manager)
+        BatchImageReadout(self.inputs["image_paths"].data, self.inputs["mask_paths"].data,self.user_segmentation_channel,self.user_channel_prefix,self.user_directory_path.path,True).run(self.event_manager)

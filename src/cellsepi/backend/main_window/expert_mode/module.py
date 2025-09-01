@@ -14,12 +14,14 @@ class FilePath:
     def __init__(self, path: str = ""):
         self.path = path
 
+
 class DirectoryPath:
     """
     Type to specify DirectoryPath's
     """
     def __init__(self, path: str = ""):
         self.path = path
+
 
 class Port:
     """

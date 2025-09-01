@@ -46,5 +46,5 @@ class ReadTif(Module,ABC):
         self._event_manager = value
 
     def run(self):
-        working_directory = DirectoryCard().select_directory_parallel(self.user_directory_path, False, self.user_channel_prefix, self.event_manager)
+        working_directory = DirectoryCard().select_directory_parallel(self.user_directory_path.path, False, self.user_channel_prefix, self.event_manager)
         self._outputs["image_paths"].data,self._outputs["mask_paths"].data= load_directory(working_directory, self.user_channel_prefix, self.user_mask_suffix, ReturnTypePath.BOTH_PATHS, self.event_manager)

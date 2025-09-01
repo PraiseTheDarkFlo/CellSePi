@@ -4,8 +4,11 @@ import os
 from io import BytesIO
 import flet as ft
 import cv2
+import numpy as np
 from PIL import Image, ImageEnhance
 from matplotlib import pyplot as plt
+from tifffile import tifffile
+
 from cellsepi.frontend.main_window.gui_canvas import update_main_image
 
 
@@ -110,10 +113,12 @@ class ImageTuning:
         """
         if self.cached_image and self.cached_image[0] == image_path:
             return self.cached_image[1]
-
-        image = Image.open(image_path)
-        self.cached_image = (image_path, image)
-        return image
+        image = tifffile.imread(image_path)
+        if image.ndim == 3:
+            image = np.max(image, axis=2)
+        img = Image.fromarray(image)
+        self.cached_image = (image_path, img)
+        return img
 
     def save_current_main_image(self):
         """
@@ -167,8 +172,9 @@ class AutoImageTuning:
 
     def auto_adjust(self):
         image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
-
-        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        image = tifffile.imread(image_path)
+        if image.ndim == 3:
+            image = np.max(image, axis=2)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         normalized_image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 

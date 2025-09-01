@@ -175,6 +175,7 @@ def load_lif3d_bioimage(lif3d_path):
 def extract_from_lif3d_file(lif3d_path, target_dir, channel_prefix, event_manager: EventManager = None):
     series_ids, images = load_lif3d_bioimage(lif3d_path)
 
+    images = np.transpose(images, axes=(0, 2, 3, 4, 1))
     target_dir = pathlib.Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -274,7 +275,7 @@ def extract_from_lif_file(lif_path, target_dir,channel_prefix,event_manager: Eve
 
 
 def load_image_to_numpy(path):
-    im = Image.open(path)
+    im = tifffile.imread(path)
     array = np.array(im)
     return array
 
@@ -352,10 +353,12 @@ def transform_image_path(image_path, output_path):
 
 
 def process_channel(channel_id, channel_path):
-    image = Image.open(channel_path)
-
+    image = tifffile.imread(channel_path)
+    if image.ndim == 3:
+        image = np.max(image, axis=2)
+    img = Image.fromarray(image)
     buffer = BytesIO()
-    image.save(buffer, format="PNG")
+    img.save(buffer, format="PNG")
     buffer.seek(0)
 
     return channel_id, base64.b64encode(buffer.getvalue()).decode('utf-8')

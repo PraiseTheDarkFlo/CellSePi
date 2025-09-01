@@ -13,9 +13,11 @@ from PIL import Image
 from cellpose import models, io
 from cellpose.io import imread
 from scipy.ndimage import binary_erosion
+from tifffile import tifffile
 from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+from triton.language.extra.cuda.libdevice import norm3d
 
 from cellsepi.backend.drawing_window.drawing_util import trace_contour
 from cellsepi.backend.main_window.data_util import load_image_to_numpy
@@ -250,7 +252,7 @@ class BatchImageSegmentation(Notifier):
                         self.segmentation.is_resuming()
 
                 image_path = image_paths[image_id][segmentation_channel]
-                image = imread(image_path)
+                image = tifffile.imread(image_path)
 
                 # Normalization
                 image = image.astype(np.float32)
@@ -263,6 +265,10 @@ class BatchImageSegmentation(Notifier):
 
                 # model evaluates image
                 if model_type == 'cellpose':
+                    #if image.ndim == 3:
+                    #    image = np.transpose(image, (2, 1, 0))
+                    #    res = model.eval(image, diameter=diameter, channels=[0, 0],z_axis=0,do_3D=True)
+                    #else:
                     res = model.eval(image, diameter=diameter, channels=[0, 0])
                     mask, flow, style = res[:3]
 
@@ -563,6 +569,8 @@ class BatchImageReadout(Notifier):
             mask_path = mask_paths[image_id][segmentation_channel]
             mask_data = np.load(mask_path,allow_pickle=True).item()
             mask = mask_data["masks"]
+            if mask.ndim == 3:
+                mask = np.transpose(mask, (1, 2, 0))
 
             cell_ids = np.unique(mask)
             if len(cell_ids) == 1:

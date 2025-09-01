@@ -55,6 +55,6 @@ class BatchImageSegModule(Module, ABC):
     def run(self):
         if self.inputs["mask_paths"].data is None:
             self.inputs["mask_paths"].data = {}
-        BatchImageSegmentation(segmentation_channel=self._segmentation_channel,diameter=self._diameter,suffix=self._ms).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self._model_path)
+        BatchImageSegmentation(segmentation_channel=self.user_segmentation_channel,diameter=self.user_diameter,suffix=self.user_mask_suffix).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self.user_model_path.path)
         self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
 
