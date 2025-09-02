@@ -91,10 +91,10 @@ class ModuleGUI(ft.GestureDetector):
         self.in_ports_Icons_occupied = {}
         for port in self.module.inputs.values():
             if not port.opt:
-                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),width=40,height=40)
                 self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and is satisfied.")],alignment=ft.alignment.center,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
             else:
-                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.RED,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CLOSE,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and has no incoming pipe.")],alignment=ft.alignment.center,opacity=0.2,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is optional and has no incoming pipe!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),opacity=0.2,width=40,height=40)
                 self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and is satisfied.")],alignment=ft.alignment.center,opacity=0.2,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]))
 
         in_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE),self.in_ports_Icons[port.name],self.in_ports_Icons_occupied[port.name]]) for port in self.module.inputs.values()],spacing=0)
@@ -447,8 +447,8 @@ class ModuleGUI(ft.GestureDetector):
                         padding=10,
                     )],
                     alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),width=550,height=300 if calc_height else height+40
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),width=550,height=300 if calc_height else height+40,
             )
             ,height=300
             ,padding=ft.padding.only(top=6),on_dismiss=lambda e: self.close_options(e))

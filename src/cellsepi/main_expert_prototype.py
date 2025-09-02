@@ -5,7 +5,6 @@ from typing import List, Tuple
 import flet as ft
 import flet.canvas as canvas
 from PyQt5.QtCore import QPointF
-from attr.validators import disabled
 from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
@@ -67,21 +66,21 @@ class PipelineGUI(ft.Stack):
         return module_gui
 
     def refill_show_room(self,module_gui:ModuleGUI,visible:bool=True,index:int=None):
-        new_module_gui = ModuleGUI(self,module_gui.module_type,x=self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X),y=module_gui.show_offset_y, show_mode=True,visible=visible,index=index)
+        new_module_gui = ModuleGUI(self, module_gui.module_type, x=SPACING_X + SHOWROOM_PADDING_X / 2, y=module_gui.show_offset_y, show_mode=True, visible=visible, index=index)
         self.page_stack.controls.append(new_module_gui)
         self.page_stack.update()
         self.update_all_port_icons()
 
     def build_show_room(self,page_stack:ft.Stack):
         self.page_stack = page_stack
-        x = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X)
-        y = SHOWROOM_SPACING_Y
-        self.show_room_container = ft.Container(top=y - SHOWROOM_SPACING_Y / 2, left=x - SHOWROOM_SPACING_X / 2, width=MODULE_WIDTH + SHOWROOM_SPACING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SHOWROOM_SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10))
+        x = SPACING_X + SHOWROOM_PADDING_X / 2
+        y = SPACING_Y
+        self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10))
         self.page_stack.controls.append(self.show_room_container)
         self.show_room_max_page_number = math.ceil(len(ModuleType) / SHOWROOM_MODULE_COUNT)
         for i,module_type in enumerate(ModuleType):
             visible = i < SHOWROOM_MODULE_COUNT
-            y_module = y+ (MODULE_HEIGHT + SHOWROOM_SPACING_Y) * (i%SHOWROOM_MODULE_COUNT)
+            y_module = y+ (MODULE_HEIGHT + SPACING_Y) * (i%SHOWROOM_MODULE_COUNT)
             self.add_show_room_module(module_type,x,y_module,visible)
             self.add_show_room_module(module_type,x,y_module,visible)
 
@@ -96,11 +95,11 @@ class PipelineGUI(ft.Stack):
             module.update()
 
     def update_show_room(self):
-        self.show_room_container.left = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X) - SHOWROOM_SPACING_X / 2
-        self.show_room_container.top = SHOWROOM_SPACING_Y - SHOWROOM_SPACING_Y / 2
+        self.show_room_container.left = SPACING_X
+        self.show_room_container.top = SPACING_Y - SPACING_Y / 2
         self.show_room_container.update()
         for module in self.show_room_modules:
-            module.left = self.page.window.width - (MODULE_WIDTH + SHOWROOM_PADDING_X)
+            module.left = SPACING_X + SHOWROOM_PADDING_X / 2
             module.update()
 
     def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
@@ -350,13 +349,6 @@ class Builder:
                 color=ft.Colors.WHITE60,
                 overlay_color=ft.Colors.WHITE12,
             ),on_click=lambda e:self.pipeline_gui.save())],tight=True)
-        self.save_menu = ft.Container(ft.Container(ft.Column(
-                [
-                    directory_stack,save_row,
-                ], tight=True,spacing=2
-            ), bgcolor=MENU_COLOR, expand=True,padding=10
-            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=50,visible=False)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -378,9 +370,16 @@ class Builder:
                 [
                     self.load_button, self.save_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
-            ), bgcolor=MENU_COLOR, expand=True,width=40
+            ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=5)
+            bottom=20,left=SPACING_X,width=40)
+        self.save_menu = ft.Container(ft.Container(ft.Column(
+                [
+                    directory_stack,save_row,
+                ], tight=True,spacing=2
+            ), bgcolor=MENU_COLOR, expand=True,padding=10
+            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
+            bottom=20,left=self.tools.left+ self.tools.width + 5,visible=False)
         self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
@@ -406,7 +405,7 @@ class Builder:
                 ), bgcolor=MENU_COLOR, expand=True, height=40
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
                     top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
-                    left=self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width-82, )
+                    left=self.pipeline_gui.show_room_container.left, )
         self.page_stack.controls.append(self.switch_pages)
         self.page_stack.update()
 
@@ -553,8 +552,6 @@ class Builder:
             self.horizontal_scroll_bar.left = e.width/2 - self.horizontal_scroll_bar.width/2
             self.horizontal_scroll_bar.update()
             self.pipeline_gui.update_show_room()
-            self.switch_pages.left = self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width - 82
-            self.switch_pages.update()
             scroll_area.update()
 
         self.page.on_resized = on_resize
@@ -574,10 +571,10 @@ class Builder:
 def main(page: ft.Page):
     builder = Builder(page)
     pipeline_gui = builder.pipeline_gui
-    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF,491.0,262.0)
-    module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG,60.0,259.0)
-    module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,66.0,33.0)
-    module_gui4 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,351.0,30.0)
+    module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF,891.0,262.0)
+    module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG,460.0,259.0)
+    module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,466.0,33.0)
+    module_gui4 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,751.0,30.0)
     pipeline_gui.add_connection(module_gui1,module_gui2,["image_paths","mask_paths"])
     pipeline_gui.add_connection(module_gui2,module_gui3,["mask_paths"])
     pipeline_gui.add_connection(module_gui2, module_gui4, ["mask_paths"])
