@@ -530,7 +530,9 @@ class ModuleGUI(ft.GestureDetector):
         Handles if a file is selected.
         """
         if e.files is not None:
+            print(f"{e.files[0].path} + {attr_name}")
             setattr(self.module, attr_name, FilePath(e.files[0].path))
+            print(getattr(self.module, attr_name).path + self.name)
             text.value = format_directory_path(e.files[0].path,50)
             text.update()
             self.pipeline_gui.page.update()

@@ -3,7 +3,8 @@ from collections import deque
 from itertools import chain
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
-from cellsepi.backend.main_window.expert_mode.listener import ErrorEvent
+from cellsepi.backend.main_window.expert_mode.listener import ErrorEvent, OnPipelineChangeEvent, ModuleExecutedEvent, \
+    ModuleStartedEvent
 from cellsepi.backend.main_window.expert_mode.module import Module,Port
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict, Type
@@ -28,6 +29,7 @@ class Pipeline:
         self.module_map[module.module_id] = module
         self.pipes_in[module.module_id] = []
         self.pipes_out[module.module_id] = []
+        self.event_manager.notify(OnPipelineChangeEvent(f"Added module {module_class.gui_config().name}"))
         return module
 
     def remove_module(self, module: Module) -> None:
@@ -44,6 +46,7 @@ class Pipeline:
             del self.pipes_in[module.module_id]
             del self.pipes_out[module.module_id]
             module.destroy()
+            self.event_manager.notify(OnPipelineChangeEvent(f"Removed module {module.gui_config().name}"))
 
     def is_disconnected(self, module_name: str) -> bool:
         """
@@ -66,6 +69,7 @@ class Pipeline:
 
         self.pipes_in[target_id].remove(pipe)
         self.pipes_out[source_id].remove(pipe)
+        self.event_manager.notify(OnPipelineChangeEvent(f"Removed connection between {target_id} and {source_id}"))
 
     def get_pipe(self, source_name: str, target_name: str) -> Pipe | None:
         """
@@ -93,6 +97,8 @@ class Pipeline:
 
         self.pipes_in[pipe.target_module.module_id].append(pipe)
         self.pipes_out[pipe.source_module.module_id].append(pipe)
+
+        self.event_manager.notify(OnPipelineChangeEvent(f"Added connection between {pipe.target_module.module_id} and {pipe.source_module.module_id}"))
 
     def check_connections(self,source_module_id:str,target_module_id:str) -> bool:
         """
@@ -173,7 +179,7 @@ class Pipeline:
         else:
             return True
 
-    def run(self,resume: bool = False):
+    def run(self,show_room: List[str] = [],resume: bool = False) -> None:
         """
         Executes the steps of the Pipeline.
         Skips steps of the Pipeline if min. one of the mandatory inputs is None.
@@ -184,6 +190,8 @@ class Pipeline:
             self.run_order = self.get_run_order()
         while self.run_order:
             module_name = self.run_order.popleft()
+            if module_name in show_room:
+                continue
             module = self.module_map[module_name]
             module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.module_id]
@@ -191,21 +199,25 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
+                    self.event_manager.notify(ModuleStartedEvent(module_name))
                     stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
+                    self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if stop:
                         return
                 except PipelineRunningException as e:
-                    module.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     return
             else:
                 continue
 
-    def skip_and_run(self,module_id: str,resume:bool = False):
+    def skip_and_run(self,module_id: str,show_room: List[str] = [],resume:bool = False):
         if not resume:
             self.run_order = self.get_run_order()
             self.found = False
         while self.run_order:
             module_name = self.run_order.popleft()
+            if module_name in show_room:
+                continue
             if module_name != module_id and not self.found:
                 continue
             self.found = True
@@ -216,11 +228,13 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
+                    self.event_manager.notify(ModuleStartedEvent(module_name))
                     stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
+                    self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if stop:
                         return
                 except PipelineRunningException as e:
-                    module.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     return
             else:
                 continue

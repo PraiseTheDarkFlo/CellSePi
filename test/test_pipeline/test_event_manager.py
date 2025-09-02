@@ -72,8 +72,8 @@ class DummyErrorListener(EventListener):
 
 class DummyModuleListener(EventListener):
     def __init__(self):
-        self.last_event: ModuleEvent | None = None
-        self.event_type = ModuleEvent
+        self.last_event: ModuleExecutedEvent | None = None
+        self.event_type = ModuleExecutedEvent
 
     def get_event_type(self) -> Type[Event]:
         return self.event_type
@@ -106,7 +106,7 @@ def test_module_listener():
     listener = DummyModuleListener()
 
     manager.subscribe(listener=listener)
-    event = ModuleEvent("test")
+    event = ModuleExecutedEvent("test")
     assert manager._listeners[type(event)] == [listener]
     manager.notify(event)
     assert listener.last_event is not None, "Listener was not notified"

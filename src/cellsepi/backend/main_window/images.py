@@ -347,7 +347,7 @@ class BatchImageSegmentation(Notifier):
                     current_image = {"image_id": image_id, "path": image_path}
                     self._call_update_listeners(progress, current_image)
                 else:
-                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images}"))
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images} (Latest Image: {image_id})"))
                 self.num_seg_images = self.num_seg_images + 1
                 if event_manager is None:
                     self.gui.directory.update_mask_check(image_id)
@@ -359,7 +359,7 @@ class BatchImageSegmentation(Notifier):
                     current_image = {"image_id": image_id, "path": None}
                     self._call_update_listeners(progress, current_image)
                 else:
-                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images}"))
+                    event_manager.notify(ProgressEvent(percent=percent,process=f"Segmenting Images: {iN+1}/{n_images} (Latest Image: {image_id})"))
                 self.num_seg_images = self.num_seg_images + 1
 
         if event_manager is None:
@@ -578,7 +578,7 @@ class BatchImageReadout(Notifier):
                     self._call_update_listeners(**kwargs)
                 else:
                     event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),
-                                                       process=f"Readout Images: {iN + 1}/{n_images} (Current Image: {image_id})"))
+                                                       process=f"Readout Images: {iN + 1}/{n_images} (Latest Image: {image_id})"))
                 continue
             cell_ids = cell_ids[1:]
 
@@ -618,7 +618,7 @@ class BatchImageReadout(Notifier):
             if event_manager is None:
                 self._call_update_listeners(**kwargs)
             else:
-                event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),process=f"Readout Images: {iN+1}/{n_images} (Current Image: {image_id})"))
+                event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),process=f"Readout Images: {iN+1}/{n_images} (Latest Image: {image_id})"))
 
 
         readout_path = os.path.join(self.directory, "readout.xlsx")

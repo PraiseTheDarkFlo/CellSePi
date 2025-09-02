@@ -13,7 +13,8 @@ from cellsepi.gui_module import ModuleGUI
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.expert_constants import *
-
+from cellsepi.gui_pipeline_listener import PipelineChangeListener, ModuleExecutedListener, ModuleStartedListener, \
+    ModuleProgressListener, ModuleErrorListener
 
 
 class PipelineGUI(ft.Stack):
@@ -21,6 +22,7 @@ class PipelineGUI(ft.Stack):
         super().__init__()
         self.controls = []
         self.pipeline = Pipeline()
+        self.modules_executed = 0
         self.page = page
         self.modules = {} #identiefierer is the module_id
         self.show_room_size = SHOWROOM_MODULE_COUNT*2+1
@@ -315,6 +317,11 @@ class Builder:
                                            style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                            tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+        self.run_menu_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.run_menu_click(),
+                                         icon_color=WHITE60,
+                                         style=ft.ButtonStyle(
+                                             shape=ft.RoundedRectangleBorder(radius=12), ),
+                                         tooltip="Show run menu", hover_color=ft.Colors.WHITE12)
         ref = ft.Ref[ft.Text]()
         choose_name = ft.TextField(
             label="Pipeline name",
@@ -360,15 +367,9 @@ class Builder:
                                            tooltip="Show which ports get transferred", hover_color=ft.Colors.WHITE12)
 
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
-        self.horizontal_scroll_bar = ft.Container(ft.Container(ft.Column(
-            [self.slider_horizontal,
-            ]
-        ), bgcolor=MENU_COLOR, expand=True
-        ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-        bottom=20,left=self.page.window.width/2-400/2,width=400,height=40)
         self.tools = ft.Container(ft.Container(ft.Column(
                 [
-                    self.load_button, self.save_button,self.delete_button,self.port_button
+                    self.load_button, self.save_button,self.run_menu_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
@@ -380,6 +381,45 @@ class Builder:
             ), bgcolor=MENU_COLOR, expand=True,padding=10
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
             bottom=20,left=self.tools.left+ self.tools.width + 5,visible=False)
+        self.start_button = ft.ElevatedButton(  # button to start the pipeline
+            text="Start",
+            icon=ft.Icons.PLAY_CIRCLE,
+            tooltip="Start the pipeline",
+            disabled=False,
+            on_click=lambda e:self.run(),
+            opacity=0.75
+        )
+        self.resume_button = ft.ElevatedButton(  # button to resume the pipeline
+            text="Resume the pipeline",
+            icon=ft.Icons.PLAY_CIRCLE,
+            visible=False,
+            on_click=self.pipeline_gui.pipeline.run(resume=True),
+            opacity=0.75
+        )
+        self.progress_bar_module = ft.ProgressBar(value=0, width=160,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
+        self.progress_pipeline = ft.ProgressRing(value=0,width=50,height=50,stroke_width=8,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
+        self.progress_text = ft.Text(f"{self.pipeline_gui.modules_executed}/{len(self.pipeline_gui.pipeline.modules)}",weight=ft.FontWeight.BOLD,tooltip="How many modules has been executed",color=ft.Colors.WHITE60)
+        self.progress_stack = ft.Stack([self.progress_pipeline,ft.Container(self.progress_text,alignment=ft.alignment.center)],width=50,height=50,)
+        self.progress_bar_module_text = ft.Text("0%",color=ft.Colors.WHITE60)
+        self.progress_and_start = ft.Column([ft.Container(self.progress_stack,alignment=ft.alignment.center),
+            ft.Container(
+                content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=80,spacing=20
+        )
+        self.running_module = ft.Text("Module",color=ft.Colors.WHITE60,width=190,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
+        self.info_text = ft.Text("Idle, waiting for start.",color=ft.Colors.WHITE60,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=2)
+        self.category_icon = ft.Icon(ft.Icons.CATEGORY_ROUNDED,color=ft.Colors.BLUE_400)
+        self.run_infos = ft.Column([ft.Row([self.category_icon,self.running_module]),self.info_text])
+        self.left_run_menu = ft.Column([
+            self.run_infos,ft.Row([ft.Container(self.progress_bar_module,padding=10),self.progress_bar_module_text]),
+        ],alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        self.run_menu = ft.Container(ft.Container(ft.Row(
+            [
+                ft.Container(self.left_run_menu,padding=10),ft.VerticalDivider(), ft.Column([ft.Row([ft.Container(self.progress_and_start,padding=10)],alignment=ft.MainAxisAlignment.CENTER)],alignment=ft.MainAxisAlignment.CENTER),
+            ], spacing=2,width=360,height=130
+        ), bgcolor=MENU_COLOR, expand=True, padding=10
+        ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
+            bottom=20, left=self.tools.left + self.tools.width + 5, visible=False)
+
         self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
@@ -408,7 +448,33 @@ class Builder:
                     left=self.pipeline_gui.show_room_container.left, )
         self.page_stack.controls.append(self.switch_pages)
         self.page_stack.update()
+        self.add_all_listeners()
 
+    def run(self):
+        show_room_names = [m.name for m in self.pipeline_gui.show_room_modules]
+        self.start_button.disabled = True
+        self.start_button.update()
+        self.pipeline_gui.pipeline.run(show_room_names)
+
+    def add_all_listeners(self):
+        pipeline_change_listener = PipelineChangeListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_change_listener)
+        module_executed_listener =ModuleExecutedListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_executed_listener)
+        module_started_listener =ModuleStartedListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_started_listener)
+        module_progress_listener =ModuleProgressListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_progress_listener)
+        module_error_listener =ModuleErrorListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_error_listener)
+
+    def update_modules_executed(self):
+        current =self.pipeline_gui.modules_executed
+        total = len(self.pipeline_gui.pipeline.modules)-len(ModuleType)*2
+        self.progress_pipeline.value = (current / total) if total > 0 else 0
+        self.progress_text.value = f"{current}/{total}"
+        self.progress_text.update()
+        self.page.update()
 
     def on_change(self,e,reference):
         """
@@ -469,7 +535,7 @@ class Builder:
         self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
         self.scroll_horizontal_row.update()
 
-    def save_button_click(self):
+    def save_button_click(self,from_code=False):
         if self.save_menu.visible:
             self.save_button.icon_color = WHITE60
             self.save_button.tooltip = f"Show save menu"
@@ -480,8 +546,26 @@ class Builder:
             self.save_button.icon_color = ft.Colors.BLUE_400
             self.save_button.tooltip = f"Hide save menu"
             self.save_button.update()
+            if not from_code and self.run_menu.visible:
+                self.run_menu_click(True)
             self.save_menu.visible = True
             self.save_menu.update()
+
+    def run_menu_click(self,from_code=False):
+        if self.run_menu.visible:
+            self.run_menu_button.icon_color = WHITE60
+            self.run_menu_button.tooltip = f"Show run menu"
+            self.run_menu_button.update()
+            self.run_menu.visible = False
+            self.run_menu.update()
+        else:
+            self.run_menu_button.icon_color = ft.Colors.BLUE_400
+            self.run_menu_button.tooltip = f"Hide run menu"
+            self.run_menu_button.update()
+            if not from_code and self.save_menu.visible:
+                self.save_button_click(True)
+            self.run_menu.visible = True
+            self.run_menu.update()
 
     def delete_button_click(self):
         #for module in self.pipeline_gui.modules.values():
@@ -525,15 +609,8 @@ class Builder:
             height=10000,
             bgcolor=ft.Colors.TRANSPARENT,
         )
-        def on_horizontal_scroll(e:ft.OnScrollEvent):
-            new_slider_value = e.pixels/(self.work_area.width-self.page.window.width)
-            if not(new_slider_value < 0 or new_slider_value > 1):
-                self.slider_horizontal.value = new_slider_value
-                self.slider_horizontal.update()
-            self.pipeline_gui.offset_x = e.pixels
-
         self.scroll_horizontal_row = ft.Row(
-            [self.work_area], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_horizontal_scroll)
+            [self.work_area], scroll=ft.ScrollMode.ALWAYS)
 
         def on_vertical_scroll(e:ft.OnScrollEvent):
             self.pipeline_gui.offset_y = e.pixels
@@ -549,8 +626,6 @@ class Builder:
         def on_resize(e: ft.WindowResizeEvent):
             scroll_area.height = e.height
             scroll_area.width = e.width
-            self.horizontal_scroll_bar.left = e.width/2 - self.horizontal_scroll_bar.width/2
-            self.horizontal_scroll_bar.update()
             self.pipeline_gui.update_show_room()
             scroll_area.update()
 
@@ -560,7 +635,7 @@ class Builder:
                 scroll_area,
                 self.tools,
                 self.save_menu,
-                self.horizontal_scroll_bar,
+                self.run_menu,
              ]
             )
 
