@@ -11,8 +11,9 @@ class FilePath:
     """
     Type to specify FilePath's
     """
-    def __init__(self, path: str = ""):
+    def __init__(self, path: str = "",suffix:str=""):
         self.path = path
+        self.suffix = suffix
 
 
 class DirectoryPath:

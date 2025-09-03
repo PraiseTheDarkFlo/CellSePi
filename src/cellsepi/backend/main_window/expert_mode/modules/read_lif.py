@@ -13,7 +13,7 @@ class ReadLif(Module,ABC):
             "mask_paths": Port("mask_paths", dict),
         }
         self._settings: ft.CupertinoBottomSheet = None
-        self.user_file_path: FilePath = FilePath()
+        self.user_file_path: FilePath = FilePath(suffix=".lif")
         self.user_channel_prefix: str = "c"
         self.user_mask_suffix: str = "_seg"
 

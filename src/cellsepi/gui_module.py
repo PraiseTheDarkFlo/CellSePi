@@ -1,3 +1,4 @@
+from pathlib import Path
 
 import flet as ft
 from flet_core.cupertino_colors import WHITE
@@ -530,9 +531,14 @@ class ModuleGUI(ft.GestureDetector):
         Handles if a file is selected.
         """
         if e.files is not None:
-            print(f"{e.files[0].path} + {attr_name}")
-            setattr(self.module, attr_name, FilePath(e.files[0].path))
-            print(getattr(self.module, attr_name).path + self.name)
+            current_file_path = getattr(self.module, attr_name)
+            if current_file_path.suffix != "" and current_file_path.suffix != Path(e.files[0].path).suffix:
+                attribute_name_without_prefix = attr_name.removeprefix("user_")
+                self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {current_file_path.suffix}'s.")))
+                text.value = current_file_path.path
+                self.pipeline_gui.page.update()
+                return
+            current_file_path.path = e.files[0].path
             text.value = format_directory_path(e.files[0].path,50)
             text.update()
             self.pipeline_gui.page.update()
@@ -553,14 +559,11 @@ class ModuleGUI(ft.GestureDetector):
         """
         try:
             setattr(self.module, attr_name, typ(e.control.value))
-            reference.current.color = None
             self.pipeline_gui.page.update()
         except ValueError:
             attribute_name_without_prefix = attr_name.removeprefix("user_")
-            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s."))
-            self.pipeline_gui.page.snack_bar.open = True
+            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.")))
             reference.current.value = getattr(self.module, attr_name)
-            reference.current.color = ft.Colors.RED
             self.pipeline_gui.page.update()
 
     def open_options(self,e):
