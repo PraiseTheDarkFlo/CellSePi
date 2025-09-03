@@ -148,14 +148,14 @@ class Pipeline:
             raise RuntimeError(f"The pipeline contains a cycle, only acyclic graphs are supported.")
         return topological_order
 
-    def check_pipeline_runnable(self) -> bool:
+    def check_pipeline_runnable(self,ignore:List[str]="") -> bool:
         """
         Checks if every module input is satisfied.
         """
         for module in self.modules:
-            module_pipes = self.pipes_in[module.module_id]
-            delivered_ports = set(chain.from_iterable(pipe.ports for pipe in module_pipes))
-            if not all(port_name in delivered_ports for port_name in module.get_mandatory_inputs()):
+            if module.module_id in ignore:
+                continue
+            if not self.check_module_satisfied(module.module_id):
                 return False
         return True
 
@@ -187,7 +187,11 @@ class Pipeline:
             resume (bool, optional): Whether to resume the execution of the pipeline. Defaults to False.
         """
         if not resume:
-            self.run_order = self.get_run_order()
+            try:
+                self.run_order = self.get_run_order()
+            except RuntimeError as e:
+                self.event_manager.notify(ErrorEvent("Cycle in Pipeline", e.args[0]))
+                return
         while self.run_order:
             module_name = self.run_order.popleft()
             if module_name in show_room:
@@ -208,11 +212,16 @@ class Pipeline:
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     return
             else:
+                self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
 
     def skip_and_run(self,module_id: str,show_room: List[str] = [],resume:bool = False):
         if not resume:
-            self.run_order = self.get_run_order()
+            try:
+                self.run_order = self.get_run_order()
+            except RuntimeError as e:
+                self.event_manager.notify(ErrorEvent("Cycle in Pipeline", e.args[0]))
+                return
             self.found = False
         while self.run_order:
             module_name = self.run_order.popleft()
@@ -237,6 +246,7 @@ class Pipeline:
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     return
             else:
+                self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
 
 class PipelineRunningException(Exception):

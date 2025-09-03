@@ -23,6 +23,8 @@ class PipelineGUI(ft.Stack):
         self.controls = []
         self.pipeline = Pipeline()
         self.modules_executed = 0
+        self.module_executing = ""
+        self.module_running_count = 0
         self.page = page
         self.modules = {} #identiefierer is the module_id
         self.show_room_size = SHOWROOM_MODULE_COUNT*2+1
@@ -59,7 +61,7 @@ class PipelineGUI(ft.Stack):
     def remove_connection(self,source_module_gui,target_module_gui):
         self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
-        self.check_for_valid()
+        self.check_for_valid_all_modules()
         self.update_all_port_icons()
 
     def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True):
@@ -77,7 +79,7 @@ class PipelineGUI(ft.Stack):
         self.page_stack = page_stack
         x = SPACING_X + SHOWROOM_PADDING_X / 2
         y = SPACING_Y
-        self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10))
+        self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10),blur=10)
         self.page_stack.controls.append(self.show_room_container)
         self.show_room_max_page_number = math.ceil(len(ModuleType) / SHOWROOM_MODULE_COUNT)
         for i,module_type in enumerate(ModuleType):
@@ -143,14 +145,29 @@ class PipelineGUI(ft.Stack):
         self.source_module = module_id
         self.transmitting_ports = []
         for module in self.modules.values():
-            if module.name != module_id:
-                module.toggle_detection()
-                self.update()
+            if module.name not in self.pipeline.run_order and module.name != self.module_executing:
+                if module.name != module_id:
+                    module.toggle_detection()
+                    self.update()
 
-    def check_for_valid(self):
+    def toggle_all_stuck_in_running(self):
+        for module in self.pipeline.run_order:
+            self.modules[module].toggle_detection()
+        if self.module_executing != "":
+            self.modules[self.module_executing].toggle_detection()
+
+    def check_for_valid_all_modules(self):
         for target_module_gui in self.modules.values():
+            self.check_for_valid(target_module_gui.name)
+
+    def check_for_valid(self,module_id: str):
+        target_module_gui = self.modules[module_id]
+        if target_module_gui.name not in self.pipeline.run_order and target_module_gui.name != self.module_executing:
             if target_module_gui.name != self.source_module:
-                if all(k in target_module_gui.module.inputs for k in self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(self.source_module, target_module_gui.name) and not(self.pipeline.check_ports_occupied(target_module_gui.name, self.transmitting_ports)):
+                if all(k in target_module_gui.module.inputs for k in
+                       self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(
+                        self.source_module, target_module_gui.name) and not (
+                self.pipeline.check_ports_occupied(target_module_gui.name, self.transmitting_ports)):
                     target_module_gui.set_valid()
                 else:
                     target_module_gui.set_invalid()
@@ -257,9 +274,12 @@ class LinesGUI(canvas.Canvas):
 
         def dummy():
             pass
+        disabled = False
+        if source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order:
+            disabled = True
         delete_button = ft.GestureDetector(top=port_y-20,left=port_x-20,on_hover=lambda e:dummy(),content=ft.IconButton(
             icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=ft.Colors.RED_ACCENT,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
-            ),visible=self.pipeline_gui.show_delete_button)
+            ),visible=self.pipeline_gui.show_delete_button,disabled=disabled)
 
         self.shapes.append(edge)
         self.shapes.append(arrow)
@@ -373,14 +393,16 @@ class Builder:
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=SPACING_X,width=40)
+            bottom=20,left=SPACING_X,width=40,blur=10)
         self.save_menu = ft.Container(ft.Container(ft.Column(
                 [
                     directory_stack,save_row,
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True,padding=10
-            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=self.tools.left+ self.tools.width + 5,visible=False)
+            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),width=0,height=140,
+            bottom=20,left=self.tools.left+ self.tools.width + 5,blur=10,opacity=0,
+            animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+            animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),)
         self.start_button = ft.ElevatedButton(  # button to start the pipeline
             text="Start",
             icon=ft.Icons.PLAY_CIRCLE,
@@ -396,7 +418,7 @@ class Builder:
             on_click=self.pipeline_gui.pipeline.run(resume=True),
             opacity=0.75
         )
-        self.progress_bar_module = ft.ProgressBar(value=0, width=160,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
+        self.progress_bar_module = ft.ProgressBar(value=0, width=230,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
         self.progress_pipeline = ft.ProgressRing(value=0,width=50,height=50,stroke_width=8,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
         self.progress_text = ft.Text(f"{self.pipeline_gui.modules_executed}/{len(self.pipeline_gui.pipeline.modules)}",weight=ft.FontWeight.BOLD,tooltip="How many modules has been executed",color=ft.Colors.WHITE60)
         self.progress_stack = ft.Stack([self.progress_pipeline,ft.Container(self.progress_text,alignment=ft.alignment.center)],width=50,height=50,)
@@ -405,20 +427,23 @@ class Builder:
             ft.Container(
                 content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=80,spacing=20
         )
-        self.running_module = ft.Text("Module",color=ft.Colors.WHITE60,width=190,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
-        self.info_text = ft.Text("Idle, waiting for start.",color=ft.Colors.WHITE60,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=2)
+        self.running_module = ft.Text("Module",color=ft.Colors.WHITE60,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
+        self.info_text = ft.Text("Idle, waiting for start.",color=ft.Colors.WHITE60,width=250,overflow=ft.TextOverflow.ELLIPSIS,max_lines=2)
         self.category_icon = ft.Icon(ft.Icons.CATEGORY_ROUNDED,color=ft.Colors.BLUE_400)
         self.run_infos = ft.Column([ft.Row([self.category_icon,self.running_module]),self.info_text])
         self.left_run_menu = ft.Column([
-            self.run_infos,ft.Row([ft.Container(self.progress_bar_module,padding=10),self.progress_bar_module_text]),
+            self.run_infos,ft.Row([ft.Container(self.progress_bar_module),self.progress_bar_module_text],width=260),
         ],alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         self.run_menu = ft.Container(ft.Container(ft.Row(
             [
                 ft.Container(self.left_run_menu,padding=10),ft.VerticalDivider(), ft.Column([ft.Row([ft.Container(self.progress_and_start,padding=10)],alignment=ft.MainAxisAlignment.CENTER)],alignment=ft.MainAxisAlignment.CENTER),
-            ], spacing=2,width=360,height=130
+            ], spacing=2
         ), bgcolor=MENU_COLOR, expand=True, padding=10
-        ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
-            bottom=20, left=self.tools.left + self.tools.width + 5, visible=False)
+        ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),width=0,height=150,
+            bottom=20, left=self.tools.left + self.tools.width + 5,blur=10,opacity=0,
+            animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+            animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+            )
 
         self.scroll_horizontal_row = None
         self.work_area = None
@@ -445,16 +470,49 @@ class Builder:
                 ), bgcolor=MENU_COLOR, expand=True, height=40
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
                     top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
-                    left=self.pipeline_gui.show_room_container.left, )
+                    left=self.pipeline_gui.show_room_container.left,blur=10)
         self.page_stack.controls.append(self.switch_pages)
         self.page_stack.update()
         self.add_all_listeners()
 
-    def run(self):
+    def run(self,ignore_check=False):
         show_room_names = [m.name for m in self.pipeline_gui.show_room_modules]
+        if not ignore_check and not self.pipeline_gui.pipeline.check_pipeline_runnable(show_room_names):
+            def dismiss_dialog(e):
+                cupertino_alert_dialog.open = False
+                e.control.page.update()
+            def dismiss_dialog_ignore(e):
+                cupertino_alert_dialog.open = False
+                e.control.page.update()
+                self.run(True)
+            cupertino_alert_dialog = ft.CupertinoAlertDialog(
+                title=ft.Text("Mandatory Input Warning"),
+                content=ft.Text("Not all mandatory inputs are satisfied."),
+                actions=[
+                    ft.CupertinoDialogAction(
+                        "Change",is_default_action=True, on_click=dismiss_dialog
+                    ),
+                    ft.CupertinoDialogAction(text="Ignore", is_destructive_action=True, on_click=dismiss_dialog_ignore),
+                ],
+            )
+            self.page.overlay.append(cupertino_alert_dialog)
+            cupertino_alert_dialog.open = True
+            self.page.update()
+            return
+        self.info_text.spans = []
+        self.info_text.value = "Idle, waiting for start."
+        self.info_text.update()
         self.start_button.disabled = True
         self.start_button.update()
+        if self.pipeline_gui.source_module != "":
+            self.pipeline_gui.modules[self.pipeline_gui.source_module].connect_clicked()
+        for module in self.pipeline_gui.modules.values():
+            module.toggle_detection()
         self.pipeline_gui.pipeline.run(show_room_names)
+        self.pipeline_gui.modules_executed = 0
+        self.update_modules_executed()
+        self.start_button.disabled = False
+        self.start_button.update()
 
     def add_all_listeners(self):
         pipeline_change_listener = PipelineChangeListener(self)
@@ -470,9 +528,14 @@ class Builder:
 
     def update_modules_executed(self):
         current =self.pipeline_gui.modules_executed
-        total = len(self.pipeline_gui.pipeline.modules)-len(ModuleType)*2
-        self.progress_pipeline.value = (current / total) if total > 0 else 0
-        self.progress_text.value = f"{current}/{total}"
+        if self.pipeline_gui.module_executing == "":
+            total = len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2
+            self.progress_pipeline.value = (current / total) if total > 0 else 0
+            self.pipeline_gui.module_running_count = total
+            self.progress_text.value = f"{current}/{total}"
+        else:
+            self.progress_pipeline.value = (current / self.pipeline_gui.module_running_count) if self.pipeline_gui.module_running_count > 0 else 0
+            self.progress_text.value = f"{current}/{self.pipeline_gui.module_running_count}"
         self.progress_text.update()
         self.page.update()
 
@@ -536,35 +599,39 @@ class Builder:
         self.scroll_horizontal_row.update()
 
     def save_button_click(self,from_code=False):
-        if self.save_menu.visible:
+        if self.save_menu.opacity==1:
             self.save_button.icon_color = WHITE60
             self.save_button.tooltip = f"Show save menu"
             self.save_button.update()
-            self.save_menu.visible = False
+            self.save_menu.width = 0
+            self.save_menu.opacity = 0
             self.save_menu.update()
         else:
             self.save_button.icon_color = ft.Colors.BLUE_400
             self.save_button.tooltip = f"Hide save menu"
             self.save_button.update()
-            if not from_code and self.run_menu.visible:
+            if not from_code and self.run_menu.opacity==1:
                 self.run_menu_click(True)
-            self.save_menu.visible = True
+            self.save_menu.width = 280
+            self.save_menu.opacity = 1
             self.save_menu.update()
 
     def run_menu_click(self,from_code=False):
-        if self.run_menu.visible:
+        if self.run_menu.opacity==1:
             self.run_menu_button.icon_color = WHITE60
             self.run_menu_button.tooltip = f"Show run menu"
             self.run_menu_button.update()
-            self.run_menu.visible = False
+            self.run_menu.width = 0
+            self.run_menu.opacity = 0
             self.run_menu.update()
         else:
             self.run_menu_button.icon_color = ft.Colors.BLUE_400
             self.run_menu_button.tooltip = f"Hide run menu"
             self.run_menu_button.update()
-            if not from_code and self.save_menu.visible:
+            if not from_code and self.save_menu.opacity==1:
                 self.save_button_click(True)
-            self.run_menu.visible = True
+            self.run_menu.width = 420
+            self.run_menu.opacity = 1
             self.run_menu.update()
 
     def delete_button_click(self):

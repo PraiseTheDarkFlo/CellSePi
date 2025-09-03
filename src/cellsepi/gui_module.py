@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import flet as ft
@@ -72,7 +73,7 @@ class ModuleGUI(ft.GestureDetector):
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.ports_in_out_clicked(),
-                                                 tooltip="View ports", hover_color=ft.Colors.WHITE12)
+                                                 tooltip="View ports", hover_color=ft.Colors.WHITE12,)
 
         self.tools = ft.Container(ft.Row(
                                             [
@@ -127,13 +128,16 @@ class ModuleGUI(ft.GestureDetector):
                     ,bgcolor=self.color,width=MODULE_WIDTH
                     ,height=MODULE_HEIGHT,
                     border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode else ft.Colors.BLACK12),
-                    border_radius=ft.border_radius.all(10)
+                    border_radius=ft.border_radius.all(10),
                 )
+        self.ports_column = ft.Column(controls=control_list_ports, scroll=ft.ScrollMode.HIDDEN)
         self.ports_container = ft.Container(
-            content=ft.Column(controls=control_list_ports, scroll=ft.ScrollMode.ALWAYS), bgcolor=self.color,
+            content=self.ports_column, bgcolor=self.color,
             width=MODULE_WIDTH,
             border_radius=ft.border_radius.all(10), padding=10, top=self.module_container.height-15,
-            border=ft.border.all(8, ft.Colors.BLACK12), height=MODULE_HEIGHT * 2, visible=False
+            border=ft.border.all(8, ft.Colors.BLACK12), height=0,opacity=0,
+            animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+            animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
         )
         self.content = ft.Stack([
             self.ports_container,
@@ -187,6 +191,7 @@ class ModuleGUI(ft.GestureDetector):
             self.warning_satisfied.visible = not self.pipeline_gui.pipeline.check_module_satisfied(self.name)
             self.warning_satisfied.update()
 
+
     def connect_clicked(self,update:bool=True):
         """
         Handles the event when the connection button gets pressed.
@@ -197,49 +202,67 @@ class ModuleGUI(ft.GestureDetector):
                 self.ports_in_out_clicked(False)
             if update:
                 self.pipeline_gui.set_in_background(self,True)
-            self.connection_ports.visible = True
             self.connect_button.icon_color = ft.Colors.BLACK38
             self.delete_button.visible = False
             self.content.height = 40+self.module_container.height
+            self.connection_ports.visible = True
+            self.connection_ports.update()
             self.port_selection = True
         else:
             self.valid = False
             self.connection_ports.visible = False
+            self.connection_ports.update()
             self.port_chips = self.get_ports_row()
             self.connection_ports.content = self.port_chips
             self.connect_button.icon_color = ft.Colors.WHITE60
             self.delete_button.visible = True
             self.content.height = self.module_container.height
             self.port_selection = False
+            self.pipeline_gui.source_module = ""
 
-        self.connection_ports.update()
-        self.connect_button.update()
         self.delete_button.update()
         self.content.update()
+        self.connect_button.update()
+        self.pipeline_gui.page.update()
 
-    def ports_in_out_clicked(self,update:bool=True):
+    def ports_in_out_clicked(self, update: bool = True):
+        self.pipeline_gui.page.run_task(self.async_ports_in_out_clicked, update=update)
+
+    async def async_ports_in_out_clicked(self, update:bool=True):
         """
         Handles the event when the show ports button gets pressed.
         """
         if not self.show_ports:
             if self.port_selection:
                 self.connect_clicked(False)
-            if update:
-                self.pipeline_gui.set_in_foreground(self)
-            self.ports_container.visible = True
-            self.content.height = self.ports_container.height + self.module_container.height - 15
+                await asyncio.sleep(0.02)
+
             self.ports_in_out_button.icon_color = ft.Colors.BLACK38
+            self.ports_in_out_button.update()
+            self.content.height = MODULE_HEIGHT * 2 + self.module_container.height - 15
+            self.content.update()
+            self.ports_container.height = MODULE_HEIGHT * 2
+            self.ports_container.opacity = 1
+            self.ports_container.update()
+            await asyncio.sleep(0.08)
+            self.ports_column.scroll=ft.ScrollMode.ALWAYS
+            self.ports_column.update()
             self.show_ports = True
         else:
-            self.ports_container.visible = False
             self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+            self.ports_in_out_button.update()
+            self.ports_column.scroll=ft.ScrollMode.HIDDEN
+            self.ports_column.update()
+            self.ports_container.height = 0
+            self.ports_container.opacity = 0
+            self.ports_container.update()
+            await asyncio.sleep(0.22)
             self.content.height = self.module_container.height
+            self.content.update()
             self.show_ports = False
 
-        self.ports_container.update()
         self.content.update()
-        self.ports_in_out_button.update()
-        self.update()
+        self.pipeline_gui.page.update()
 
 
     def set_valid(self):
@@ -259,6 +282,15 @@ class ModuleGUI(ft.GestureDetector):
         self.valid = False
         self.click_container.bgcolor = INVALID_COLOR
         self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
+        self.module_container.update()
+        self.click_container.update()
+
+    def set_running(self):
+        self.valid = False
+        self.click_container.bgcolor = ft.Colors.BLUE_400.with_opacity(0.40,ft.Colors.BLUE)
+        self.module_container.border = ft.border.all(4,
+                                                     ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(
+                                                         self.name) else ft.Colors.BLACK12)
         self.module_container.update()
         self.click_container.update()
 
@@ -288,7 +320,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.transmitting_ports.remove(port_name)
             self.port_chips.update()
 
-        self.pipeline_gui.check_for_valid()
+        self.pipeline_gui.check_for_valid_all_modules()
 
     def toggle_detection(self):
         """
@@ -325,7 +357,7 @@ class ModuleGUI(ft.GestureDetector):
         """
         if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection and self.valid:
             self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
-            self.pipeline_gui.check_for_valid()
+            self.pipeline_gui.check_for_valid_all_modules()
 
     def remove_module(self):
         """
@@ -424,6 +456,9 @@ class ModuleGUI(ft.GestureDetector):
             self.click_gesture.disabled = True
             self.click_gesture.visible = False
             self.delete_button.visible = True
+            self.pipeline_gui.check_for_valid(self.name)
+            if self.pipeline_gui.source_module != "":
+                self.toggle_detection()
             self.pipeline_gui.page.update()
 
         e.control.update()

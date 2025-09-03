@@ -1,5 +1,5 @@
 from typing import Type
-
+import flet as ft
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnPipelineChangeEvent, Event, \
     ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent
 
@@ -32,8 +32,16 @@ class ModuleExecutedListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        self.builder.pipeline_gui.modules[event.module_id].set_invalid()
         self.builder.pipeline_gui.modules_executed += 1
+        if len(self.builder.pipeline_gui.pipeline.run_order) == 0:
+            self.builder.pipeline_gui.module_executing = ""
+        if self.builder.pipeline_gui.source_module == "":
+            self.builder.pipeline_gui.modules[event.module_id].toggle_detection()
+        self.builder.pipeline_gui.check_for_valid(event.module_id)
         self.builder.update_modules_executed()
+        self.builder.pipeline_gui.lines_gui.update_lines(self.builder.pipeline_gui.modules[event.module_id])
+
 
 class ModuleStartedListener(EventListener):
     def __init__(self,builder):
@@ -49,6 +57,8 @@ class ModuleStartedListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        self.builder.pipeline_gui.module_executing = event.module_id
+        self.builder.pipeline_gui.modules[event.module_id].set_running()
         self.builder.category_icon.color = self.builder.pipeline_gui.modules[event.module_id].module.gui_config().category.value
         self.builder.category_icon.update()
         self.builder.running_module.value = self.builder.pipeline_gui.modules[event.module_id].module.gui_config().name
@@ -73,6 +83,7 @@ class ModuleProgressListener(EventListener):
         self.builder.progress_bar_module_text.value = f"{event.percent}%"
         self.builder.progress_bar_module_text.update()
         self.builder.info_text.value = event.process
+        self.builder.info_text.spans = []
         self.builder.info_text.update()
         self.builder.page.update()
 
@@ -90,5 +101,14 @@ class ModuleErrorListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        print(event)
+        self.builder.pipeline_gui.toggle_all_stuck_in_running()
+        self.builder.pipeline_gui.module_executing = ""
+        self.builder.info_text.value = ""
+        self.builder.info_text.spans = [
+        ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+        ft.TextSpan(event.error_msg, style=ft.TextStyle(color=ft.Colors.WHITE60)),]
+        self.builder.info_text.update()
+        self.builder.page.update()
+        self.builder.category_icon.color = ft.Colors.RED
+        self.builder.category_icon.update()
 

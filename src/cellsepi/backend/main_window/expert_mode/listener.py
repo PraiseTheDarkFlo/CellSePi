@@ -32,6 +32,7 @@ class ErrorEvent(Event):
     def __init__(self,error_name: str, error_msg: str):
         self.error_name = error_name
         self.error_msg = error_msg
+
     def __str__(self):
         return f"Error_name: {self.error_name} Error_msg: {self.error_msg}"
 
