@@ -265,11 +265,10 @@ class BatchImageSegmentation(Notifier):
 
                 # model evaluates image
                 if model_type == 'cellpose':
-                    #if image.ndim == 3:
-                    #    image = np.transpose(image, (2, 1, 0))
-                    #    res = model.eval(image, diameter=diameter, channels=[0, 0],z_axis=0,do_3D=True)
-                    #else:
-                    res = model.eval(image, diameter=diameter, channels=[0, 0])
+                    if image.ndim == 3: #x,y,z dimensions
+                        res = model.eval(image, diameter=diameter, channels=[0, 0],z_axis=2,do_3D=False)
+                    else:
+                        res = model.eval(image, diameter=diameter, channels=[0, 0])
                     mask, flow, style = res[:3]
 
                 elif model_type == 'pytorch':

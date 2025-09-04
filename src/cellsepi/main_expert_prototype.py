@@ -418,7 +418,7 @@ class Builder:
             on_click=self.pipeline_gui.pipeline.run(resume=True),
             opacity=0.75
         )
-        self.progress_bar_module = ft.ProgressBar(value=0, width=230,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
+        self.progress_bar_module = ft.ProgressBar(value=0, width=220,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
         self.progress_pipeline = ft.ProgressRing(value=0,width=50,height=50,stroke_width=8,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
         self.progress_text = ft.Text(f"{self.pipeline_gui.modules_executed}/{len(self.pipeline_gui.pipeline.modules)}",weight=ft.FontWeight.BOLD,tooltip="How many modules has been executed",color=ft.Colors.WHITE60)
         self.progress_stack = ft.Stack([self.progress_pipeline,ft.Container(self.progress_text,alignment=ft.alignment.center)],width=50,height=50,)

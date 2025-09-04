@@ -2,6 +2,7 @@
 from cellsepi.backend.main_window.data_util import load_directory, ReturnTypePath
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.expert_mode.module import *
+from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningException
 from cellsepi.backend.main_window.images import BatchImageSegmentation
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
@@ -55,6 +56,10 @@ class BatchImageSegModule(Module, ABC):
     def run(self):
         if self.inputs["mask_paths"].data is None:
             self.inputs["mask_paths"].data = {}
-        BatchImageSegmentation(segmentation_channel=self.user_segmentation_channel,diameter=self.user_diameter,suffix=self.user_mask_suffix).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self.user_model_path.path)
+        try:
+            BatchImageSegmentation(segmentation_channel=self.user_segmentation_channel,diameter=self.user_diameter,suffix=self.user_mask_suffix).run(self.event_manager,self.inputs["image_paths"].data,self.inputs["mask_paths"].data,self.user_model_path.path)
+        except:
+            raise PipelineRunningException("Segmentation Error", "Incompatible file for the segmentation model.")
+
         self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
 
