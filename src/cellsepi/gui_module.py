@@ -244,7 +244,7 @@ class ModuleGUI(ft.GestureDetector):
             self.ports_container.height = MODULE_HEIGHT * 2
             self.ports_container.opacity = 1
             self.ports_container.update()
-            await asyncio.sleep(0.08)
+            await asyncio.sleep(0.14)
             self.ports_column.scroll=ft.ScrollMode.ALWAYS
             self.ports_column.update()
             self.show_ports = True
@@ -473,20 +473,18 @@ class ModuleGUI(ft.GestureDetector):
         height = 72* len(user_attributes) + 10 * (len(user_attributes)-1)+10 #72 because 60 only apples on the inner measurements
         calc_height = height>260
         if len(user_attributes) != 0:
-            return ft.CupertinoBottomSheet(ft.Card(
+            return ft.CupertinoBottomSheet(ft.Column([ft.Card(
                 content=ft.Column(
-                    [ft.ListView(
+                    [ft.Container(ft.ListView(
                         controls=self.create_attribute_list(user_attributes),
                         width=500,
                         spacing=10,
                         height=260 if height>260 else height,
                         padding=10,
-                    )],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                ),width=550,height=300 if calc_height else height+40,
-            )
-            ,height=300
+                    ),padding=10)]
+                ),height=300 if calc_height else height+40,
+            )],
+                    alignment=ft.MainAxisAlignment.CENTER,)
             ,padding=ft.padding.only(top=6),on_dismiss=lambda e: self.close_options(e))
         else:
             return None

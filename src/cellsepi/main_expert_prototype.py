@@ -332,11 +332,11 @@ class Builder:
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
 
-        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.save_button_click(),
-                                           icon_color=WHITE60,
-                                           style=ft.ButtonStyle(
+        self.save_menu_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.save_button_click(),
+                                              icon_color=WHITE60,
+                                              style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                           tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+                                              tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
         self.run_menu_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.run_menu_click(),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
@@ -372,10 +372,15 @@ class Builder:
             alignment=ft.alignment.top_right, right=10, top=5
         )
         ])
-        save_row = ft.Row([choose_name, ft.TextButton("Save",style=ft.ButtonStyle(
-                color=ft.Colors.WHITE60,
-                overlay_color=ft.Colors.WHITE12,
-            ),on_click=lambda e:self.pipeline_gui.save())],tight=True)
+        self.save_button = ft.ElevatedButton(  # button to start the pipeline
+            text="Save",
+            icon=ft.Icons.DOWNLOAD_FOR_OFFLINE_SHARP,
+            tooltip="Save the pipeline",
+            disabled=False,
+            on_click=lambda e: self.pipeline_gui.save(),
+            opacity=0.75
+        )
+        save_row = ft.Row([choose_name, self.save_button],tight=True,spacing=20)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -389,7 +394,7 @@ class Builder:
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
                 [
-                    self.load_button, self.save_button,self.run_menu_button,self.delete_button,self.port_button
+                    self.load_button, self.save_menu_button,self.run_menu_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
@@ -398,8 +403,8 @@ class Builder:
                 [
                     directory_stack,save_row,
                 ], tight=True,spacing=2
-            ), bgcolor=MENU_COLOR, expand=True,padding=10
-            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),width=0,height=140,
+            ), bgcolor=MENU_COLOR, expand=True,padding=20
+            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),width=0,height=150,
             bottom=20,left=self.tools.left+ self.tools.width + 5,blur=10,opacity=0,
             animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),)
@@ -425,7 +430,7 @@ class Builder:
         self.progress_bar_module_text = ft.Text("0%",color=ft.Colors.WHITE60)
         self.progress_and_start = ft.Column([ft.Container(self.progress_stack,alignment=ft.alignment.center),
             ft.Container(
-                content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=80,spacing=20
+                content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=85,spacing=20
         )
         self.running_module = ft.Text("Module",color=ft.Colors.WHITE60,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
         self.info_text = ft.Text("Idle, waiting for start.",color=ft.Colors.WHITE60,width=250,overflow=ft.TextOverflow.ELLIPSIS,max_lines=2)
@@ -481,6 +486,9 @@ class Builder:
             def dismiss_dialog(e):
                 cupertino_alert_dialog.open = False
                 e.control.page.update()
+                for mod in self.pipeline_gui.modules.values():
+                    if not self.pipeline_gui.pipeline.check_module_satisfied(mod.name):
+                        mod.ports_in_out_clicked()
             def dismiss_dialog_ignore(e):
                 cupertino_alert_dialog.open = False
                 e.control.page.update()
@@ -490,9 +498,9 @@ class Builder:
                 content=ft.Text("Not all mandatory inputs are satisfied."),
                 actions=[
                     ft.CupertinoDialogAction(
-                        "Change",is_default_action=True, on_click=dismiss_dialog
+                        "Change modules",is_default_action=True, on_click=dismiss_dialog
                     ),
-                    ft.CupertinoDialogAction(text="Ignore", is_destructive_action=True, on_click=dismiss_dialog_ignore),
+                    ft.CupertinoDialogAction(text="Skip modules", is_destructive_action=True, on_click=dismiss_dialog_ignore),
                 ],
             )
             self.page.overlay.append(cupertino_alert_dialog)
@@ -600,19 +608,19 @@ class Builder:
 
     def save_button_click(self,from_code=False):
         if self.save_menu.opacity==1:
-            self.save_button.icon_color = WHITE60
-            self.save_button.tooltip = f"Show save menu"
-            self.save_button.update()
+            self.save_menu_button.icon_color = WHITE60
+            self.save_menu_button.tooltip = f"Show save menu"
+            self.save_menu_button.update()
             self.save_menu.width = 0
             self.save_menu.opacity = 0
             self.save_menu.update()
         else:
-            self.save_button.icon_color = ft.Colors.BLUE_400
-            self.save_button.tooltip = f"Hide save menu"
-            self.save_button.update()
+            self.save_menu_button.icon_color = ft.Colors.BLUE_400
+            self.save_menu_button.tooltip = f"Hide save menu"
+            self.save_menu_button.update()
             if not from_code and self.run_menu.opacity==1:
                 self.run_menu_click(True)
-            self.save_menu.width = 280
+            self.save_menu.width = 320
             self.save_menu.opacity = 1
             self.save_menu.update()
 
