@@ -32,15 +32,20 @@ class ModuleExecutedListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        self.builder.pipeline_gui.modules[event.module_id].set_invalid()
+        self.builder.pipeline_gui.modules[event.module_id].enable_tools()
         self.builder.pipeline_gui.modules_executed += 1
-        if len(self.builder.pipeline_gui.pipeline.run_order) == 0:
-            self.builder.pipeline_gui.module_executing = ""
-        if self.builder.pipeline_gui.source_module == "":
-            self.builder.pipeline_gui.modules[event.module_id].toggle_detection()
-        self.builder.pipeline_gui.check_for_valid(event.module_id)
+        if self.builder.pipeline_gui.source_module != "":
+            self.builder.pipeline_gui.check_for_valid(event.module_id)
+        self.builder.pipeline_gui.lines_gui.update_delete_buttons(self.builder.pipeline_gui.modules[event.module_id])
+        self.builder.pipeline_gui.modules[event.module_id].pause_button.visible = False
+        self.builder.pipeline_gui.modules[event.module_id].waiting_button.visible = False
+        self.builder.pipeline_gui.modules[event.module_id].start_button.visible = True
+        self.builder.pipeline_gui.modules[event.module_id].delete_button.visible = True
+        self.builder.pipeline_gui.modules[event.module_id].pause_button.update()
+        self.builder.pipeline_gui.modules[event.module_id].waiting_button.update()
+        self.builder.pipeline_gui.modules[event.module_id].start_button.update()
+        self.builder.pipeline_gui.modules[event.module_id].delete_button.update()
         self.builder.update_modules_executed()
-        self.builder.pipeline_gui.lines_gui.update_lines(self.builder.pipeline_gui.modules[event.module_id])
 
 
 class ModuleStartedListener(EventListener):
@@ -57,7 +62,6 @@ class ModuleStartedListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        self.builder.pipeline_gui.module_executing = event.module_id
         self.builder.pipeline_gui.modules[event.module_id].set_running()
         self.builder.category_icon.color = self.builder.pipeline_gui.modules[event.module_id].module.gui_config().category.value
         self.builder.category_icon.update()
@@ -102,7 +106,6 @@ class ModuleErrorListener(EventListener):
 
     def _update(self, event: Event) -> None:
         self.builder.pipeline_gui.toggle_all_stuck_in_running()
-        self.builder.pipeline_gui.module_executing = ""
         self.builder.info_text.value = ""
         self.builder.info_text.spans = [
         ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),

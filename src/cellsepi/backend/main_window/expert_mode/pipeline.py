@@ -17,6 +17,8 @@ class Pipeline:
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
         self.run_order: deque[str] = deque()
+        self.executing: str = ""
+        self.running: bool = False
         self.found: bool = False
         self.event_manager: EventManager = EventManager()
 
@@ -193,6 +195,7 @@ class Pipeline:
                 self.event_manager.notify(ErrorEvent("Cycle in Pipeline", e.args[0]))
                 return
         while self.run_order:
+            self.running = True
             module_name = self.run_order.popleft()
             if module_name in show_room:
                 continue
@@ -203,17 +206,23 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
+                    self.executing = module_name
                     self.event_manager.notify(ModuleStartedEvent(module_name))
                     stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
+                    self.executing = ""
                     self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if stop:
+                        self.running = False
                         return
                 except PipelineRunningException as e:
+                    self.running = False
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    self.executing = ""
                     return
             else:
                 self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
+        self.running = False
 
     def skip_and_run(self,module_id: str,show_room: List[str] = [],resume:bool = False):
         if not resume:
@@ -224,6 +233,7 @@ class Pipeline:
                 return
             self.found = False
         while self.run_order:
+            self.running = True
             module_name = self.run_order.popleft()
             if module_name in show_room:
                 continue
@@ -237,17 +247,23 @@ class Pipeline:
                 pipe.run()
             if self.check_module_runnable(module_name):
                 try:
+                    self.executing = module_name
                     self.event_manager.notify(ModuleStartedEvent(module_name))
-                    stop = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
+                    stop = module.run()  # if the run of a module returns True, the module wants to stop the pipeline.
+                    self.executing = ""
                     self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if stop:
+                        self.running = False
                         return
                 except PipelineRunningException as e:
-                    self.event_manager.notify(ErrorEvent(e.error_type,e.description))
+                    self.running = False
+                    self.event_manager.notify(ErrorEvent(e.error_type, e.description))
+                    self.executing = ""
                     return
             else:
                 self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
+            self.running = False
 
 class PipelineRunningException(Exception):
     """

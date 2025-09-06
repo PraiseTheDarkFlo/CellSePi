@@ -23,7 +23,6 @@ class PipelineGUI(ft.Stack):
         self.controls = []
         self.pipeline = Pipeline()
         self.modules_executed = 0
-        self.module_executing = ""
         self.module_running_count = 0
         self.page = page
         self.modules = {} #identiefierer is the module_id
@@ -61,8 +60,8 @@ class PipelineGUI(ft.Stack):
     def remove_connection(self,source_module_gui,target_module_gui):
         self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
-        self.check_for_valid_all_modules()
         self.update_all_port_icons()
+        self.check_for_valid_all_modules()
 
     def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True):
         module_gui = ModuleGUI(self, module_type, x, y,True,visible)
@@ -145,16 +144,39 @@ class PipelineGUI(ft.Stack):
         self.source_module = module_id
         self.transmitting_ports = []
         for module in self.modules.values():
-            if module.name not in self.pipeline.run_order and module.name != self.module_executing:
-                if module.name != module_id:
-                    module.toggle_detection()
-                    self.update()
+            if module.name != module_id:
+                module.toggle_detection()
+                self.update()
 
     def toggle_all_stuck_in_running(self):
         for module in self.pipeline.run_order:
-            self.modules[module].toggle_detection()
-        if self.module_executing != "":
-            self.modules[self.module_executing].toggle_detection()
+            show_room_names = [m.name for m in self.show_room_modules]
+            if module in show_room_names:
+                continue
+            self.lines_gui.update_delete_buttons(
+                self.modules[module])
+            self.modules[module].enable_tools()
+            self.modules[module].start_button.visible = True
+            self.modules[module].start_button.update()
+            self.modules[module].delete_button.visible = True
+            self.modules[module].delete_button.update()
+            self.modules[module].pause_button.visible = False
+            self.modules[module].pause_button.update()
+            self.modules[module].waiting_button.visible = False
+            self.modules[module].waiting_button.update()
+        if self.pipeline.executing != "":
+            self.lines_gui.update_delete_buttons(
+                self.modules[self.pipeline.executing])
+            self.modules[self.pipeline.executing].enable_tools()
+            self.modules[self.pipeline.executing].start_button.visible = True
+            self.modules[self.pipeline.executing].start_button.update()
+            self.modules[self.pipeline.executing].delete_button.visible = True
+            self.modules[self.pipeline.executing].delete_button.update()
+            self.modules[self.pipeline.executing].pause_button.visible = False
+            self.modules[self.pipeline.executing].pause_button.update()
+            self.modules[self.pipeline.executing].waiting_button.visible = False
+            self.modules[self.pipeline.executing].waiting_button.update()
+        self.check_for_valid_all_modules()
 
     def check_for_valid_all_modules(self):
         for target_module_gui in self.modules.values():
@@ -162,7 +184,7 @@ class PipelineGUI(ft.Stack):
 
     def check_for_valid(self,module_id: str):
         target_module_gui = self.modules[module_id]
-        if target_module_gui.name not in self.pipeline.run_order and target_module_gui.name != self.module_executing:
+        if (target_module_gui.name not in self.pipeline.run_order or not self.pipeline.running) and target_module_gui.name != self.pipeline.executing:
             if target_module_gui.name != self.source_module:
                 if all(k in target_module_gui.module.inputs for k in
                        self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(
@@ -275,10 +297,12 @@ class LinesGUI(canvas.Canvas):
         def dummy():
             pass
         disabled = False
-        if source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order:
+        bgcolor = ft.Colors.RED_ACCENT
+        if (source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running:
             disabled = True
+            bgcolor = DISABLED_BUTTONS_COLOR
         delete_button = ft.GestureDetector(top=port_y-20,left=port_x-20,on_hover=lambda e:dummy(),content=ft.IconButton(
-            icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=ft.Colors.RED_ACCENT,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
+            icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=bgcolor,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
             ),visible=self.pipeline_gui.show_delete_button,disabled=disabled)
 
         self.shapes.append(edge)
@@ -292,6 +316,24 @@ class LinesGUI(canvas.Canvas):
         self.update()
         self.pipeline_gui.delete_stack.update()
 
+    def update_delete_button(self,source_module_gui: ModuleGUI, target_module_gui: ModuleGUI,set_all: bool = False):
+        disabled = False
+        bgcolor = ft.Colors.RED_ACCENT
+        if ((source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running) or set_all:
+            disabled = True
+            bgcolor = DISABLED_BUTTONS_COLOR
+        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.bgcolor = bgcolor
+        self.delete_buttons[(source_module_gui.name, target_module_gui.name)].content.disabled = disabled
+        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.update()
+
+    def update_delete_buttons(self,module_gui: ModuleGUI,set_all: bool = False):
+        """
+        Updates all delete buttons that are connected to the given module.
+        """
+        for pipe in self.pipeline_gui.pipeline.pipes_in[module_gui.module.module_id]:
+            self.update_delete_button(self.pipeline_gui.modules[pipe.source_module.module_id], module_gui,set_all)
+        for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module.module_id]:
+            self.update_delete_button(module_gui, self.pipeline_gui.modules[pipe.target_module.module_id],set_all)
 
     def remove_line(self, source_module_gui: ModuleGUI, target_module_gui: ModuleGUI):
         """
@@ -488,7 +530,8 @@ class Builder:
                 e.control.page.update()
                 for mod in self.pipeline_gui.modules.values():
                     if not self.pipeline_gui.pipeline.check_module_satisfied(mod.name):
-                        mod.ports_in_out_clicked()
+                        if not mod.show_ports:
+                            mod.ports_in_out_clicked()
             def dismiss_dialog_ignore(e):
                 cupertino_alert_dialog.open = False
                 e.control.page.update()
@@ -512,10 +555,15 @@ class Builder:
         self.info_text.update()
         self.start_button.disabled = True
         self.start_button.update()
-        if self.pipeline_gui.source_module != "":
-            self.pipeline_gui.modules[self.pipeline_gui.source_module].connect_clicked()
         for module in self.pipeline_gui.modules.values():
-            module.toggle_detection()
+            self.pipeline_gui.lines_gui.update_delete_buttons(module,True)
+            module.waiting_button.visible = True
+            module.start_button.visible = False
+            module.delete_button.visible = False
+            module.waiting_button.update()
+            module.start_button.update()
+            module.delete_button.update()
+            module.disable_tools()
         self.pipeline_gui.pipeline.run(show_room_names)
         self.pipeline_gui.modules_executed = 0
         self.update_modules_executed()
@@ -536,7 +584,7 @@ class Builder:
 
     def update_modules_executed(self):
         current =self.pipeline_gui.modules_executed
-        if self.pipeline_gui.module_executing == "":
+        if not self.pipeline_gui.pipeline.running:
             total = len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2
             self.progress_pipeline.value = (current / total) if total > 0 else 0
             self.pipeline_gui.module_running_count = total

@@ -67,7 +67,19 @@ class ModuleGUI(ft.GestureDetector):
                                              shape=ft.RoundedRectangleBorder(radius=12),
                                          ), on_click=lambda e: self.copy_module(),
                                           tooltip="Start pipeline from here", hover_color=ft.Colors.WHITE12, )
+        self.pause_button = ft.IconButton(icon=ft.Icons.PAUSE_ROUNDED, icon_color=ft.Colors.WHITE60,disabled=True,
+                                          style=ft.ButtonStyle(
+                                              shape=ft.RoundedRectangleBorder(radius=12),
+                                          ), on_click=lambda e: self.copy_module(),
+                                          tooltip="Pause pipeline", hover_color=ft.Colors.WHITE12, visible=False)
+        self.waiting_button = ft.IconButton(icon=ft.Icons.HOURGLASS_EMPTY_ROUNDED, icon_color=ft.Colors.WHITE60,disabled=True,
+                                          style=ft.ButtonStyle(
+                                              shape=ft.RoundedRectangleBorder(radius=12),
+                                          ), on_click=lambda e: self.copy_module(),
+                                          tooltip="Waiting for execution", hover_color=ft.Colors.WHITE12, visible=False)
 
+
+        self.state_stack = ft.Stack([self.start_button,self.pause_button,self.waiting_button])
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
                                                  style=ft.ButtonStyle(
@@ -77,7 +89,7 @@ class ModuleGUI(ft.GestureDetector):
 
         self.tools = ft.Container(ft.Row(
                                             [
-                                                self.connect_button,self.options_button,self.ports_in_out_button,self.copy_button,self.start_button,
+                                                self.connect_button,self.options_button,self.ports_in_out_button,self.copy_button,self.state_stack,
                                             ],tight=True,spacing=7
                                         ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH
                                         )
@@ -154,6 +166,38 @@ class ModuleGUI(ft.GestureDetector):
         ],tight=True
         )],height=self.module_container.height,
         )
+
+    def disable_tools(self):
+        if self.port_selection:
+            self.connect_clicked()
+        self.connect_button.disabled=True
+        self.connect_button.icon_color = DISABLED_BUTTONS_COLOR
+        self.options_button.disabled=True
+        self.options_button.icon_color = DISABLED_BUTTONS_COLOR
+        self.copy_button.disabled = True
+        self.copy_button.icon_color = DISABLED_BUTTONS_COLOR
+        if self.show_ports:
+            self.ports_in_out_clicked()
+        self.connect_button.update()
+        self.options_button.update()
+        self.copy_button.update()
+        self.ports_in_out_button.disabled = True
+        self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
+        self.ports_in_out_button.update()
+
+    def enable_tools(self):
+        self.connect_button.disabled = False
+        self.connect_button.icon_color = ft.Colors.WHITE60
+        self.options_button.disabled = False
+        self.options_button.icon_color = ft.Colors.WHITE60
+        self.copy_button.disabled = False
+        self.copy_button.icon_color = ft.Colors.WHITE60
+        self.ports_in_out_button.disabled = False
+        self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+        self.connect_button.update()
+        self.options_button.update()
+        self.copy_button.update()
+        self.ports_in_out_button.update()
 
     def on_enter_click_module(self):
         """
@@ -261,9 +305,6 @@ class ModuleGUI(ft.GestureDetector):
             self.content.update()
             self.show_ports = False
 
-        self.content.update()
-        self.pipeline_gui.page.update()
-
 
     def set_valid(self):
         """
@@ -286,13 +327,10 @@ class ModuleGUI(ft.GestureDetector):
         self.click_container.update()
 
     def set_running(self):
-        self.valid = False
-        self.click_container.bgcolor = ft.Colors.BLUE_400.with_opacity(0.40,ft.Colors.BLUE)
-        self.module_container.border = ft.border.all(4,
-                                                     ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(
-                                                         self.name) else ft.Colors.BLACK12)
-        self.module_container.update()
-        self.click_container.update()
+        self.pause_button.visible = True
+        self.waiting_button.visible = False
+        self.pause_button.update()
+        self.waiting_button.update()
 
     def get_ports_row(self):
         """
@@ -345,8 +383,9 @@ class ModuleGUI(ft.GestureDetector):
             self.click_gesture.disabled = True
             self.click_gesture.visible = False
             self.click_gesture.update()
-            self.delete_button.visible = True
-            self.delete_button.update()
+            if (self.name not in self.pipeline_gui.pipeline.run_order and not self.pipeline_gui.pipeline.executing == self.name) or not self.pipeline_gui.pipeline.running:
+                self.delete_button.visible = True
+                self.delete_button.update()
             self.connection_ports.visible = False
             self.connect_button.update()
 
@@ -456,9 +495,9 @@ class ModuleGUI(ft.GestureDetector):
             self.click_gesture.disabled = True
             self.click_gesture.visible = False
             self.delete_button.visible = True
-            self.pipeline_gui.check_for_valid(self.name)
             if self.pipeline_gui.source_module != "":
                 self.toggle_detection()
+                self.pipeline_gui.check_for_valid_all_modules()
             self.pipeline_gui.page.update()
 
         e.control.update()
@@ -469,20 +508,21 @@ class ModuleGUI(ft.GestureDetector):
         Generates with the user attributes tagged with the prefix 'user_' a gui overlay.
         """
         user_attributes = self.module.get_user_attributes
-
-        height = 72* len(user_attributes) + 10 * (len(user_attributes)-1)+10 #72 because 60 only apples on the inner measurements
-        calc_height = height>260
+        element_height= 60
+        spacing = 10
+        padding = 20
+        height = element_height* len(user_attributes) + spacing * (len(user_attributes)-1)
+        limit_reached = len(user_attributes) > USER_OPTIONS_LIMIT
         if len(user_attributes) != 0:
             return ft.CupertinoBottomSheet(ft.Column([ft.Card(
                 content=ft.Column(
                     [ft.Container(ft.ListView(
                         controls=self.create_attribute_list(user_attributes),
                         width=500,
-                        spacing=10,
-                        height=260 if height>260 else height,
-                        padding=10,
-                    ),padding=10)]
-                ),height=300 if calc_height else height+40,
+                        spacing=spacing,
+                        height=(element_height* (USER_OPTIONS_LIMIT+1) + spacing * ((USER_OPTIONS_LIMIT+1)-1))-30  if limit_reached else height,
+                    ),padding=padding)]
+                )
             )],
                     alignment=ft.MainAxisAlignment.CENTER,)
             ,padding=ft.padding.only(top=6),on_dismiss=lambda e: self.close_options(e))
