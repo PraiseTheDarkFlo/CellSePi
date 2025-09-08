@@ -56,3 +56,10 @@ class Pipe:
                     f"Type mismatch on port '{port}', source_module provided {out_port.data_type}, output_module provided {in_port.data_type}!")
 
             in_port.data = copy_data(out_port.data)
+
+    def to_dict(self):
+        return {
+            "source": self.source_module.module_id,
+            "target": self.target_module.module_id,
+            "ports": self.ports,
+        }

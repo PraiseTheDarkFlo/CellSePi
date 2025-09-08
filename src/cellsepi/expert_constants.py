@@ -32,3 +32,4 @@ class ModuleType(Enum):
     READ_LIF = ReadLif
     READ_TIF = ReadTif
     PROJECTION_3D_TO_2D = Project3dTo2d
+

@@ -13,7 +13,7 @@ class ReadLif(Module,ABC):
             "mask_paths": Port("mask_paths", dict),
         }
         self._settings: ft.CupertinoBottomSheet = None
-        self.user_file_path: FilePath = FilePath(suffix=".lif")
+        self.user_file_path: FilePath = FilePath(suffix=["lif"])
         self.user_channel_prefix: str = "c"
         self.user_mask_suffix: str = "_seg"
 
@@ -25,6 +25,10 @@ class ReadLif(Module,ABC):
     @property
     def module_id(self) -> str:
         return self._module_id
+
+    @module_id.setter
+    def module_id(self,value: str):
+        self._module_id = value
 
     @property
     def inputs(self) -> dict[str, Port]:

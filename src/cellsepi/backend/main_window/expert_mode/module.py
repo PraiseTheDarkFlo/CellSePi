@@ -11,7 +11,7 @@ class FilePath:
     """
     Type to specify FilePath's
     """
-    def __init__(self, path: str = "",suffix:str=""):
+    def __init__(self, path: str = "", suffix: List[str]=None):
         self.path = path
         self.suffix = suffix
 
@@ -72,19 +72,29 @@ class IdManager:
     Manages the module ID's so every module
     """
     def __init__(self):
-        self._free_ids_queue = deque()
-        self.current_id = 0
+        self._occupied_ids = set()
+        self._next_id = 0
 
     def get_id(self) -> int:
-        if len(self._free_ids_queue) > 0:
-            return self._free_ids_queue.popleft()
-        else:
-            id_number = self.current_id
-            self.current_id += 1
-            return id_number
+        while self._next_id in self._occupied_ids:
+            self._next_id += 1
+        id_number = self._next_id
+        self._occupied_ids.add(id_number)
+        self._next_id += 1
+        return id_number
+
+    def occupy_id(self, id_number: int):
+        if id_number in self._occupied_ids:
+            raise ValueError(f"Number {id_number} already occupied!")
+        self._occupied_ids.add(id_number)
+        if id_number ==  self._next_id:
+            self._next_id = id_number + 1
 
     def free_id(self, id_number: int) -> None:
-        self._free_ids_queue.append(id_number)
+        if id_number in self._occupied_ids:
+            self._occupied_ids.discard(id_number)
+            if self._next_id > id_number > 0:
+                self._next_id = id_number
 
 
 class Module(ABC):
@@ -98,10 +108,16 @@ class Module(ABC):
     """
 
     @classmethod
-    def get_id(cls) -> int:
+    def get_id(cls) -> str:
         if not hasattr(cls, "_id_manager"):
             cls._id_manager = IdManager()
-        return cls._id_manager.get_id()
+        return cls.gui_config().name + str(cls._id_manager.get_id())
+
+    @classmethod
+    def occupy_id(cls,id_number: int):
+        if not hasattr(cls, "_id_manager"):
+            cls._id_manager = IdManager()
+        cls._id_manager.occupy_id(id_number)
 
     @classmethod
     def free_id(cls, id_number: int):
@@ -122,6 +138,16 @@ class Module(ABC):
     def __init__(self,module_id: str):
         pass
 
+    def occupy(self):
+        id_number = self.module_id.removeprefix(self.gui_config().name)
+        if id_number != "":
+            number = int(id_number)
+            self.occupy_id(number)
+
+    def get_id_number(self)-> int:
+        id_number = self.module_id.removeprefix(self.gui_config().name)
+        return int(id_number)
+
     def destroy(self):
         id_number = self.module_id.removeprefix(self.gui_config().name)
         if id_number != "":
@@ -132,6 +158,11 @@ class Module(ABC):
     @property
     @abstractmethod
     def module_id(self) -> str:
+        pass
+
+    @module_id.setter
+    @abstractmethod
+    def module_id(self,value: str):
         pass
 
     #the needed inputs of the module

@@ -26,13 +26,33 @@ class Pipeline:
         """
         Creates a module of the given class and adds it to the pipeline.
         """
-        module = module_class(module_id=module_class.gui_config().name + str(module_class.get_id()))
+        module = module_class(module_id=module_class.get_id())
+        return self._add_module(module,module_class)
+
+    def add_module_with_id(self, module_class: Type[Module],module_id: str) -> Module:
+        """
+        Creates a module of the given class with the given module_id and adds it to the pipeline.
+        """
+        module = module_class(module_id=module_id)
+        module.occupy()
+        return self._add_module(module,module_class)
+
+    def _add_module(self, module: Module,module_class: Type[Module]) -> Module:
         self.modules.append(module)
         self.module_map[module.module_id] = module
         self.pipes_in[module.module_id] = []
         self.pipes_out[module.module_id] = []
         self.event_manager.notify(OnPipelineChangeEvent(f"Added module {module_class.gui_config().name}"))
         return module
+
+    def change_module_name(self, module_id_old: str, module_id_new: str):
+        self.module_map[module_id_old].module_id = module_id_new
+        self.module_map[module_id_new] = self.module_map[module_id_old]
+        del self.module_map[module_id_old]
+        self.pipes_in[module_id_new] = self.pipes_in[module_id_old]
+        del self.pipes_in[module_id_old]
+        self.pipes_out[module_id_new] = self.pipes_out[module_id_old]
+        del self.pipes_out[module_id_old]
 
     def remove_module(self, module: Module) -> None:
         """

@@ -33,6 +33,10 @@ class BatchImageSegModule(Module, ABC):
     def module_id(self) -> str:
         return self._module_id
 
+    @module_id.setter
+    def module_id(self,value: str):
+        self._module_id = value
+
     @property
     def inputs(self) -> dict[str, Port]:
         return self._inputs

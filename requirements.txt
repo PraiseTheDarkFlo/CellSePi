@@ -16,4 +16,5 @@ matplotlib
 pytest
 pyqt5
 torchvision == 0.23.0
+jsonschema == 4.25.1
 

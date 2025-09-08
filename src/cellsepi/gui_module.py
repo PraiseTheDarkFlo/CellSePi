@@ -1,5 +1,7 @@
 import asyncio
+from dataclasses import asdict
 from pathlib import Path
+from typing import List, Any, Dict
 
 import flet as ft
 from flet_core.cupertino_colors import WHITE
@@ -13,7 +15,7 @@ class ModuleGUI(ft.GestureDetector):
     """
     Manages the GUI parts of the module.
     """
-    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False,visible=True,index:int=None):
+    def __init__(self, pipeline_gui,module_type: ModuleType,x: float = None,y: float = None,show_mode:bool=False,visible=True,index:int=None,id_number:int=None,module_dict:dict=None):
         super().__init__()
         self.pipeline_gui = pipeline_gui
         self.detection: bool = True
@@ -31,7 +33,9 @@ class ModuleGUI(ft.GestureDetector):
         self.old_left = None
         self.old_top = None
         self.port_selection = False
-        self.module = self.pipeline_gui.pipeline.add_module(module_type.value)
+        self.module = self.pipeline_gui.pipeline.add_module(module_type.value) if id_number is None else self.pipeline_gui.pipeline.add_module_with_id(module_type.value,module_type.value.gui_config().name + str(id_number))
+        if module_dict is not None:
+            self.update_user_attr(module_dict)
         if self.module.settings is None and hasattr(self.module, "_settings"):
             self.module._settings = self.generate_options_overlay()
         if show_mode:
@@ -407,7 +411,13 @@ class ModuleGUI(ft.GestureDetector):
         for pipe in list(self.pipeline_gui.pipeline.pipes_out[self.name]):
             self.pipeline_gui.remove_connection(self,self.pipeline_gui.modules[pipe.target_module.module_id])
 
-        self.pipeline_gui.remove_module(self.name)
+        if self.show_mode:
+            self.pipeline_gui.show_room_modules.remove(self)
+            self.pipeline_gui.pipeline.remove_module(self.module)
+            self.pipeline_gui.page_stack.controls.remove(self)
+            self.pipeline_gui.update()
+        else:
+            self.pipeline_gui.remove_module(self.name)
 
 
     @property
@@ -480,10 +490,13 @@ class ModuleGUI(ft.GestureDetector):
             return
         elif self.show_mode:
             self.show_mode = False
-            self.pipeline_gui.modules[self.name] = self
             index = self.pipeline_gui.show_room_modules.index(self)
             self.pipeline_gui.show_room_modules.remove(self)
-            self.pipeline_gui.refill_show_room(self,self.visible,index)
+            show_room_id = self.module.get_id_number()
+            self.module.free_id(show_room_id)
+            self.pipeline_gui.pipeline.change_module_name(self.module.module_id,self.module.get_id())
+            self.pipeline_gui.modules[self.name] = self
+            self.pipeline_gui.refill_show_room(self,self.visible,index,show_room_id)
             self.pipeline_gui.page_stack.controls.remove(self)
             self.left += self.pipeline_gui.offset_x
             self.top += self.pipeline_gui.offset_y
@@ -562,13 +575,14 @@ class ModuleGUI(ft.GestureDetector):
                     read_only=True,
                     disabled=True
                 )
+                attr = getattr(self.module, attribute_name)
                 file_picker = ft.FilePicker(on_result=lambda a,attr_name= attribute_name,text=text_field: self.on_select_file(a,attr_name,text))
                 self.pipeline_gui.page.overlay.extend([file_picker])
                 items.append(ft.Stack([text_field,ft.Container(
                                 content=ft.IconButton(
                                     icon=ft.Icons.UPLOAD_FILE,
                                     tooltip="Pick file",
-                                    on_click=lambda e: file_picker.pick_files(allow_multiple=False),
+                                    on_click=lambda e: file_picker.pick_files(allow_multiple=False,file_type=ft.FilePickerFileType.CUSTOM if attr.suffix is not None else ft.FilePickerFileType.ANY,allowed_extensions=attr.suffix if attr.suffix is not None else [],),
                                 ),
                                 alignment=ft.alignment.top_right
                             ,right=10,top=5)
@@ -605,12 +619,6 @@ class ModuleGUI(ft.GestureDetector):
         """
         if e.files is not None:
             current_file_path = getattr(self.module, attr_name)
-            if current_file_path.suffix != "" and current_file_path.suffix != Path(e.files[0].path).suffix:
-                attribute_name_without_prefix = attr_name.removeprefix("user_")
-                self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {current_file_path.suffix}'s.")))
-                text.value = current_file_path.path
-                self.pipeline_gui.page.update()
-                return
             current_file_path.path = e.files[0].path
             text.value = format_directory_path(e.files[0].path,50)
             text.update()
@@ -635,7 +643,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.update()
         except ValueError:
             attribute_name_without_prefix = attr_name.removeprefix("user_")
-            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.")))
+            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
             reference.current.value = getattr(self.module, attr_name)
             self.pipeline_gui.page.update()
 
@@ -660,5 +668,27 @@ class ModuleGUI(ft.GestureDetector):
         self.copy_button.icon_color = ft.Colors.WHITE60
         self.copy_button.update()
 
+    def to_dict(self):
+        user_attributes: List[Dict[str, Any]] = []
+        for attr_name in self.module.get_user_attributes:
+            value = getattr(self.module,attr_name)
+            value_type = type(value).__name__
+            if isinstance(value,FilePath) or isinstance(value,DirectoryPath):
+                value = value.path
+            user_attributes.append({"name": attr_name,"value": value,"attr_type":value_type})
+        return {
+            "module_id": self.name,
+            "module_name": self.module.gui_config().name,
+            "position": {"x":self.left, "y":self.top},
+            "user_attributes": user_attributes,
+        }
 
+    def update_user_attr(self,module_dict:dict):
+        for attr in module_dict.get("user_attributes", []):
+            user_attributes = self.module.get_user_attributes
+            if attr["name"] in user_attributes:
+                if attr["attr_type"] == FilePath.__name__ or attr["attr_type"] == DirectoryPath.__name__:
+                    getattr(self.module, attr["name"]).path = attr["value"]
+                else:
+                    setattr(self.module, attr["name"], attr["value"])
 

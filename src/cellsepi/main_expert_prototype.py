@@ -1,6 +1,8 @@
 import math
+from collections import deque
 from enum import Enum
-from typing import List, Tuple
+from pathlib import Path
+from typing import List
 
 import flet as ft
 import flet.canvas as canvas
@@ -8,13 +10,13 @@ from PyQt5.QtCore import QPointF
 from flet_core.colors import WHITE60
 
 from cellsepi.backend.drawing_window.drawing_util import bresenham_line
-from cellsepi.frontend.main_window.gui_directory import format_directory_path
 from cellsepi.gui_module import ModuleGUI
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.expert_constants import *
 from cellsepi.gui_pipeline_listener import PipelineChangeListener, ModuleExecutedListener, ModuleStartedListener, \
     ModuleProgressListener, ModuleErrorListener
+from cellsepi.backend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
 
 class PipelineGUI(ft.Stack):
@@ -45,15 +47,37 @@ class PipelineGUI(ft.Stack):
         self.expand = True
         self.offset_x = 0
         self.offset_y = 0
-        self.save_dir = ""
-        self.name = ""
 
-    def save(self):
-        pass
+    def reset(self):
+        for module in list(self.modules.values()):
+            module.remove_module()
+        self.pipeline.run_order = deque()
+        self.pipeline.executing = ""
+        self.pipeline.running = False
+        self.update()
+
+    def load_pipeline(self,pipeline_dict:dict):
+        for module_dict in pipeline_dict["modules"]:
+            type_map = {mt.value.gui_config().name: mt for mt in ModuleType}
+            self.add_module(module_type=type_map[module_dict["module_name"]], x=module_dict["position"]["x"], y=module_dict["position"]["y"], module_id=module_dict["module_id"],module_dict=module_dict)
+
+        for pipe in pipeline_dict["pipes"]:
+            source = pipe["source"]
+            target = pipe["target"]
+            ports= pipe["ports"]
+            self.add_connection(self.modules[source],self.modules[target],ports)
+
+        #TODO: View, but first need to integrate extension
+
+        self.page.open(
+            ft.SnackBar(ft.Text(f"Pipeline successfully loaded.", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
+        self.page.update()
+
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
         self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports_copy))
+        print(source_module_gui.name,target_module_gui.name)
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
         self.update_all_port_icons()
 
@@ -63,13 +87,13 @@ class PipelineGUI(ft.Stack):
         self.update_all_port_icons()
         self.check_for_valid_all_modules()
 
-    def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True):
-        module_gui = ModuleGUI(self, module_type, x, y,True,visible)
+    def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True,show_room_id:int=None):
+        module_gui = ModuleGUI(self, module_type, x, y,True,visible,id_number=show_room_id)
         self.page_stack.controls.append(module_gui)
         return module_gui
 
-    def refill_show_room(self,module_gui:ModuleGUI,visible:bool=True,index:int=None):
-        new_module_gui = ModuleGUI(self, module_gui.module_type, x=SPACING_X + SHOWROOM_PADDING_X / 2, y=module_gui.show_offset_y, show_mode=True, visible=visible, index=index)
+    def refill_show_room(self,module_gui:ModuleGUI,visible:bool=True,index:int=None,show_room_id:int=None):
+        new_module_gui = ModuleGUI(self, module_gui.module_type, x=SPACING_X + SHOWROOM_PADDING_X / 2, y=module_gui.show_offset_y, show_mode=True, visible=visible, index=index,id_number=show_room_id)
         self.page_stack.controls.append(new_module_gui)
         self.page_stack.update()
         self.update_all_port_icons()
@@ -84,8 +108,8 @@ class PipelineGUI(ft.Stack):
         for i,module_type in enumerate(ModuleType):
             visible = i < SHOWROOM_MODULE_COUNT
             y_module = y+ (MODULE_HEIGHT + SPACING_Y) * (i%SHOWROOM_MODULE_COUNT)
-            self.add_show_room_module(module_type,x,y_module,visible)
-            self.add_show_room_module(module_type,x,y_module,visible)
+            self.add_show_room_module(module_type,x,y_module,visible,-1)
+            self.add_show_room_module(module_type,x,y_module,visible,-2)
 
     def change_page(self,page_number:int):
         self.show_room_page_number = page_number
@@ -105,8 +129,9 @@ class PipelineGUI(ft.Stack):
             module.left = SPACING_X + SHOWROOM_PADDING_X / 2
             module.update()
 
-    def add_module(self,module_type: ModuleType,x: float = None,y: float = None):
-        module_gui = ModuleGUI(self,module_type,x,y)
+    def add_module(self,module_type: ModuleType,x: float = None,y: float = None,module_id: str = None,module_dict:dict=None):
+        id_number = int(module_id.removeprefix(module_type.value.gui_config().name)) if module_id is not None else None
+        module_gui = ModuleGUI(self,module_type,x,y,id_number=id_number,module_dict=module_dict)
         self.controls.append(module_gui)
         self.update()
         return module_gui
@@ -365,64 +390,27 @@ class Builder:
         self.page = page
         self.page_stack = None
         self.pipeline_gui = PipelineGUI(page)
+        self.pipeline_storage = PipelineStorage(self.pipeline_gui)
         file_picker = ft.FilePicker(
             on_result=lambda a: self.on_select_file(a))
-        self.pipeline_gui.page.overlay.extend([file_picker])
-        self.load_button = ft.IconButton(icon=ft.Icons.UPLOAD_FILE, on_click=lambda e: file_picker.pick_files(allow_multiple=False),
+        file_saver = ft.FilePicker(
+            on_result=lambda a: self.on_file_saved(a))
+        self.page.overlay.extend([file_picker,file_saver])
+        self.load_button = ft.IconButton(icon=ft.Icons.UPLOAD_FILE, on_click=lambda e: file_picker.pick_files(file_type=ft.FilePickerFileType.CUSTOM,allowed_extensions=["csp"],allow_multiple=False),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
-
-        self.save_menu_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.save_button_click(),
-                                              icon_color=WHITE60,
-                                              style=ft.ButtonStyle(
+        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: file_saver.save_file(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"], dialog_title="Save Pipeline",file_name="pipeline.csp"),
+                                         icon_color=WHITE60,
+                                         style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                              tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+                                         tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
         self.run_menu_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.run_menu_click(),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Show run menu", hover_color=ft.Colors.WHITE12)
-        ref = ft.Ref[ft.Text]()
-        choose_name = ft.TextField(
-            label="Pipeline name",
-            border_color=ft.Colors.BLUE_ACCENT,
-            value="",
-            color=ft.Colors.WHITE60,
-            ref=ref,
-            on_blur=lambda e, reference=ref: self.on_change(e,reference),label_style=ft.TextStyle(color=ft.Colors.WHITE60),
-            height=60,width=185
-        )
-        text_field = ft.TextField(
-            label="Save directory",
-            border_color=ft.Colors.WHITE60,
-            value=None,
-            height=60,
-            color=ft.Colors.WHITE60,width=250,
-            read_only=True,label_style=ft.TextStyle(color=ft.Colors.WHITE60),
-        )
-        dir_picker = ft.FilePicker(
-            on_result=lambda a, text=text_field: self.on_select_dir(a,text))
-        self.page.overlay.extend([dir_picker])
-        directory_stack = ft.Stack([text_field, ft.Container(
-            content=ft.IconButton(
-                icon=ft.Icons.FOLDER_OPEN,icon_color=ft.Colors.WHITE60,
-                tooltip="Choose directory",hover_color=ft.Colors.WHITE12,
-                on_click=lambda e: dir_picker.get_directory_path(),
-            ),
-            alignment=ft.alignment.top_right, right=10, top=5
-        )
-        ])
-        self.save_button = ft.ElevatedButton(  # button to start the pipeline
-            text="Save",
-            icon=ft.Icons.DOWNLOAD_FOR_OFFLINE_SHARP,
-            tooltip="Save the pipeline",
-            disabled=False,
-            on_click=lambda e: self.pipeline_gui.save(),
-            opacity=0.75
-        )
-        save_row = ft.Row([choose_name, self.save_button],tight=True,spacing=20)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
@@ -436,20 +424,12 @@ class Builder:
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
                 [
-                    self.load_button, self.save_menu_button,self.run_menu_button,self.delete_button,self.port_button
+                    self.load_button, self.save_button,self.run_menu_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
             bottom=20,left=SPACING_X,width=40,blur=10)
-        self.save_menu = ft.Container(ft.Container(ft.Column(
-                [
-                    directory_stack,save_row,
-                ], tight=True,spacing=2
-            ), bgcolor=MENU_COLOR, expand=True,padding=20
-            ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),width=0,height=150,
-            bottom=20,left=self.tools.left+ self.tools.width + 5,blur=10,opacity=0,
-            animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
-            animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),)
+
         self.start_button = ft.ElevatedButton(  # button to start the pipeline
             text="Start",
             icon=ft.Icons.PLAY_CIRCLE,
@@ -474,7 +454,7 @@ class Builder:
             ft.Container(
                 content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=85,spacing=20
         )
-        self.running_module = ft.Text("Module",color=ft.Colors.WHITE60,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
+        self.running_module = ft.Text("Module",color=ft.Colors.WHITE70,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
         self.info_text = ft.Text("Idle, waiting for start.",color=ft.Colors.WHITE60,width=250,overflow=ft.TextOverflow.ELLIPSIS,max_lines=2)
         self.category_icon = ft.Icon(ft.Icons.CATEGORY_ROUNDED,color=ft.Colors.BLUE_400)
         self.run_infos = ft.Column([ft.Row([self.category_icon,self.running_module]),self.info_text])
@@ -595,38 +575,54 @@ class Builder:
         self.progress_text.update()
         self.page.update()
 
-    def on_change(self,e,reference):
-        """
-        Handles if the name to save gets changed.
-        """
-        try:
-            self.pipeline_gui.name = str(e.control.value)
-            reference.current.color = ft.Colors.WHITE60
-            self.pipeline_gui.page.update()
-        except ValueError:
-            self.pipeline_gui.page.snack_bar = ft.SnackBar(ft.Text(f"Pipeline name only allows str's."))
-            self.pipeline_gui.page.snack_bar.open = True
-            reference.current.value = self.name
-            reference.current.color = ft.Colors.RED
-            self.pipeline_gui.page.update()
-
     def on_select_file(self, e):
         """
         Handles if a file is selected.
         """
         if e.files is not None:
-            #TODO: LOAD FILE with path
-            pass
+            if len(self.pipeline_gui.modules) > 0:
+                def cancel_dialog(a):
+                    cupertino_alert_dialog.open = False
+                    a.control.page.update()
 
-    def on_select_dir(self,e,text):
+                def ok_dialog(a):
+                    cupertino_alert_dialog.open = False
+                    a.control.page.update()
+                    self.pipeline_storage.load_pipeline(e.files[0].path)
+
+                cupertino_alert_dialog = ft.CupertinoAlertDialog(
+                    title=ft.Text("Unsaved Changes"),
+                    content=ft.Text("Loading will overwrite the currently opened pipeline."),
+                    actions=[
+                        ft.CupertinoDialogAction(
+                            "Cancel",is_default_action=True, on_click=cancel_dialog
+                        ),
+                        ft.CupertinoDialogAction(text="Ok", is_destructive_action=True, on_click=ok_dialog),
+                    ],
+                )
+                self.page.overlay.append(cupertino_alert_dialog)
+                cupertino_alert_dialog.open = True
+                self.page.update()
+                return
+            else:
+                self.pipeline_storage.load_pipeline(e.files[0].path)
+
+
+    def on_file_saved(self, e):
         """
-        Handles if a directory is selected.
+        Handles if a file gets saved.
         """
         if e.path is not None:
-            self.pipeline_gui.save_dir = e.path
-            text.value = format_directory_path(e.path,20)
-            text.update()
-            self.page.update()
+            if Path(e.path).suffix == "":
+                e.path = e.path + ".csp"
+            if Path(e.path).suffix != ".csp":
+                self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline name must have .csp suffix!",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
+                self.pipeline_gui.page.update()
+                return
+            self.pipeline_storage.save_pipeline(e.path)
+            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}.",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
+            self.pipeline_gui.page.update()
+
 
     def press_page_up(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
@@ -654,25 +650,7 @@ class Builder:
         self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
         self.scroll_horizontal_row.update()
 
-    def save_button_click(self,from_code=False):
-        if self.save_menu.opacity==1:
-            self.save_menu_button.icon_color = WHITE60
-            self.save_menu_button.tooltip = f"Show save menu"
-            self.save_menu_button.update()
-            self.save_menu.width = 0
-            self.save_menu.opacity = 0
-            self.save_menu.update()
-        else:
-            self.save_menu_button.icon_color = ft.Colors.BLUE_400
-            self.save_menu_button.tooltip = f"Hide save menu"
-            self.save_menu_button.update()
-            if not from_code and self.run_menu.opacity==1:
-                self.run_menu_click(True)
-            self.save_menu.width = 320
-            self.save_menu.opacity = 1
-            self.save_menu.update()
-
-    def run_menu_click(self,from_code=False):
+    def run_menu_click(self):
         if self.run_menu.opacity==1:
             self.run_menu_button.icon_color = WHITE60
             self.run_menu_button.tooltip = f"Show run menu"
@@ -684,8 +662,6 @@ class Builder:
             self.run_menu_button.icon_color = ft.Colors.BLUE_400
             self.run_menu_button.tooltip = f"Hide run menu"
             self.run_menu_button.update()
-            if not from_code and self.save_menu.opacity==1:
-                self.save_button_click(True)
             self.run_menu.width = 420
             self.run_menu.opacity = 1
             self.run_menu.update()
@@ -757,7 +733,6 @@ class Builder:
         self.page_stack = ft.Stack([
                 scroll_area,
                 self.tools,
-                self.save_menu,
                 self.run_menu,
              ]
             )
