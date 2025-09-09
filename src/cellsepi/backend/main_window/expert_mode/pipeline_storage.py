@@ -35,6 +35,7 @@ class PipelineStorage:
         pipeline_dict = self.generate_pipline_dict()
 
         self.pipeline_gui.pipeline_directory = Path(file_path).parent
+        self.pipeline_gui.pipeline_dict = pipeline_dict
         self.pipeline_gui.pipeline_name = Path(file_path).stem
 
         try:
@@ -71,8 +72,12 @@ class PipelineStorage:
         Checks if the pipeline is still saved.
         Ignores module positions and view.
         """
-        if self.pipeline_gui.pipeline_dict == {} or len(self.pipeline_gui.modules) == 0:
+        if self.pipeline_gui.pipeline_dict == {}:
+            return False
+
+        if len(self.pipeline_gui.modules) == 0:
             return True
+
         new_pipeline_dict = get_major_dict(self.generate_pipline_dict())
         old_pipeline_dict = get_major_dict(self.pipeline_gui.pipeline_dict)
         return new_pipeline_dict==old_pipeline_dict
