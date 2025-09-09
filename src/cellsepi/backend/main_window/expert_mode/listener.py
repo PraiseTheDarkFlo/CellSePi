@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import List, Type, TypeVar, Generic
 
 class Event(ABC):
@@ -35,6 +36,10 @@ class ErrorEvent(Event):
 
     def __str__(self):
         return f"Error_name: {self.error_name} Error_msg: {self.error_msg}"
+
+class DragAndDropEvent(Event):
+    def __init__(self,drag:bool):
+        self.drag = drag #False if it is no longer dragging or not valid dragging
 
 class EventListener(ABC):
     """

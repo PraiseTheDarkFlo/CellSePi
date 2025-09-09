@@ -10,6 +10,18 @@ def load_schema(schema_path: str) -> dict:
     with open(schema_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+IGNORED_KEYS = {"view", "position"}
+
+def get_major_dict(data):
+    """Deletes the unimportant data for change comparison"""
+    if isinstance(data, dict):
+        return {k: get_major_dict(v) for k, v in data.items() if k not in IGNORED_KEYS}
+    elif isinstance(data, list):
+        return [get_major_dict(x) for x in data]
+    else:
+        return data
+
+
 class PipelineStorage:
     def __init__(self,pipeline_gui):
         self.schema_name = "csp.schema.json"
@@ -20,9 +32,23 @@ class PipelineStorage:
         self.schema = load_schema(schema_path=self.schema_directory)
 
     def save_pipeline(self,file_path:str= ""):
+        pipeline_dict = self.generate_pipline_dict()
+
+        self.pipeline_gui.pipeline_directory = Path(file_path).parent
+        self.pipeline_gui.pipeline_name = Path(file_path).stem
+
+        try:
+            validate(instance=pipeline_dict, schema=self.schema)
+        except ValidationError as e:
+            raise ValueError(f"Pipeline json doesn't match with: {e.message}")
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(pipeline_dict, f, indent=2, ensure_ascii=False)
+
+    def generate_pipline_dict(self):
         modules: List[Dict[str, Any]] = []
         pipes: List[Dict[str, Any]] = []
-        view = {"zoom": 1.0,"offset_x": 0.0,"offset_y": 0.0}
+        view = {"zoom": 1.0, "offset_x": 0.0, "offset_y": 0.0}
 
         for module in self.pipeline_gui.modules.values():
             modules.append(module.to_dict())
@@ -38,14 +64,18 @@ class PipelineStorage:
             "view": view
         }
 
-        try:
-            validate(instance=pipeline_dict, schema=self.schema)
-        except ValidationError as e:
-            raise ValueError(f"Pipeline json doesn't match with: {e.message}")
+        return pipeline_dict
 
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(pipeline_dict, f, indent=2, ensure_ascii=False)
-
+    def check_saved(self):
+        """
+        Checks if the pipeline is still saved.
+        Ignores module positions and view.
+        """
+        if self.pipeline_gui.pipeline_dict == {}:
+            return True
+        new_pipeline_dict = get_major_dict(self.generate_pipline_dict())
+        old_pipeline_dict = get_major_dict(self.pipeline_gui.pipeline_dict)
+        return new_pipeline_dict==old_pipeline_dict
 
 
     def load_pipeline(self,file_path: str):
@@ -66,6 +96,9 @@ class PipelineStorage:
         except ValidationError as e:
             raise ValueError(f"Pipeline json doesn't match with: {e.message}")
 
+        self.pipeline_gui.pipeline_directory = filename.parent
+        self.pipeline_gui.pipeline_name = filename.stem
+        self.pipeline_gui.pipeline_dict = pipeline_dict
         self.pipeline_gui.reset()
-        self.pipeline_gui.load_pipeline(pipeline_dict)
+        self.pipeline_gui.load_pipeline()
 

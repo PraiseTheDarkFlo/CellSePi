@@ -15,7 +15,7 @@ from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.expert_constants import *
 from cellsepi.gui_pipeline_listener import PipelineChangeListener, ModuleExecutedListener, ModuleStartedListener, \
-    ModuleProgressListener, ModuleErrorListener
+    ModuleProgressListener, ModuleErrorListener, DragAndDropListener
 from cellsepi.backend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
 
@@ -26,6 +26,9 @@ class PipelineGUI(ft.Stack):
         self.pipeline = Pipeline()
         self.modules_executed = 0
         self.module_running_count = 0
+        self.pipeline_name = ""
+        self.pipeline_directory = ""
+        self.pipeline_dict = {} #last saved pipeline dict
         self.page = page
         self.modules = {} #identiefierer is the module_id
         self.show_room_size = SHOWROOM_MODULE_COUNT*2+1
@@ -56,12 +59,12 @@ class PipelineGUI(ft.Stack):
         self.pipeline.running = False
         self.update()
 
-    def load_pipeline(self,pipeline_dict:dict):
-        for module_dict in pipeline_dict["modules"]:
+    def load_pipeline(self):
+        for module_dict in self.pipeline_dict["modules"]:
             type_map = {mt.value.gui_config().name: mt for mt in ModuleType}
             self.add_module(module_type=type_map[module_dict["module_name"]], x=module_dict["position"]["x"], y=module_dict["position"]["y"], module_id=module_dict["module_id"],module_dict=module_dict)
 
-        for pipe in pipeline_dict["pipes"]:
+        for pipe in self.pipeline_dict["pipes"]:
             source = pipe["source"]
             target = pipe["target"]
             ports= pipe["ports"]
@@ -77,7 +80,6 @@ class PipelineGUI(ft.Stack):
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
         self.pipeline.add_connection(pipe=Pipe(source_module_gui.module, target_module_gui.module, ports_copy))
-        print(source_module_gui.name,target_module_gui.name)
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
         self.update_all_port_icons()
 
@@ -161,8 +163,9 @@ class PipelineGUI(ft.Stack):
                 self.set_in_background(module)
 
     def remove_module(self,module_id: str):
-        self.pipeline.remove_module(self.modules[module_id].module)
-        self.controls.remove(self.modules.pop(module_id))
+        gui_module = self.modules.pop(module_id)
+        self.controls.remove(gui_module)
+        self.pipeline.remove_module(gui_module.module)
         self.update()
 
     def toggle_all_module_detection(self,module_id: str):
@@ -390,19 +393,50 @@ class Builder:
         self.page = page
         self.page_stack = None
         self.pipeline_gui = PipelineGUI(page)
+        self.help_text =  ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Move Modules",
+                        size=50,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.GREY_500
+                    ),
+                    ft.Row([
+                        ft.Text(
+                            "here",
+                            size=40,
+                            italic=True,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.GREY_400
+                        ),
+                        ft.Icon(ft.Icons.CROP_FREE,size=50,color=ft.Colors.GREY_400), #Icons.COPY_ALL_ROUNDED,CONTROL_CAMERA,Icons.CROP_FREE, Icons.VIEW_IN_AR,Icons.HIGHLIGHT_ALT_ROUNDED
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                ],
+                spacing=2,
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            )
+            ,alignment=ft.alignment.center,
+            width=self.page.width,
+            height=self.page.height,
+            animate_opacity= ft.Animation(duration=600, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+        )
         self.pipeline_storage = PipelineStorage(self.pipeline_gui)
-        file_picker = ft.FilePicker(
+        self.file_picker = ft.FilePicker(
             on_result=lambda a: self.on_select_file(a))
-        file_saver = ft.FilePicker(
+        self.file_saver = ft.FilePicker(
             on_result=lambda a: self.on_file_saved(a))
-        self.page.overlay.extend([file_picker,file_saver])
-        self.load_button = ft.IconButton(icon=ft.Icons.UPLOAD_FILE, on_click=lambda e: file_picker.pick_files(file_type=ft.FilePickerFileType.CUSTOM,allowed_extensions=["csp"],allow_multiple=False),
+        self.page.overlay.extend([self.file_picker,self.file_saver])
+        self.load_button = ft.IconButton(icon=ft.Icons.UPLOAD_FILE, on_click=lambda e: self.click_load_file(),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
-        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: file_saver.save_file(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"], dialog_title="Save Pipeline",file_name="pipeline.csp"),
-                                         icon_color=WHITE60,
+        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.click_save_file(),
+                                         icon_color=WHITE60 if len(self.pipeline_gui.modules) > 0 else ft.Colors.WHITE24,disabled=False if len(self.pipeline_gui.modules) > 0 else True,
                                          style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
@@ -535,6 +569,9 @@ class Builder:
         self.info_text.update()
         self.start_button.disabled = True
         self.start_button.update()
+        self.load_button.disabled = True
+        self.load_button.icon_color = ft.Colors.WHITE24
+        self.load_button.update()
         for module in self.pipeline_gui.modules.values():
             self.pipeline_gui.lines_gui.update_delete_buttons(module,True)
             module.waiting_button.visible = True
@@ -549,6 +586,9 @@ class Builder:
         self.update_modules_executed()
         self.start_button.disabled = False
         self.start_button.update()
+        self.load_button.disabled = False
+        self.load_button.icon_color = ft.Colors.WHITE60
+        self.load_button.update()
 
     def add_all_listeners(self):
         pipeline_change_listener = PipelineChangeListener(self)
@@ -561,6 +601,8 @@ class Builder:
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_progress_listener)
         module_error_listener =ModuleErrorListener(self)
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_error_listener)
+        drag_and_drop_listener =DragAndDropListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=drag_and_drop_listener)
 
     def update_modules_executed(self):
         current =self.pipeline_gui.modules_executed
@@ -575,12 +617,25 @@ class Builder:
         self.progress_text.update()
         self.page.update()
 
+    def click_load_file(self):
+        self.file_picker.pick_files(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"],
+                                    allow_multiple=False)
+        self.load_button.icon_color = ft.Colors.BLUE_400
+        self.load_button.update()
+
+    def click_save_file(self):
+        self.file_saver.save_file(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"],
+                             dialog_title="Save Pipeline", file_name=self.pipeline_gui.pipeline_name,
+                             initial_directory=self.pipeline_gui.pipeline_directory)
+        self.save_button.icon_color = ft.Colors.BLUE_400
+        self.save_button.update()
+
     def on_select_file(self, e):
         """
         Handles if a file is selected.
         """
         if e.files is not None:
-            if len(self.pipeline_gui.modules) > 0:
+            if not self.pipeline_storage.check_saved():
                 def cancel_dialog(a):
                     cupertino_alert_dialog.open = False
                     a.control.page.update()
@@ -588,6 +643,14 @@ class Builder:
                 def ok_dialog(a):
                     cupertino_alert_dialog.open = False
                     a.control.page.update()
+                    if self.pipeline_gui.pipeline.running:
+                        self.pipeline_gui.page.open(
+                            ft.SnackBar(
+                                ft.Text(f"Failed to load pipeline: a previous pipeline execution is still active!",
+                                        color=ft.Colors.WHITE),
+                                bgcolor=ft.Colors.RED))
+                        self.pipeline_gui.page.update()
+                        return
                     self.pipeline_storage.load_pipeline(e.files[0].path)
 
                 cupertino_alert_dialog = ft.CupertinoAlertDialog(
@@ -603,9 +666,20 @@ class Builder:
                 self.page.overlay.append(cupertino_alert_dialog)
                 cupertino_alert_dialog.open = True
                 self.page.update()
+                self.load_button.icon_color = ft.Colors.WHITE60
+                self.load_button.update()
                 return
             else:
+                if self.pipeline_gui.pipeline.running:
+                    self.pipeline_gui.page.open(
+                        ft.SnackBar(ft.Text(f"Failed to load pipeline: a previous pipeline execution is still active!", color=ft.Colors.WHITE),
+                                    bgcolor=ft.Colors.RED))
+                    self.pipeline_gui.page.update()
+                    return
                 self.pipeline_storage.load_pipeline(e.files[0].path)
+
+        self.load_button.icon_color = ft.Colors.WHITE60
+        self.load_button.update()
 
 
     def on_file_saved(self, e):
@@ -618,10 +692,15 @@ class Builder:
             if Path(e.path).suffix != ".csp":
                 self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline name must have .csp suffix!",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
                 self.pipeline_gui.page.update()
+                self.save_button.icon_color = ft.Colors.WHITE60
+                self.save_button.update()
                 return
             self.pipeline_storage.save_pipeline(e.path)
-            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}.",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
+            self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
             self.pipeline_gui.page.update()
+
+        self.save_button.icon_color = ft.Colors.WHITE60
+        self.save_button.update()
 
 
     def press_page_up(self):
@@ -726,11 +805,15 @@ class Builder:
             scroll_area.height = e.height
             scroll_area.width = e.width
             self.pipeline_gui.update_show_room()
+            self.help_text.height = e.height
+            self.help_text.width = e.width
+            self.help_text.update()
             scroll_area.update()
 
         self.page.on_resized = on_resize
 
         self.page_stack = ft.Stack([
+                self.help_text,
                 scroll_area,
                 self.tools,
                 self.run_menu,
@@ -744,6 +827,8 @@ class Builder:
 def main(page: ft.Page):
     builder = Builder(page)
     pipeline_gui = builder.pipeline_gui
+
+    """
     module_gui1 = pipeline_gui.add_module(ModuleType.READ_LIF,891.0,262.0)
     module_gui2 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_SEG,460.0,259.0)
     module_gui3 = pipeline_gui.add_module(ModuleType.BATCH_IMAGE_READOUT,466.0,33.0)
@@ -752,5 +837,6 @@ def main(page: ft.Page):
     pipeline_gui.add_connection(module_gui2,module_gui3,["mask_paths"])
     pipeline_gui.add_connection(module_gui2, module_gui4, ["mask_paths"])
     pipeline_gui.add_connection(module_gui1, module_gui4, ["image_paths"])
+    """
 
 ft.app(main)

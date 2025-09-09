@@ -1,7 +1,7 @@
 from typing import Type
 import flet as ft
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnPipelineChangeEvent, Event, \
-    ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent
+    ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent, DragAndDropEvent
 
 
 class PipelineChangeListener(EventListener):
@@ -17,7 +17,40 @@ class PipelineChangeListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        if len(self.builder.pipeline_gui.modules) > 0:
+            self.builder.help_text.opacity = 0
+            self.builder.help_text.update()
+            self.builder.save_button.icon_color = ft.Colors.WHITE60
+            self.builder.save_button.disabled = False
+            self.builder.save_button.update()
+        else:
+            self.builder.help_text.opacity = 1
+            self.builder.help_text.update()
+            self.builder.save_button.icon_color = ft.Colors.WHITE24
+            self.builder.save_button.disabled = True
+            self.builder.save_button.update()
         self.builder.update_modules_executed()
+
+class DragAndDropListener(EventListener):
+    def __init__(self,builder):
+        self.event_type = DragAndDropEvent
+        self.builder = builder
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def update(self, event: Event) -> None:
+        if not isinstance(event, self.get_event_type()):
+            raise TypeError("The given event is not the right event type!")
+        self._update(event)
+
+    def _update(self, event: Event) -> None:
+        if len(self.builder.pipeline_gui.modules) == 0:
+            if event.drag:
+                self.builder.help_text.opacity = 0.60
+                self.builder.help_text.update()
+            else:
+                self.builder.help_text.opacity = 1
+                self.builder.help_text.update()
 
 class ModuleExecutedListener(EventListener):
     def __init__(self,builder):

@@ -6,6 +6,7 @@ from typing import List, Any, Dict
 import flet as ft
 from flet_core.cupertino_colors import WHITE
 
+from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent
 from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
 from cellsepi.expert_constants import *
 from cellsepi.frontend.main_window.gui_directory import format_directory_path
@@ -126,7 +127,7 @@ class ModuleGUI(ft.GestureDetector):
             control_list_ports.append(output_text)
             control_list_ports.append(out_ports)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!")],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=40,height=40,top=-5,left=MODULE_WIDTH-65)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=None)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=40,height=40,top=-5,left=MODULE_WIDTH-65)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -446,6 +447,20 @@ class ModuleGUI(ft.GestureDetector):
         """
         Handles the drag event.
         """
+        if self.show_mode:
+            self.click_container.tooltip = None
+            self.click_container.update()
+            overlap_show_room = not (
+                    self.left + MODULE_WIDTH  < self.pipeline_gui.show_room_container.left or
+                    self.left > self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width or
+                    self.top + MODULE_HEIGHT < self.pipeline_gui.show_room_container.top or
+                    self.top > self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height
+            ) and self.show_mode
+            if not overlap_show_room:
+                self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(True))
+            else:
+                self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(False))
+
         self.top = max(0, self.top + e.delta_y)
         self.left = max(0, self.left + e.delta_x)
         self.pipeline_gui.lines_gui.update_lines(self)
@@ -455,6 +470,10 @@ class ModuleGUI(ft.GestureDetector):
         """
         Handles the drop event.
         """
+        if self.show_mode:
+            self.click_container.tooltip = self.module.gui_config().description
+            self.click_container.update()
+            self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(False))
         for module in self.pipeline_gui.modules.values():
             if module is self:
                 continue
