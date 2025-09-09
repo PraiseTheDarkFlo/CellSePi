@@ -509,9 +509,6 @@ class Builder:
         self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
-        self.pipeline_gui.build_show_room(self.page_stack)
-
-
         self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_up(),
                                           icon_color=ft.Colors.WHITE60,
                                           style=ft.ButtonStyle(
@@ -523,7 +520,7 @@ class Builder:
                                            style=ft.ButtonStyle(
                                            shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
                                            tooltip="Return to the last page", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
-
+        self.pipeline_gui.build_show_room(self.page_stack)
         self.switch_pages = ft.Container(ft.Container(ft.Row(
                     [
                         self.page_backward, self.page_forward,
@@ -532,7 +529,7 @@ class Builder:
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
                     top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
                     left=self.pipeline_gui.show_room_container.left,blur=10)
-        self.page_stack.controls.append(self.switch_pages)
+        self.page_stack.controls.insert(2,self.switch_pages)
         self.page_stack.update()
         self.add_all_listeners()
 

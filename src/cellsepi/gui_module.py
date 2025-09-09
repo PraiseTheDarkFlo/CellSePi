@@ -421,7 +421,6 @@ class ModuleGUI(ft.GestureDetector):
         else:
             self.pipeline_gui.remove_module(self.name)
 
-
     @property
     def name(self):
         """
