@@ -17,7 +17,7 @@ class PipelineChangeListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        if len(self.builder.pipeline_gui.modules) > 0:
+        if len(self.builder.pipeline_gui.pipeline.modules) > 0:
             self.builder.help_text.opacity = 0
             self.builder.help_text.update()
             self.builder.save_button.icon_color = ft.Colors.WHITE60

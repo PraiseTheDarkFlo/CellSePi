@@ -72,11 +72,11 @@ class PipelineStorage:
         Checks if the pipeline is still saved.
         Ignores module positions and view.
         """
-        if self.pipeline_gui.pipeline_dict == {}:
-            return False
-
         if len(self.pipeline_gui.modules) == 0:
             return True
+
+        if self.pipeline_gui.pipeline_dict == {}:
+            return False
 
         new_pipeline_dict = get_major_dict(self.generate_pipline_dict())
         old_pipeline_dict = get_major_dict(self.pipeline_gui.pipeline_dict)

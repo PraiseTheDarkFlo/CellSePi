@@ -71,7 +71,6 @@ class PipelineGUI(ft.Stack):
             self.add_connection(self.modules[source],self.modules[target],ports)
 
         #TODO: View, but first need to integrate extension
-
         self.page.open(
             ft.SnackBar(ft.Text(f"Pipeline successfully loaded.", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.page.update()
