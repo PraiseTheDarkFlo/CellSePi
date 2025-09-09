@@ -23,12 +23,16 @@ class PipelineChangeListener(EventListener):
             self.builder.save_button.icon_color = ft.Colors.WHITE60
             self.builder.save_button.disabled = False
             self.builder.save_button.update()
+            self.builder.start_button.disabled = False
+            self.builder.start_button.update()
         else:
             self.builder.help_text.opacity = 1
             self.builder.help_text.update()
             self.builder.save_button.icon_color = ft.Colors.WHITE24
             self.builder.save_button.disabled = True
             self.builder.save_button.update()
+            self.builder.start_button.disabled = True
+            self.builder.start_button.update()
         self.builder.update_modules_executed()
 
 class DragAndDropListener(EventListener):

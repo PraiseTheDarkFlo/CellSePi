@@ -468,9 +468,9 @@ class Builder:
             text="Start",
             icon=ft.Icons.PLAY_CIRCLE,
             tooltip="Start the pipeline",
-            disabled=False,
+            disabled=False if len(self.pipeline_gui.modules) > 0 else True,
             on_click=lambda e:self.run(),
-            opacity=0.75
+            opacity=0.75,
         )
         self.resume_button = ft.ElevatedButton(  # button to resume the pipeline
             text="Resume the pipeline",

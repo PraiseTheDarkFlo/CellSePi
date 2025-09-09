@@ -127,7 +127,7 @@ class ModuleGUI(ft.GestureDetector):
             control_list_ports.append(output_text)
             control_list_ports.append(out_ports)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=2,right=9,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=None)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=40,height=40,top=-5,left=MODULE_WIDTH-65)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -135,8 +135,9 @@ class ModuleGUI(ft.GestureDetector):
                                                 [
                                                 ft.Text(value=self.module.gui_config().name,
                                                     weight=ft.FontWeight.BOLD,
-                                                    width=MODULE_WIDTH-60,
-                                                    height=20,color=ft.Colors.BLACK),
+                                                    width=MODULE_WIDTH-70,
+                                                    height=20,color=ft.Colors.BLACK,
+                                                    overflow=ft.TextOverflow.ELLIPSIS),
                                                ],height=20
                                               ),padding=ft.padding.only(left=5, top=5)),
                                             self.tools,
