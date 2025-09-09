@@ -75,6 +75,24 @@ class PipelineGUI(ft.Stack):
             ft.SnackBar(ft.Text(f"Pipeline successfully loaded.", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.page.update()
 
+    def check_all_deletable(self):
+        for module in self.modules.values():
+            if self.check_deletable(module):
+                module.delete_button.visible = True
+                module.delete_button.update()
+            else:
+                module.delete_button.visible = False
+                module.delete_button.update()
+
+    def check_deletable(self,module:ModuleGUI):
+        if  module.name in self.pipeline.run_order or module.name == self.pipeline.executing:
+            return False
+
+        for pipe in self.pipeline.pipes_out[module.name]:
+            if pipe.target_module.module_id in self.pipeline.run_order or pipe.target_module.module_id == self.pipeline.executing:
+                return False
+
+        return True
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
@@ -176,33 +194,17 @@ class PipelineGUI(ft.Stack):
                 self.update()
 
     def toggle_all_stuck_in_running(self):
-        for module in self.pipeline.run_order:
-            show_room_names = [m.name for m in self.show_room_modules]
-            if module in show_room_names:
-                continue
-            self.lines_gui.update_delete_buttons(
-                self.modules[module])
-            self.modules[module].enable_tools()
-            self.modules[module].start_button.visible = True
-            self.modules[module].start_button.update()
-            self.modules[module].delete_button.visible = True
-            self.modules[module].delete_button.update()
-            self.modules[module].pause_button.visible = False
-            self.modules[module].pause_button.update()
-            self.modules[module].waiting_button.visible = False
-            self.modules[module].waiting_button.update()
-        if self.pipeline.executing != "":
-            self.lines_gui.update_delete_buttons(
-                self.modules[self.pipeline.executing])
-            self.modules[self.pipeline.executing].enable_tools()
-            self.modules[self.pipeline.executing].start_button.visible = True
-            self.modules[self.pipeline.executing].start_button.update()
-            self.modules[self.pipeline.executing].delete_button.visible = True
-            self.modules[self.pipeline.executing].delete_button.update()
-            self.modules[self.pipeline.executing].pause_button.visible = False
-            self.modules[self.pipeline.executing].pause_button.update()
-            self.modules[self.pipeline.executing].waiting_button.visible = False
-            self.modules[self.pipeline.executing].waiting_button.update()
+        for module in self.modules.values():
+            self.lines_gui.update_delete_buttons(module)
+            module.enable_tools()
+            module.start_button.visible = True
+            module.start_button.update()
+            module.delete_button.visible = True
+            module.delete_button.update()
+            module.pause_button.visible = False
+            module.pause_button.update()
+            module.waiting_button.visible = False
+            module.waiting_button.update()
         self.check_for_valid_all_modules()
 
     def check_for_valid_all_modules(self):

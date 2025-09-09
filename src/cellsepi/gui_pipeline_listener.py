@@ -75,14 +75,13 @@ class ModuleExecutedListener(EventListener):
         if self.builder.pipeline_gui.source_module != "":
             self.builder.pipeline_gui.check_for_valid(event.module_id)
         self.builder.pipeline_gui.lines_gui.update_delete_buttons(self.builder.pipeline_gui.modules[event.module_id])
+        self.builder.pipeline_gui.check_all_deletable()
         self.builder.pipeline_gui.modules[event.module_id].pause_button.visible = False
         self.builder.pipeline_gui.modules[event.module_id].waiting_button.visible = False
         self.builder.pipeline_gui.modules[event.module_id].start_button.visible = True
-        self.builder.pipeline_gui.modules[event.module_id].delete_button.visible = True
         self.builder.pipeline_gui.modules[event.module_id].pause_button.update()
         self.builder.pipeline_gui.modules[event.module_id].waiting_button.update()
         self.builder.pipeline_gui.modules[event.module_id].start_button.update()
-        self.builder.pipeline_gui.modules[event.module_id].delete_button.update()
         self.builder.update_modules_executed()
 
 
