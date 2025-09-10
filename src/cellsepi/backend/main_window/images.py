@@ -17,7 +17,6 @@ from tifffile import tifffile
 from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from triton.language.extra.cuda.libdevice import norm3d
 
 from cellsepi.backend.drawing_window.drawing_util import trace_contour
 from cellsepi.backend.main_window.data_util import load_image_to_numpy
