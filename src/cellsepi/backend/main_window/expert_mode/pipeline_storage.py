@@ -50,8 +50,9 @@ class PipelineStorage:
         pipeline_dict = self.generate_pipline_dict()
 
         self.pipeline_gui.pipeline_dict = pipeline_dict
+        from pathlib import Path
 
-        file_path = str(self.pipeline_gui.pipeline_directory) + "/" + self.pipeline_gui.pipeline_name + ".csp"
+        file_path = Path(self.pipeline_gui.pipeline_directory) / f"{self.pipeline_gui.pipeline_name}.csp"
 
         try:
             validate(instance=pipeline_dict, schema=self.schema)
