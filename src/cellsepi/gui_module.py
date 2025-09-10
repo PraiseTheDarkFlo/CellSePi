@@ -420,7 +420,11 @@ class ModuleGUI(ft.GestureDetector):
         Handles the last step of the adding event when the target gets selected.
         """
         if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection and self.valid:
-            self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
+            current_pipe = self.pipeline_gui.pipeline.get_pipe(self.pipeline_gui.source_module,self.name)
+            if current_pipe is None:
+                self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
+            else:
+                self.pipeline_gui.expand_connection(current_pipe,self.pipeline_gui.transmitting_ports)
             self.pipeline_gui.check_for_valid_all_modules()
 
     def remove_module(self):

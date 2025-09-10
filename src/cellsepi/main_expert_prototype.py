@@ -100,6 +100,12 @@ class PipelineGUI(ft.Stack):
         self.lines_gui.update_line(source_module_gui, target_module_gui,ports)
         self.update_all_port_icons()
 
+    def expand_connection(self,pipe:Pipe,ports:List[str]):
+        ports_copy = list(ports)
+        self.pipeline.expand_connection(pipe,ports_copy)
+        self.lines_gui.update_line(self.modules[pipe.source_module.module_id], self.modules[pipe.target_module.module_id], pipe.ports)
+        self.update_all_port_icons()
+
     def remove_connection(self,source_module_gui,target_module_gui):
         self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
@@ -215,9 +221,17 @@ class PipelineGUI(ft.Stack):
         target_module_gui = self.modules[module_id]
         if (target_module_gui.name not in self.pipeline.run_order and target_module_gui.name != self.pipeline.executing) or not self.pipeline.running:
             if target_module_gui.name != self.source_module:
+                valid = True
+                existing_pipe = self.pipeline.check_connections(
+                    self.source_module, target_module_gui.name) if self.source_module != "" else None
+                if existing_pipe is None:
+                    valid = True
+                elif any(port in existing_pipe.ports for port in self.transmitting_ports) or existing_pipe.source_module.module_id != self.source_module or existing_pipe.target_module.module_id != target_module_gui.name:
+                    valid = False
+                for pipe in self.pipeline.pipes_in[target_module_gui.name]:
+                    print(pipe)
                 if all(k in target_module_gui.module.inputs for k in
-                       self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(
-                        self.source_module, target_module_gui.name) and not (
+                       self.transmitting_ports) and self.transmitting_ports != [] and valid and not (
                 self.pipeline.check_ports_occupied(target_module_gui.name, self.transmitting_ports)):
                     target_module_gui.set_valid()
                 else:
@@ -458,7 +472,21 @@ class Builder:
                 self.delete_button_click()
             if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
                 self.port_button_click()
-
+            if e.ctrl and e.key == "Q" and not e.alt and not e.shift and not e.meta:
+                if not self.page_backward.disabled:
+                    self.press_page_backward()
+            if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
+                if not self.page_forward.disabled:
+                    self.press_page_forward()
+            if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
+                pass
+                #TODO: Zoom menu open
+            if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
+                pass
+                #TODO: Zoom in
+            if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
+                pass
+                # TODO: Zoom out
         self.page.on_keyboard_event = on_keyboard
         self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ROUNDED, on_click=lambda e: self.click_save_file(),
                                             icon_color=WHITE60 if self.pipeline_gui.pipeline_directory != "" else ft.Colors.WHITE24,
@@ -535,17 +563,17 @@ class Builder:
         self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
-        self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_up(),
+        self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_forward(),
                                           icon_color=ft.Colors.WHITE60,
                                           style=ft.ButtonStyle(
                                          shape=ft.RoundedRectangleBorder(radius=12), ),
                                           visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False,
-                                          tooltip="Get to the next page", hover_color=ft.Colors.WHITE12)
-        self.page_backward = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_down(),
+                                          tooltip="Get to the next page\n[Ctrl + E]", hover_color=ft.Colors.WHITE12)
+        self.page_backward = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_backward(),
                                            icon_color=ft.Colors.WHITE24,
                                            style=ft.ButtonStyle(
                                            shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
-                                           tooltip="Return to the last page", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
+                                           tooltip="Return to the last page\n[Ctrl + Q]", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
         self.pipeline_gui.build_show_room(self.page_stack)
         self.switch_pages = ft.Container(ft.Container(ft.Row(
                     [
@@ -745,7 +773,7 @@ class Builder:
         self.save_as_button.update()
 
 
-    def press_page_up(self):
+    def press_page_forward(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
         if self.pipeline_gui.show_room_page_number > 0:
             self.page_backward.icon_color = ft.Colors.WHITE60
@@ -756,7 +784,7 @@ class Builder:
             self.page_forward.disabled = True
             self.page_forward.update()
 
-    def press_page_down(self):
+    def press_page_backward(self):
         self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number-1)
         if self.pipeline_gui.show_room_page_number == 0:
             self.page_backward.icon_color = ft.Colors.WHITE24
@@ -788,8 +816,6 @@ class Builder:
             self.run_menu.update()
 
     def delete_button_click(self):
-        #for module in self.pipeline_gui.modules.values():
-        #    print(module.name,module.left,module.top)
         if self.pipeline_gui.show_delete_button:
             self.delete_button.icon_color = WHITE60
             self.delete_button.tooltip = f"Show delete buttons\n[Ctrl + D]"

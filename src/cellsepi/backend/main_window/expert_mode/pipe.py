@@ -57,6 +57,9 @@ class Pipe:
 
             in_port.data = copy_data(out_port.data)
 
+    def __str__(self):
+        return f"Pipe between source: '{self.source_module.module_id}' and target: '{self.target_module.module_id}' with ports: {self.ports}"
+
     def to_dict(self):
         return {
             "source": self.source_module.module_id,

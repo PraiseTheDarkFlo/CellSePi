@@ -114,7 +114,7 @@ class Pipeline:
         if pipe.target_module not in self.modules:
             raise ModuleNotFoundError(f"Target module '{pipe.target_module.module_id}' not found in the pipeline.")
 
-        if self.check_connections(pipe.source_module.module_id, pipe.target_module.module_id):
+        if self.check_connections(pipe.source_module.module_id, pipe.target_module.module_id) is not None:
                 raise ValueError(f"Pipe between source module '{pipe.source_module.module_id}' and target module '{pipe.target_module.module_id}' already exists.")
 
         self.pipes_in[pipe.target_module.module_id].append(pipe)
@@ -122,17 +122,22 @@ class Pipeline:
 
         self.event_manager.notify(OnPipelineChangeEvent(f"Added connection between {pipe.target_module.module_id} and {pipe.source_module.module_id}"))
 
-    def check_connections(self,source_module_id:str,target_module_id:str) -> bool:
+    def expand_connection(self,pipe:Pipe, ports: List[str]) -> None:
+        pipe.ports.extend(ports)
+        self.event_manager.notify(OnPipelineChangeEvent(
+            f"Expanded the connection between {pipe.target_module.module_id} and {pipe.source_module.module_id}"))
+
+    def check_connections(self,source_module_id:str,target_module_id:str) -> Pipe | None:
         """
         Checks if a pipe between the source and target modules exist in the pipeline.
         """
         for existing_pipe in self.pipes_in[target_module_id]:
             if existing_pipe.source_module.module_id == source_module_id:
-                return True
+                return existing_pipe
         for existing_pipe in self.pipes_out[source_module_id]:
             if existing_pipe.target_module.module_id == target_module_id:
-                return True
-        return False
+                return existing_pipe
+        return None
 
     def check_ports_occupied(self,module_id: str,ports:List[str]) -> bool:
         for port in ports:
