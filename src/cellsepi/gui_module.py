@@ -1,4 +1,5 @@
 import asyncio
+import textwrap
 from dataclasses import asdict
 from pathlib import Path
 from typing import List, Any, Dict
@@ -48,7 +49,8 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.modules[self.module.module_id] = self
         self.color = self.module.gui_config().category.value
         self.valid = False
-        self.click_container = ft.Container(on_click=lambda e: self.add_connection(),tooltip=self.module.gui_config().description if self.show_mode else None, height=MODULE_HEIGHT, width=MODULE_WIDTH,
+        self.wrapped_description = "\n".join(textwrap.wrap(self.module.gui_config().description, width=40))
+        self.click_container = ft.Container(on_click=lambda e: self.add_connection(),tooltip=self.wrapped_description if self.show_mode else None, height=MODULE_HEIGHT, width=MODULE_WIDTH,
                                             visible=False if not show_mode else True,bgcolor=INVALID_COLOR if not show_mode else ft.Colors.TRANSPARENT,disabled=True if not show_mode else False,border_radius=ft.border_radius.all(10))
         self.click_gesture = ft.GestureDetector(visible=False if not show_mode else True,disabled=True if not show_mode else False,content=self.click_container,on_enter=lambda e: self.on_enter_click_module(),on_exit=lambda e: self.on_exit_click_module())
         self.connect_button = ft.IconButton(icon=ft.Icons.SHARE, icon_color=ft.Colors.WHITE60,
@@ -127,6 +129,17 @@ class ModuleGUI(ft.GestureDetector):
             control_list_ports.append(output_text)
             control_list_ports.append(out_ports)
 
+        self.error_icon = ft.IconButton(ft.Icons.REPORT, icon_size=35, disabled=True,
+                                                         hover_color=ft.Colors.TRANSPARENT, icon_color=ft.Colors.RED,
+                                                         tooltip="An error occurred while executing!",
+                                                         highlight_color=ft.Colors.TRANSPARENT,
+                                                         padding=ft.padding.all(2))
+        self.error_stack = ft.Stack([ft.Container(bgcolor=WHITE, width=10, height=20, bottom=16, right=23,
+                                                        border_radius=ft.border_radius.all(45)),
+                                           self.error_icon],
+                                          visible=False, width=48, height=48, top=1,
+                                          left=MODULE_WIDTH - 75)
+
         self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
         self.module_container = ft.Container(
                     content=ft.Column(
@@ -164,6 +177,7 @@ class ModuleGUI(ft.GestureDetector):
                 ft.Container(content=self.delete_button,margin=ft.margin.only(top=-7, left=7),alignment=ft.alignment.top_right,width=MODULE_WIDTH,
                              ),
                 self.warning_satisfied,
+                self.error_stack,
                 self.click_gesture
         ]
         ),
@@ -236,11 +250,16 @@ class ModuleGUI(ft.GestureDetector):
             self.in_ports_Icons[port].update()
             self.in_ports_Icons_occupied[port].update()
 
-            self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
-            self.module_container.update()
+            self.check_warning()
+
+    def check_warning(self):
+        self.module_container.border = ft.border.all(4,
+                                                     ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(
+                                                         self.name) or self.error_stack.visible else ft.Colors.BLACK12)
+        self.module_container.update()
+        if not self.error_stack.visible:
             self.warning_satisfied.visible = not self.pipeline_gui.pipeline.check_module_satisfied(self.name)
             self.warning_satisfied.update()
-
 
     def connect_clicked(self,update:bool=True):
         """
@@ -328,7 +347,7 @@ class ModuleGUI(ft.GestureDetector):
         """
         self.valid = False
         self.click_container.bgcolor = INVALID_COLOR
-        self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) else ft.Colors.BLACK12)
+        self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) or self.error_stack.visible else ft.Colors.BLACK12)
         self.module_container.update()
         self.click_container.update()
 
@@ -471,7 +490,7 @@ class ModuleGUI(ft.GestureDetector):
         Handles the drop event.
         """
         if self.show_mode:
-            self.click_container.tooltip = self.module.gui_config().description
+            self.click_container.tooltip = self.wrapped_description
             self.click_container.update()
             self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(False))
         for module in self.pipeline_gui.modules.values():

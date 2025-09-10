@@ -1,3 +1,4 @@
+import textwrap
 from typing import Type
 import flet as ft
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnPipelineChangeEvent, Event, \
@@ -20,15 +21,22 @@ class PipelineChangeListener(EventListener):
         if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
             self.builder.help_text.opacity = 0
             self.builder.help_text.update()
-            self.builder.save_button.icon_color = ft.Colors.WHITE60
-            self.builder.save_button.disabled = False
-            self.builder.save_button.update()
+            self.builder.save_as_button.icon_color = ft.Colors.WHITE60
+            self.builder.save_as_button.disabled = False
+            self.builder.save_as_button.update()
+            if self.builder.pipeline_gui.pipeline_directory != "":
+                self.builder.save_button.icon_color = ft.Colors.WHITE60
+                self.builder.save_button.disabled = False
+                self.builder.save_button.update()
             if not self.builder.pipeline_gui.pipeline.running:
                 self.builder.start_button.disabled = False
                 self.builder.start_button.update()
         else:
             self.builder.help_text.opacity = 1
             self.builder.help_text.update()
+            self.builder.save_as_button.icon_color = ft.Colors.WHITE24
+            self.builder.save_as_button.disabled = True
+            self.builder.save_as_button.update()
             self.builder.save_button.icon_color = ft.Colors.WHITE24
             self.builder.save_button.disabled = True
             self.builder.save_button.update()
@@ -142,6 +150,10 @@ class ModuleErrorListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        self.builder.pipeline_gui.modules[
+            self.builder.pipeline_gui.pipeline.executing].module_container.border = ft.border.all(4,
+                                                                                                  ft.Colors.RED)
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].module_container.update()
         self.builder.pipeline_gui.toggle_all_stuck_in_running()
         self.builder.info_text.value = ""
         self.builder.info_text.spans = [
@@ -151,4 +163,8 @@ class ModuleErrorListener(EventListener):
         self.builder.page.update()
         self.builder.category_icon.color = ft.Colors.RED
         self.builder.category_icon.update()
-
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
+        wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.tooltip = f"An error occurred while executing!\nError: {wrapped_text}"
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.update()

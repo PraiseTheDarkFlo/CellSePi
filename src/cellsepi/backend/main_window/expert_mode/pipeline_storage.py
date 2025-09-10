@@ -31,7 +31,7 @@ class PipelineStorage:
         self.version = "csp-1.0"
         self.schema = load_schema(schema_path=self.schema_directory)
 
-    def save_pipeline(self,file_path:str= ""):
+    def save_as_pipeline(self,file_path:str= ""):
         pipeline_dict = self.generate_pipline_dict()
 
         self.pipeline_gui.pipeline_directory = Path(file_path).parent
@@ -45,6 +45,23 @@ class PipelineStorage:
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(pipeline_dict, f, indent=2, ensure_ascii=False)
+
+    def save_pipeline(self):
+        pipeline_dict = self.generate_pipline_dict()
+
+        self.pipeline_gui.pipeline_dict = pipeline_dict
+
+        file_path = str(self.pipeline_gui.pipeline_directory) + "/" + self.pipeline_gui.pipeline_name + ".csp"
+
+        try:
+            validate(instance=pipeline_dict, schema=self.schema)
+        except ValidationError as e:
+            raise ValueError(f"Pipeline json doesn't match with: {e.message}")
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(pipeline_dict, f, indent=2, ensure_ascii=False)
+
+        return file_path
 
     def generate_pipline_dict(self):
         modules: List[Dict[str, Any]] = []

@@ -213,7 +213,7 @@ class PipelineGUI(ft.Stack):
 
     def check_for_valid(self,module_id: str):
         target_module_gui = self.modules[module_id]
-        if (target_module_gui.name not in self.pipeline.run_order or not self.pipeline.running) and target_module_gui.name != self.pipeline.executing:
+        if (target_module_gui.name not in self.pipeline.run_order and target_module_gui.name != self.pipeline.executing) or not self.pipeline.running:
             if target_module_gui.name != self.source_module:
                 if all(k in target_module_gui.module.inputs for k in
                        self.transmitting_ports) and self.transmitting_ports != [] and not self.pipeline.check_connections(
@@ -326,12 +326,12 @@ class LinesGUI(canvas.Canvas):
         def dummy():
             pass
         disabled = False
-        bgcolor = ft.Colors.RED_ACCENT
+        opacity = 1
         if (source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running:
             disabled = True
-            bgcolor = DISABLED_BUTTONS_COLOR
+            opacity = 0.4
         delete_button = ft.GestureDetector(top=port_y-20,left=port_x-20,on_hover=lambda e:dummy(),content=ft.IconButton(
-            icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=bgcolor,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
+            icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=ft.Colors.RED_ACCENT,opacity=opacity,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
             ),visible=self.pipeline_gui.show_delete_button,disabled=disabled)
 
         self.shapes.append(edge)
@@ -347,11 +347,11 @@ class LinesGUI(canvas.Canvas):
 
     def update_delete_button(self,source_module_gui: ModuleGUI, target_module_gui: ModuleGUI,set_all: bool = False):
         disabled = False
-        bgcolor = ft.Colors.RED_ACCENT
+        opacity = 1
         if ((source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running) or set_all:
             disabled = True
-            bgcolor = DISABLED_BUTTONS_COLOR
-        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.bgcolor = bgcolor
+            opacity = 0.4
+        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.opacity = opacity
         self.delete_buttons[(source_module_gui.name, target_module_gui.name)].content.disabled = disabled
         self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.update()
 
@@ -436,11 +436,17 @@ class Builder:
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
-        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ALT_SHARP, on_click=lambda e: self.click_save_file(),
-                                         icon_color=WHITE60 if len(self.pipeline_gui.modules) > 0 else ft.Colors.WHITE24,disabled=False if len(self.pipeline_gui.modules) > 0 else True,
-                                         style=ft.ButtonStyle(
+        self.save_as_button = ft.IconButton(icon=ft.Icons.SAVE_AS_ROUNDED, on_click=lambda e: self.click_save_as_file(),
+                                            icon_color=WHITE60 if len(self.pipeline_gui.modules) > 0 else ft.Colors.WHITE24, disabled=False if len(self.pipeline_gui.modules) > 0 else True,
+                                            style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                         tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+                                            tooltip="Save as pipeline", hover_color=ft.Colors.WHITE12)
+        self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ROUNDED, on_click=lambda e: self.click_save_file(),
+                                            icon_color=WHITE60 if self.pipeline_gui.pipeline_directory != "" else ft.Colors.WHITE24,
+                                            disabled=False if self.pipeline_gui.pipeline_directory != "" else True,
+                                            style=ft.ButtonStyle(
+                                             shape=ft.RoundedRectangleBorder(radius=12), ),
+                                            tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
         self.run_menu_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.run_menu_click(),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
@@ -459,7 +465,7 @@ class Builder:
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
                 [
-                    self.load_button, self.save_button,self.run_menu_button,self.delete_button,self.port_button
+                    self.load_button, self.save_as_button,self.save_button,self.run_menu_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
@@ -579,6 +585,10 @@ class Builder:
             module.start_button.update()
             module.delete_button.update()
             module.disable_tools()
+            module.error_stack.visible = False
+            module.error_stack.update()
+            module.check_warning()
+
         self.pipeline_gui.pipeline.run(show_room_names)
         self.pipeline_gui.modules_executed = 0
         self.update_modules_executed()
@@ -621,11 +631,21 @@ class Builder:
         self.load_button.icon_color = ft.Colors.BLUE_400
         self.load_button.update()
 
-    def click_save_file(self):
+    def click_save_as_file(self):
         self.file_saver.save_file(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"],
                              dialog_title="Save Pipeline", file_name=self.pipeline_gui.pipeline_name,
                              initial_directory=self.pipeline_gui.pipeline_directory)
+        self.save_as_button.icon_color = ft.Colors.BLUE_400
+        self.save_as_button.update()
+
+    def click_save_file(self):
         self.save_button.icon_color = ft.Colors.BLUE_400
+        self.save_button.update()
+        path = self.pipeline_storage.save_pipeline()
+        self.pipeline_gui.page.open(
+            ft.SnackBar(ft.Text(f"Pipeline saved at {path}", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
+        self.pipeline_gui.page.update()
+        self.save_button.icon_color = ft.Colors.WHITE60
         self.save_button.update()
 
     def on_select_file(self, e):
@@ -666,6 +686,9 @@ class Builder:
                 self.page.update()
                 self.load_button.icon_color = ft.Colors.WHITE60
                 self.load_button.update()
+                self.save_button.icon_color = ft.Colors.WHITE60
+                self.save_button.disabled = False
+                self.save_button.update()
                 return
             else:
                 if self.pipeline_gui.pipeline.running:
@@ -678,6 +701,9 @@ class Builder:
 
         self.load_button.icon_color = ft.Colors.WHITE60
         self.load_button.update()
+        self.save_button.icon_color = ft.Colors.WHITE60
+        self.save_button.disabled = False
+        self.save_button.update()
 
 
     def on_file_saved(self, e):
@@ -690,14 +716,20 @@ class Builder:
             if Path(e.path).suffix != ".csp":
                 self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline name must have .csp suffix!",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
                 self.pipeline_gui.page.update()
+                self.save_as_button.icon_color = ft.Colors.WHITE60
+                self.save_as_button.update()
                 self.save_button.icon_color = ft.Colors.WHITE60
+                self.save_button.disabled = False
                 self.save_button.update()
                 return
-            self.pipeline_storage.save_pipeline(e.path)
+            self.pipeline_storage.save_as_pipeline(e.path)
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
             self.pipeline_gui.page.update()
 
+        self.save_as_button.icon_color = ft.Colors.WHITE60
+        self.save_as_button.update()
         self.save_button.icon_color = ft.Colors.WHITE60
+        self.save_button.disabled = False
         self.save_button.update()
 
 
