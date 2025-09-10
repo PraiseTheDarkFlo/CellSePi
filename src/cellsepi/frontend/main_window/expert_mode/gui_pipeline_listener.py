@@ -4,7 +4,6 @@ import flet as ft
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnPipelineChangeEvent, Event, \
     ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent, DragAndDropEvent
 
-
 class PipelineChangeListener(EventListener):
     def __init__(self,builder):
         self.event_type = OnPipelineChangeEvent

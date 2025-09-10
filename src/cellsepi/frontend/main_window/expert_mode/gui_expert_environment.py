@@ -1,7 +1,7 @@
 import flet as ft
 
 
-class ExpertMode(ft.Container):
+class ExpertEnvironment(ft.Container):
 
     def __init__(self, gui):
         super().__init__()
@@ -31,14 +31,17 @@ class ExpertMode(ft.Container):
         if self.text.value == "Go To Expert Mode":
             self.go_to_training_environment(e)
         else:
-            self.gui.ref_training_environment.current.visible = False
+            self.gui.ref_builder_environment.current.visible = False
             self.gui.ref_seg_environment.current.visible = True
+            self.gui.ref_gallery_environment.current.visible = True
             self.gui.page.update()
             self.text.value = "Go To Expert Mode"
 
     def go_to_training_environment(self, e):
-        # delete the content of the page and reset the reference to the page (reference get sometimes lost)
-        self.gui.ref_training_environment.current.visible = True
+        self.gui.ref_builder_environment.current.visible = True
+        self.gui.ref_gallery_environment.current.visible = False
+        self.gui.ref_training_environment.current.visible = False
         self.gui.ref_seg_environment.current.visible = False
         self.gui.page.update()
         self.text.value = "Exit Expert Mode"
+        self.gui.training_environment.text.value = "Go To Training"

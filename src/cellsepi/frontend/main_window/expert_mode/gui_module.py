@@ -9,7 +9,7 @@ from flet_core.cupertino_colors import WHITE
 
 from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent, OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
-from cellsepi.expert_constants import *
+from cellsepi.frontend.main_window.expert_mode.expert_constants import *
 from cellsepi.frontend.main_window.gui_directory import format_directory_path
 
 

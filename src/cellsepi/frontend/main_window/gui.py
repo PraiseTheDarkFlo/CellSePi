@@ -5,7 +5,8 @@ import threading
 import flet as ft
 
 from cellsepi.backend.main_window.avg_diameter import AverageDiameter
-from cellsepi.frontend.main_window.expert_mode.gui_expert_mode import ExpertMode
+from cellsepi.frontend.main_window.expert_mode.gui_builder import Builder
+from cellsepi.frontend.main_window.expert_mode.gui_expert_environment import ExpertEnvironment
 from cellsepi.frontend.main_window.gui_segmentation import GUISegmentation
 from cellsepi.frontend.main_window.gui_options import Options
 from cellsepi.frontend.drawing_window.gui_drawing import open_qt_window
@@ -52,7 +53,7 @@ class GUI:
         self.page.title = "CellSePi"
         self.canvas = Canvas()
         self.op = Options(self)
-        self.ex_mode = ExpertMode(self)
+        self.ex_mode = ExpertEnvironment(self)
         gui_config = GUIConfig(self)
         self.gui_config = gui_config.create_profile_container()
         self.segmentation = GUISegmentation(self)
@@ -98,6 +99,9 @@ class GUI:
         self.training_environment=Training(self)
         self.ref_seg_environment = ft.Ref[ft.Column]()
         self.ref_training_environment = ft.Ref[ft.Column]()
+        self.builder_environment = Builder(self.page)
+        self.ref_builder_environment = ft.Ref[ft.Column]()
+        self.ref_gallery_environment = ft.Ref[ft.Column]()
         if self.csp.config.get_auto_button():
             self.auto_image_tuning.pressed()
 
@@ -135,7 +139,7 @@ class GUI:
                                 alignment=ft.MainAxisAlignment.START,
                                 visible=False,ref=self.ref_training_environment
                             ),
-
+                            ft.Column([self.builder_environment.builder_page_stack],expand=True,visible=False,ref=self.ref_builder_environment),
                             #RIGHT COLUMN that handles gallery and directory_card
                             ft.Column(
                                 [
@@ -145,7 +149,7 @@ class GUI:
                                         expand=True
                                     ),
                                 ],
-                                expand=True,
+                                expand=True,ref=self.ref_gallery_environment
                             ),
                             ft.Column([self.op, self.training_environment,self.ex_mode]),
                         ],
