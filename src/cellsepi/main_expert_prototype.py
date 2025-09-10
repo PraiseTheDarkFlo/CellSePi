@@ -435,32 +435,51 @@ class Builder:
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
-                                         tooltip="Load pipeline", hover_color=ft.Colors.WHITE12)
+                                         tooltip="Load pipeline\n[Ctrl + L]", hover_color=ft.Colors.WHITE12)
         self.save_as_button = ft.IconButton(icon=ft.Icons.SAVE_AS_ROUNDED, on_click=lambda e: self.click_save_as_file(),
                                             icon_color=WHITE60 if len(self.pipeline_gui.modules) > 0 else ft.Colors.WHITE24, disabled=False if len(self.pipeline_gui.modules) > 0 else True,
                                             style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                            tooltip="Save as pipeline", hover_color=ft.Colors.WHITE12)
+                                            tooltip="Save as pipeline\n[Ctrl + Shift + S]", hover_color=ft.Colors.WHITE12)
+
+        def on_keyboard(e: ft.KeyboardEvent):
+            if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
+                if not self.save_as_button.disabled:
+                    self.click_save_as_file()
+            if e.ctrl and e.key == "S" and not e.alt and not e.shift and not e.meta:
+                if not self.save_button.disabled:
+                    self.click_save_file()
+            if e.ctrl and e.key == "L" and not e.alt and not e.shift and not e.meta:
+                if not self.load_button.disabled:
+                    self.click_load_file()
+            if e.ctrl and e.key == "R" and not e.alt and not e.shift and not e.meta:
+                self.run_menu_click()
+            if e.ctrl and e.key == "D" and not e.alt and not e.shift and not e.meta:
+                self.delete_button_click()
+            if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
+                self.port_button_click()
+
+        self.page.on_keyboard_event = on_keyboard
         self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ROUNDED, on_click=lambda e: self.click_save_file(),
                                             icon_color=WHITE60 if self.pipeline_gui.pipeline_directory != "" else ft.Colors.WHITE24,
                                             disabled=False if self.pipeline_gui.pipeline_directory != "" else True,
                                             style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
-                                            tooltip="Save pipeline", hover_color=ft.Colors.WHITE12)
+                                            tooltip="Save pipeline\n[Ctrl + S]", hover_color=ft.Colors.WHITE12)
         self.run_menu_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.run_menu_click(),
                                          icon_color=WHITE60,
                                          style=ft.ButtonStyle(
                                              shape=ft.RoundedRectangleBorder(radius=12), ),
-                                         tooltip="Show run menu", hover_color=ft.Colors.WHITE12)
+                                         tooltip="Show run menu\n[Ctrl + R]", hover_color=ft.Colors.WHITE12)
         self.delete_button = ft.IconButton(icon=ft.Icons.DELETE,on_click=lambda e: self.delete_button_click(),icon_color=WHITE60,
                                                  style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),),
-                                                 tooltip="Show delete buttons", hover_color=ft.Colors.WHITE12)
+                                                 tooltip="Show delete buttons\n[Ctrl + D]", hover_color=ft.Colors.WHITE12)
         self.port_button = ft.IconButton(icon=ft.Icons.VISIBILITY, on_click=lambda e: self.port_button_click(),
                                            icon_color=WHITE60,
                                            style=ft.ButtonStyle(
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                                           tooltip="Show which ports get transferred", hover_color=ft.Colors.WHITE12)
+                                           tooltip="Show which ports get transferred\n[Ctrl + P]", hover_color=ft.Colors.WHITE12)
 
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
         self.tools = ft.Container(ft.Container(ft.Column(
@@ -645,7 +664,9 @@ class Builder:
         self.pipeline_gui.page.open(
             ft.SnackBar(ft.Text(f"Pipeline saved at {path}", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.pipeline_gui.page.update()
-        self.save_button.icon_color = ft.Colors.WHITE60
+
+        self.save_button.icon_color = ft.Colors.WHITE24
+        self.save_button.disabled = True
         self.save_button.update()
 
     def on_select_file(self, e):
@@ -686,9 +707,6 @@ class Builder:
                 self.page.update()
                 self.load_button.icon_color = ft.Colors.WHITE60
                 self.load_button.update()
-                self.save_button.icon_color = ft.Colors.WHITE60
-                self.save_button.disabled = False
-                self.save_button.update()
                 return
             else:
                 if self.pipeline_gui.pipeline.running:
@@ -701,9 +719,6 @@ class Builder:
 
         self.load_button.icon_color = ft.Colors.WHITE60
         self.load_button.update()
-        self.save_button.icon_color = ft.Colors.WHITE60
-        self.save_button.disabled = False
-        self.save_button.update()
 
 
     def on_file_saved(self, e):
@@ -718,19 +733,16 @@ class Builder:
                 self.pipeline_gui.page.update()
                 self.save_as_button.icon_color = ft.Colors.WHITE60
                 self.save_as_button.update()
-                self.save_button.icon_color = ft.Colors.WHITE60
-                self.save_button.disabled = False
-                self.save_button.update()
                 return
             self.pipeline_storage.save_as_pipeline(e.path)
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
             self.pipeline_gui.page.update()
+            self.save_button.icon_color = ft.Colors.WHITE24
+            self.save_button.disabled = True
+            self.save_button.update()
 
         self.save_as_button.icon_color = ft.Colors.WHITE60
         self.save_as_button.update()
-        self.save_button.icon_color = ft.Colors.WHITE60
-        self.save_button.disabled = False
-        self.save_button.update()
 
 
     def press_page_up(self):
@@ -762,14 +774,14 @@ class Builder:
     def run_menu_click(self):
         if self.run_menu.opacity==1:
             self.run_menu_button.icon_color = WHITE60
-            self.run_menu_button.tooltip = f"Show run menu"
+            self.run_menu_button.tooltip = f"Show run menu\n[Ctrl + R]"
             self.run_menu_button.update()
             self.run_menu.width = 0
             self.run_menu.opacity = 0
             self.run_menu.update()
         else:
             self.run_menu_button.icon_color = ft.Colors.BLUE_400
-            self.run_menu_button.tooltip = f"Hide run menu"
+            self.run_menu_button.tooltip = f"Hide run menu\n[Ctrl + R]"
             self.run_menu_button.update()
             self.run_menu.width = 420
             self.run_menu.opacity = 1
@@ -780,12 +792,12 @@ class Builder:
         #    print(module.name,module.left,module.top)
         if self.pipeline_gui.show_delete_button:
             self.delete_button.icon_color = WHITE60
-            self.delete_button.tooltip = f"Show delete buttons"
+            self.delete_button.tooltip = f"Show delete buttons\n[Ctrl + D]"
             self.pipeline_gui.show_delete_button = False
             self.pipeline_gui.lines_gui.update_all()
         else:
             self.delete_button.icon_color = ft.Colors.BLUE_400
-            self.delete_button.tooltip = f"Hide delete buttons"
+            self.delete_button.tooltip = f"Hide delete buttons\n[Ctrl + D]"
             self.pipeline_gui.show_delete_button = True
             if self.pipeline_gui.show_ports:
                 self.port_button_click()
@@ -796,12 +808,12 @@ class Builder:
     def port_button_click(self):
         if self.pipeline_gui.show_ports:
             self.port_button.icon_color = WHITE60
-            self.port_button.tooltip = f"Show which ports get transferred"
+            self.port_button.tooltip = f"Show which ports get transferred\n[Ctrl + P]"
             self.pipeline_gui.show_ports = False
             self.pipeline_gui.lines_gui.update_all()
         else:
             self.port_button.icon_color = ft.Colors.BLUE_400
-            self.port_button.tooltip = f"Hide which ports get transferred"
+            self.port_button.tooltip = f"Hide which ports get transferred\n[Ctrl + P]"
             self.pipeline_gui.show_ports = True
             if self.pipeline_gui.show_delete_button:
                 self.delete_button_click()

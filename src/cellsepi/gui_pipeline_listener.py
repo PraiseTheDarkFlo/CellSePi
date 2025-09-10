@@ -18,31 +18,50 @@ class PipelineChangeListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
-            self.builder.help_text.opacity = 0
-            self.builder.help_text.update()
-            self.builder.save_as_button.icon_color = ft.Colors.WHITE60
-            self.builder.save_as_button.disabled = False
-            self.builder.save_as_button.update()
-            if self.builder.pipeline_gui.pipeline_directory != "":
-                self.builder.save_button.icon_color = ft.Colors.WHITE60
-                self.builder.save_button.disabled = False
-                self.builder.save_button.update()
-            if not self.builder.pipeline_gui.pipeline.running:
-                self.builder.start_button.disabled = False
-                self.builder.start_button.update()
+        if event.change_type == "user_attr_change":
+            if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
+                if self.builder.pipeline_gui.pipeline_directory != "":
+                    if self.builder.pipeline_storage.check_saved():
+                        self.builder.save_button.icon_color = ft.Colors.WHITE24
+                        self.builder.save_button.disabled = True
+                        self.builder.save_button.update()
+                    else:
+                        self.builder.save_button.icon_color = ft.Colors.WHITE60
+                        self.builder.save_button.disabled = False
+                        self.builder.save_button.update()
         else:
-            self.builder.help_text.opacity = 1
-            self.builder.help_text.update()
-            self.builder.save_as_button.icon_color = ft.Colors.WHITE24
-            self.builder.save_as_button.disabled = True
-            self.builder.save_as_button.update()
-            self.builder.save_button.icon_color = ft.Colors.WHITE24
-            self.builder.save_button.disabled = True
-            self.builder.save_button.update()
-            self.builder.start_button.disabled = True
-            self.builder.start_button.update()
-        self.builder.update_modules_executed()
+            if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
+                self.builder.help_text.opacity = 0
+                self.builder.help_text.update()
+                self.builder.save_as_button.icon_color = ft.Colors.WHITE60
+                self.builder.save_as_button.disabled = False
+                self.builder.save_as_button.update()
+                if self.builder.pipeline_gui.pipeline_directory != "":
+                    if self.builder.pipeline_storage.check_saved():
+                        self.builder.save_button.icon_color = ft.Colors.WHITE24
+                        self.builder.save_button.disabled = True
+                        self.builder.save_button.update()
+                    else:
+                        self.builder.save_button.icon_color = ft.Colors.WHITE60
+                        self.builder.save_button.disabled = False
+                        self.builder.save_button.update()
+
+
+                if not self.builder.pipeline_gui.pipeline.running:
+                    self.builder.start_button.disabled = False
+                    self.builder.start_button.update()
+            else:
+                self.builder.help_text.opacity = 1
+                self.builder.help_text.update()
+                self.builder.save_as_button.icon_color = ft.Colors.WHITE24
+                self.builder.save_as_button.disabled = True
+                self.builder.save_as_button.update()
+                self.builder.save_button.icon_color = ft.Colors.WHITE24
+                self.builder.save_button.disabled = True
+                self.builder.save_button.update()
+                self.builder.start_button.disabled = True
+                self.builder.start_button.update()
+            self.builder.update_modules_executed()
 
 class DragAndDropListener(EventListener):
     def __init__(self,builder):
@@ -150,6 +169,11 @@ class ModuleErrorListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
+        wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.tooltip = f"An error occurred while executing!\nError: {wrapped_text}"
+        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.update()
         self.builder.pipeline_gui.modules[
             self.builder.pipeline_gui.pipeline.executing].module_container.border = ft.border.all(4,
                                                                                                   ft.Colors.RED)
@@ -163,8 +187,3 @@ class ModuleErrorListener(EventListener):
         self.builder.page.update()
         self.builder.category_icon.color = ft.Colors.RED
         self.builder.category_icon.update()
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
-        wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.tooltip = f"An error occurred while executing!\nError: {wrapped_text}"
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.update()

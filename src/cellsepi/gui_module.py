@@ -7,7 +7,7 @@ from typing import List, Any, Dict
 import flet as ft
 from flet_core.cupertino_colors import WHITE
 
-from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent
+from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent, OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
 from cellsepi.expert_constants import *
 from cellsepi.frontend.main_window.gui_directory import format_directory_path
@@ -661,6 +661,7 @@ class ModuleGUI(ft.GestureDetector):
             text.value = format_directory_path(e.files[0].path,50)
             text.update()
             self.pipeline_gui.page.update()
+            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     def on_select_dir(self,e,attr_name,text):
         """
@@ -671,6 +672,7 @@ class ModuleGUI(ft.GestureDetector):
             text.value = format_directory_path(e.path,50)
             text.update()
             self.pipeline_gui.page.update()
+            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     def on_change(self,e,attr_name,reference,typ:type):
         """
@@ -679,6 +681,7 @@ class ModuleGUI(ft.GestureDetector):
         try:
             setattr(self.module, attr_name, typ(e.control.value))
             self.pipeline_gui.page.update()
+            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
         except ValueError:
             attribute_name_without_prefix = attr_name.removeprefix("user_")
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
