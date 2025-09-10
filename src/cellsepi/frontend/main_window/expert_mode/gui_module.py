@@ -47,6 +47,7 @@ class ModuleGUI(ft.GestureDetector):
                 self.pipeline_gui.show_room_modules.insert(index,self)
         else:
             self.pipeline_gui.modules[self.module.module_id] = self
+            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent(f"Added {self.name} to pipeline_gui.modules."))
         self.color = self.module.gui_config().category.value
         self.valid = False
         self.wrapped_description = "\n".join(textwrap.wrap(self.module.gui_config().description, width=40))

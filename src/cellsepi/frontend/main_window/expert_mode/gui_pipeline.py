@@ -4,6 +4,7 @@ from typing import List
 
 import flet as ft
 
+from cellsepi.backend.main_window.expert_mode.listener import OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
@@ -18,7 +19,8 @@ class PipelineGUI(ft.Stack):
         self.pipeline = Pipeline()
         self.modules_executed = 0
         self.module_running_count = 0
-        self.pipeline_name = ""
+        self.loading = False
+        self.pipeline_name = "NewPipeline"
         self.pipeline_directory = ""
         self.pipeline_dict = {} #last saved pipeline dict
         self.page = page
@@ -44,14 +46,17 @@ class PipelineGUI(ft.Stack):
         self.offset_y = 0
 
     def reset(self):
+        self.loading = True
         for module in list(self.modules.values()):
             module.remove_module()
         self.pipeline.run_order = deque()
         self.pipeline.executing = ""
         self.pipeline.running = False
         self.update()
+        self.loading = False
 
     def load_pipeline(self):
+        self.loading = True
         for module_dict in self.pipeline_dict["modules"]:
             type_map = {mt.value.gui_config().name: mt for mt in ModuleType}
             self.add_module(module_type=type_map[module_dict["module_name"]], x=module_dict["position"]["x"], y=module_dict["position"]["y"], module_id=module_dict["module_id"],module_dict=module_dict)
@@ -66,6 +71,8 @@ class PipelineGUI(ft.Stack):
         self.page.open(
             ft.SnackBar(ft.Text(f"Pipeline successfully loaded.", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.page.update()
+        self.loading = False
+        self.pipeline.event_manager.notify(OnPipelineChangeEvent(f"Pipeline {self.pipeline_name} loaded."))
 
     def check_all_deletable(self):
         for module in self.modules.values():

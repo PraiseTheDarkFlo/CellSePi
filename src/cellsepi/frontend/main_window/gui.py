@@ -37,6 +37,7 @@ class GUI:
         self.cancel_event = None
         self.closing_event = False
         self.training_event = None
+        self.expert_running_event = None
         self.readout_event = None
         self.pipe_listener_running = True
         self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
@@ -230,6 +231,11 @@ class GUI:
             if self.csp.readout_running:
                 self.readout_event = multiprocessing.Event()
                 self.readout_event.wait()
+            if self.builder_environment.pipeline_gui.pipeline.running:
+                #TODO: maybe canceln und darauf warten
+                self.expert_running_event = multiprocessing.Event()
+                self.builder_environment.pipeline_running_event = self.expert_running_event
+                self.expert_running_event.wait()
             self.pipe_listener_running = False
             self.queue.put("close")
             if self.process_drawing_window is not None and self.process_drawing_window.is_alive():

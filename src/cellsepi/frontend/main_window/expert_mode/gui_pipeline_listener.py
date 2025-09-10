@@ -17,17 +17,21 @@ class PipelineChangeListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        if self.builder.pipeline_gui.loading:
+            return
         if event.change_type == "user_attr_change":
             if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
                 if self.builder.pipeline_gui.pipeline_directory != "":
                     if self.builder.pipeline_storage.check_saved():
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
                         self.builder.save_button.icon_color = ft.Colors.WHITE24
                         self.builder.save_button.disabled = True
-                        self.builder.save_button.update()
+                        self.builder.page.update()
                     else:
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}*"
                         self.builder.save_button.icon_color = ft.Colors.WHITE60
                         self.builder.save_button.disabled = False
-                        self.builder.save_button.update()
+                        self.builder.page.update()
         else:
             if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
                 self.builder.help_text.opacity = 0
@@ -37,13 +41,15 @@ class PipelineChangeListener(EventListener):
                 self.builder.save_as_button.update()
                 if self.builder.pipeline_gui.pipeline_directory != "":
                     if self.builder.pipeline_storage.check_saved():
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
                         self.builder.save_button.icon_color = ft.Colors.WHITE24
                         self.builder.save_button.disabled = True
-                        self.builder.save_button.update()
+                        self.builder.page.update()
                     else:
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}*"
                         self.builder.save_button.icon_color = ft.Colors.WHITE60
                         self.builder.save_button.disabled = False
-                        self.builder.save_button.update()
+                        self.builder.page.update()
 
 
                 if not self.builder.pipeline_gui.pipeline.running:
@@ -54,12 +60,11 @@ class PipelineChangeListener(EventListener):
                 self.builder.help_text.update()
                 self.builder.save_as_button.icon_color = ft.Colors.WHITE24
                 self.builder.save_as_button.disabled = True
-                self.builder.save_as_button.update()
                 self.builder.save_button.icon_color = ft.Colors.WHITE24
                 self.builder.save_button.disabled = True
-                self.builder.save_button.update()
                 self.builder.start_button.disabled = True
-                self.builder.start_button.update()
+                self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
+                self.builder.page.update()
             self.builder.update_modules_executed()
 
 class DragAndDropListener(EventListener):

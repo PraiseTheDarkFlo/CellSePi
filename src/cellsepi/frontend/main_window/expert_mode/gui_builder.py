@@ -13,6 +13,7 @@ class Builder:
         self.page = page
         self.builder_page_stack = None
         self.pipeline_gui = PipelineGUI(page)
+        self.pipeline_running_event = None
         self.help_text =  ft.Container(
             content=ft.Column(
                 controls=[
@@ -248,6 +249,8 @@ class Builder:
         self.load_button.disabled = False
         self.load_button.icon_color = ft.Colors.WHITE60
         self.load_button.update()
+        if self.pipeline_running_event is not None:
+            self.pipeline_running_event.set()
 
     def add_all_listeners(self):
         pipeline_change_listener = PipelineChangeListener(self)
@@ -297,9 +300,10 @@ class Builder:
             ft.SnackBar(ft.Text(f"Pipeline saved at {path}", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.pipeline_gui.page.update()
 
+        self.page.title = f"CellSePi - {self.pipeline_gui.pipeline_name}"
         self.save_button.icon_color = ft.Colors.WHITE24
         self.save_button.disabled = True
-        self.save_button.update()
+        self.page.update()
 
     def on_select_file(self, e):
         """
@@ -363,15 +367,17 @@ class Builder:
             if Path(e.path).suffix != ".csp":
                 self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline name must have .csp suffix!",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
                 self.pipeline_gui.page.update()
+                self.page.title = f"CellSePi - {self.pipeline_gui.pipeline_name}*"
                 self.save_as_button.icon_color = ft.Colors.WHITE60
-                self.save_as_button.update()
+                self.page.update()
                 return
             self.pipeline_storage.save_as_pipeline(e.path)
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"Pipeline saved at {e.path}",color=ft.Colors.WHITE),bgcolor=ft.Colors.GREEN))
             self.pipeline_gui.page.update()
+            self.page.title = f"CellSePi - {self.pipeline_gui.pipeline_name}"
             self.save_button.icon_color = ft.Colors.WHITE24
             self.save_button.disabled = True
-            self.save_button.update()
+            self.page.update()
 
         self.save_as_button.icon_color = ft.Colors.WHITE60
         self.save_as_button.update()
