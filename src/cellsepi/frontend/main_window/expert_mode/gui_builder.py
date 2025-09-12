@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from flet_core.colors import WHITE60
+from flet_extended_interactive_viewer import FletExtendedInteractiveViewer
 
 from cellsepi.frontend.main_window.expert_mode.gui_pipeline import PipelineGUI
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
@@ -13,6 +14,7 @@ class Builder:
         self.page = page
         self.builder_page_stack = None
         self.pipeline_gui = PipelineGUI(page)
+        self.pipeline_gui.interactive_view = None
         self.pipeline_running_event = None
         self.help_text =  ft.Container(
             content=ft.Column(
@@ -122,7 +124,7 @@ class Builder:
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
-            bottom=20,left=SPACING_X,width=40,blur=10)
+            bottom=40,left=SPACING_X,width=40,blur=10)
 
         self.start_button = ft.ElevatedButton(  # button to start the pipeline
             text="Start",
@@ -161,13 +163,14 @@ class Builder:
             ], spacing=2
         ), bgcolor=MENU_COLOR, expand=True, padding=10
         ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),width=0,height=150,
-            bottom=20, left=self.tools.left + self.tools.width + 5,blur=10,opacity=0,
+            bottom=40, left=self.tools.left + self.tools.width + 5,blur=10,opacity=0,
             animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             )
 
         self.scroll_horizontal_row = None
         self.work_area = None
+        self.interactive_view = None
         self.setup()
         self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_forward(),
                                           icon_color=ft.Colors.WHITE60,
@@ -181,6 +184,7 @@ class Builder:
                                            shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
                                            tooltip="Return to the last page\n[Ctrl + Q]", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
         self.pipeline_gui.build_show_room(self.builder_page_stack)
+        self.pipeline_gui.interactive_view = self.interactive_view
         self.switch_pages = ft.Container(ft.Container(ft.Row(
                     [
                         self.page_backward, self.page_forward,
@@ -465,34 +469,25 @@ class Builder:
             height=10000,
             bgcolor=ft.Colors.TRANSPARENT,
         )
-        self.scroll_horizontal_row = ft.Row(
-            [self.work_area], scroll=ft.ScrollMode.ALWAYS)
 
-        def on_vertical_scroll(e:ft.OnScrollEvent):
-            self.pipeline_gui.offset_y = e.pixels
-
-        scroll_area = ft.Container(
-            content=ft.Column([self.scroll_horizontal_row], scroll=ft.ScrollMode.ALWAYS,on_scroll=on_vertical_scroll),
-            height=self.page.window.height,
-            width=self.page.window.width,
-            expand=True,
-        )
-
+        self.interactive_view = FletExtendedInteractiveViewer(content=self.work_area, constrained=False,
+                                                              height=self.page.window.height,
+                                                              width=self.page.window.width, scale_enabled=True)
 
         def on_resize(e: ft.WindowResizeEvent):
-            scroll_area.height = e.height
-            scroll_area.width = e.width
+            self.interactive_view.height = e.height-20
+            self.interactive_view.width = e.width
+            self.interactive_view.update()
             self.pipeline_gui.update_show_room()
             self.help_text.height = e.height
             self.help_text.width = e.width
             self.help_text.update()
-            scroll_area.update()
 
         self.page.on_resized = on_resize
 
         self.builder_page_stack = ft.Stack([
                 self.help_text,
-                scroll_area,
+                self.interactive_view,
                 self.tools,
                 self.run_menu,
              ]

@@ -1,3 +1,4 @@
 include README.md
 include src/cellsepi/models/*
 include src/cellsepi/config.json
+include src/cellsepi/csp.schema.json

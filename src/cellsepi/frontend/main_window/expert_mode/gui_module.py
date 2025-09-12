@@ -498,13 +498,16 @@ class ModuleGUI(ft.GestureDetector):
             self.click_container.tooltip = self.wrapped_description
             self.click_container.update()
             self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(False))
+        # calc the left and top values in the pipeline_gui
+        offset_x, offset_y, scale = self.pipeline_gui.interactive_view.get_transformation_data()
+        check_left = self.left if not self.show_mode else (self.left - offset_x) / scale
+        check_top = self.top if not self.show_mode else (self.top - offset_y) / scale
+
         for module in self.pipeline_gui.modules.values():
             if module is self:
                 continue
 
-            #calc the left and top values in the pipeline_gui
-            check_left = self.left if not self.show_mode else self.left+self.pipeline_gui.offset_x
-            check_top = self.top if not self.show_mode else self.top+self.pipeline_gui.offset_y
+
 
             overlap = not (
                     check_left + MODULE_WIDTH < module.left or
@@ -520,7 +523,7 @@ class ModuleGUI(ft.GestureDetector):
                 return
 
         #no need to calc cords because show_room_container and module with self.show_mode are in the same page_stack
-        overlap_show_room = not (
+        overlap_show_room = not(
                 self.left + MODULE_WIDTH  < self.pipeline_gui.show_room_container.left or
                 self.left > self.pipeline_gui.show_room_container.left + self.pipeline_gui.show_room_container.width or
                 self.top + MODULE_HEIGHT < self.pipeline_gui.show_room_container.top or
@@ -541,8 +544,8 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.modules[self.name] = self
             self.pipeline_gui.refill_show_room(self,self.visible,index,show_room_id)
             self.pipeline_gui.page_stack.controls.remove(self)
-            self.left += self.pipeline_gui.offset_x
-            self.top += self.pipeline_gui.offset_y
+            self.left = check_left
+            self.top = check_top
             self.pipeline_gui.controls.append(self)
             self.click_container.disabled = True
             self.click_container.bgcolor = INVALID_COLOR

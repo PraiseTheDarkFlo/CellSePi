@@ -42,8 +42,6 @@ class PipelineGUI(ft.Stack):
         self.delete_stack = ft.Stack()
         self.controls.append(self.delete_stack)
         self.expand = True
-        self.offset_x = 0
-        self.offset_y = 0
 
     def reset(self):
         self.loading = True
