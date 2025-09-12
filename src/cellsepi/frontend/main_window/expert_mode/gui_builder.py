@@ -89,11 +89,12 @@ class Builder:
             if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
                 self.zoom_menu_click()
             if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
-                pass
-                #TODO: Zoom in
+                self.interactive_view.zoom(1.0+ZOOM_VALUE)
             if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
-                pass
-                # TODO: Zoom out
+                self.interactive_view.zoom(1.0-ZOOM_VALUE)
+            if e.ctrl and e.key == "-" and not e.alt and not e.shift and not e.meta:
+                self.interactive_view.reset(400)
+
         self.page.on_keyboard_event = on_keyboard
         self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ROUNDED, on_click=lambda e: self.click_save_file(),
                                             icon_color=WHITE60 if self.pipeline_gui.pipeline_directory != "" else ft.Colors.WHITE24,
@@ -179,14 +180,14 @@ class Builder:
             [
                 ft.IconButton(icon=ft.Icons.ZOOM_IN, icon_color=WHITE60,
                                              style=ft.ButtonStyle(
-                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.20),tooltip="Zoom in\n[Ctrl + .]",),
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0+ZOOM_VALUE),tooltip="Zoom in\n[Ctrl + .]",),
                 ft.IconButton(icon=ft.Icons.ZOOM_OUT, icon_color=WHITE60,
                                              style=ft.ButtonStyle(
-                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(0.80),tooltip="Zoom out\n[Ctrl + ,]",),
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0-ZOOM_VALUE),tooltip="Zoom out\n[Ctrl + ,]",),
                 ft.IconButton(icon=ft.Icons.CROP_FREE, icon_color=WHITE60,
                            style=ft.ButtonStyle(
                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                           on_click=lambda e: self.interactive_view.reset(400),tooltip="Reset view\n[Ctrl + #]",),
+                           on_click=lambda e: self.interactive_view.reset(400),tooltip="Reset view\n[Ctrl + -]",),
             ], spacing=2
         ), bgcolor=MENU_COLOR, expand=True
         ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
