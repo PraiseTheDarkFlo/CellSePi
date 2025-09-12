@@ -478,7 +478,7 @@ class Builder:
             self.zoom_menu_button.icon_color = ft.Colors.BLUE_400
             self.zoom_menu_button.tooltip = f"Hide zoom menu\n[Ctrl + R]"
             self.zoom_menu_button.update()
-            self.zoom_menu.width = None
+            self.zoom_menu.width = 122
             self.zoom_menu.opacity = 1
             self.zoom_menu.update()
 
@@ -525,7 +525,7 @@ class Builder:
 
         self.interactive_view = FletExtendedInteractiveViewer(content=self.work_area, constrained=False,
                                                               height=self.page.window.height,
-                                                              width=self.page.window.width, scale_enabled=True)
+                                                              width=self.page.window.width, scale_enabled=False)
 
         def on_resize(e: ft.WindowResizeEvent):
             self.interactive_view.height = e.height-20
