@@ -87,8 +87,7 @@ class Builder:
                 if not self.page_forward.disabled:
                     self.press_page_forward()
             if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
-                pass
-                #TODO: Zoom menu open
+                self.zoom_menu_click()
             if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
                 pass
                 #TODO: Zoom in
@@ -118,13 +117,14 @@ class Builder:
                                            tooltip="Show which ports get transferred\n[Ctrl + P]", hover_color=ft.Colors.WHITE12)
 
         self.slider_horizontal = ft.Slider(min=0,max=1,height=40,on_change=lambda e: self.scroll_horizontal(e),active_color=ft.Colors.BLUE_400,inactive_color=WHITE60,overlay_color=ft.Colors.WHITE12)
-        self.tools = ft.Container(ft.Container(ft.Column(
+        self.left_tools = ft.Container(ft.Container(ft.Column(
                 [
                     self.load_button, self.save_as_button,self.save_button,self.run_menu_button,self.delete_button,self.port_button
                 ], tight=True,spacing=2
             ), bgcolor=MENU_COLOR, expand=True
             ),bgcolor=ft.Colors.TRANSPARENT,border_radius=ft.border_radius.all(10),
             bottom=40,left=SPACING_X,width=40,blur=10)
+
 
         self.start_button = ft.ElevatedButton(  # button to start the pipeline
             text="Start",
@@ -157,20 +157,56 @@ class Builder:
         self.left_run_menu = ft.Column([
             self.run_infos,ft.Row([ft.Container(self.progress_bar_module),self.progress_bar_module_text],width=260),
         ],alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+
+        self.zoom_menu_button = ft.IconButton(icon=ft.Icons.SEARCH, on_click=lambda e: self.zoom_menu_click(),
+                                             icon_color=WHITE60,
+                                             style=ft.ButtonStyle(
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ),
+                                             tooltip="Show zoom menu\n[Ctrl + Z]", hover_color=ft.Colors.WHITE12)
+
+
+
+        self.right_tools = ft.Container(ft.Container(ft.Column(
+            [
+                self.zoom_menu_button,
+            ], tight=True, spacing=2
+        ), bgcolor=MENU_COLOR, expand=True
+        ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
+            bottom=40, right=SPACING_X, width=40, blur=10)
+
+        self.interactive_view = None
+        self.zoom_menu = ft.Container(ft.Container(ft.Row(
+            [
+                ft.IconButton(icon=ft.Icons.ZOOM_IN, icon_color=WHITE60,
+                                             style=ft.ButtonStyle(
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.20),tooltip="Zoom in\n[Ctrl + .]",),
+                ft.IconButton(icon=ft.Icons.ZOOM_OUT, icon_color=WHITE60,
+                                             style=ft.ButtonStyle(
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(0.80),tooltip="Zoom out\n[Ctrl + ,]",),
+                ft.IconButton(icon=ft.Icons.CROP_FREE, icon_color=WHITE60,
+                           style=ft.ButtonStyle(
+                               shape=ft.RoundedRectangleBorder(radius=12), ),
+                           on_click=lambda e: self.interactive_view.reset(400),tooltip="Reset view\n[Ctrl + #]",),
+            ], spacing=2
+        ), bgcolor=MENU_COLOR, expand=True
+        ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
+            bottom=40, right=self.right_tools.right + self.right_tools.width + 5, blur=10, opacity=0,
+            animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+            animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
+        )
+
         self.run_menu = ft.Container(ft.Container(ft.Row(
             [
                 ft.Container(self.left_run_menu,padding=10),ft.VerticalDivider(), ft.Column([ft.Row([ft.Container(self.progress_and_start,padding=10)],alignment=ft.MainAxisAlignment.CENTER)],alignment=ft.MainAxisAlignment.CENTER),
             ], spacing=2
         ), bgcolor=MENU_COLOR, expand=True, padding=10
         ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),width=0,height=150,
-            bottom=40, left=self.tools.left + self.tools.width + 5,blur=10,opacity=0,
+            bottom=40, left=self.left_tools.left + self.left_tools.width + 5,blur=10,opacity=0,
             animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             )
-
         self.scroll_horizontal_row = None
         self.work_area = None
-        self.interactive_view = None
         self.setup()
         self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_forward(),
                                           icon_color=ft.Colors.WHITE60,
@@ -429,6 +465,22 @@ class Builder:
             self.run_menu.opacity = 1
             self.run_menu.update()
 
+    def zoom_menu_click(self):
+        if self.zoom_menu.opacity==1:
+            self.zoom_menu_button.icon_color = WHITE60
+            self.zoom_menu_button.tooltip = f"Show zoom menu\n[Ctrl + R]"
+            self.zoom_menu_button.update()
+            self.zoom_menu.width = 0
+            self.zoom_menu.opacity = 0
+            self.zoom_menu.update()
+        else:
+            self.zoom_menu_button.icon_color = ft.Colors.BLUE_400
+            self.zoom_menu_button.tooltip = f"Hide zoom menu\n[Ctrl + R]"
+            self.zoom_menu_button.update()
+            self.zoom_menu.width = None
+            self.zoom_menu.opacity = 1
+            self.zoom_menu.update()
+
     def delete_button_click(self):
         if self.pipeline_gui.show_delete_button:
             self.delete_button.icon_color = WHITE60
@@ -488,7 +540,9 @@ class Builder:
         self.builder_page_stack = ft.Stack([
                 self.help_text,
                 self.interactive_view,
-                self.tools,
+                self.left_tools,
+                self.right_tools,
                 self.run_menu,
+                self.zoom_menu,
              ]
             )

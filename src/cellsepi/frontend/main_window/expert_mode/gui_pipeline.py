@@ -20,6 +20,7 @@ class PipelineGUI(ft.Stack):
         self.modules_executed = 0
         self.module_running_count = 0
         self.loading = False
+        self.interactive_view = None
         self.pipeline_name = "NewPipeline"
         self.pipeline_directory = ""
         self.pipeline_dict = {} #last saved pipeline dict
@@ -65,7 +66,11 @@ class PipelineGUI(ft.Stack):
             ports= pipe["ports"]
             self.add_connection(self.modules[source],self.modules[target],ports)
 
-        #TODO: View, but first need to integrate extension
+        offset_x = self.pipeline_dict["view"]["offset_x"]
+        offset_y = self.pipeline_dict["view"]["offset_y"]
+        scale = self.pipeline_dict["view"]["scale"]
+        self.interactive_view.set_transformation_data(offset_x=offset_x, offset_y=offset_y, scale=scale)
+
         self.page.open(
             ft.SnackBar(ft.Text(f"Pipeline successfully loaded.", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN))
         self.page.update()

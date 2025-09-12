@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Dict, Any
 
+from PIL.ImageChops import offset
 from jsonschema import validate, ValidationError
 
 def load_schema(schema_path: str) -> dict:
@@ -67,7 +68,8 @@ class PipelineStorage:
     def generate_pipline_dict(self):
         modules: List[Dict[str, Any]] = []
         pipes: List[Dict[str, Any]] = []
-        view = {"zoom": 1.0, "offset_x": 0.0, "offset_y": 0.0}
+        offset_x, offset_y, scale = self.pipeline_gui.interactive_view.get_transformation_data()
+        view = {"offset_x": offset_x, "offset_y": offset_y,"scale": scale}
 
         for module in self.pipeline_gui.modules.values():
             modules.append(module.to_dict())

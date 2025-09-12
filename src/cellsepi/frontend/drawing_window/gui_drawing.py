@@ -14,12 +14,12 @@ from cellsepi.backend.drawing_window.drawing_util import mask_shifting, bresenha
 
 class MyQtWindow(QMainWindow):
     """
-    Main PyQt window for drawing tools and deleting cells.
+    Main PyQt window for drawing left_tools and deleting cells.
 
     Attributes:
         canvas: DrawingCanvas object for displaying and interacting with the mask.
         canvas_dummy: says if the canvas is a dummy or not.
-        tools_widget: Container for tools on the right side.
+        tools_widget: Container for left_tools on the right side.
     """
 
     def __init__(self):
@@ -32,20 +32,20 @@ class MyQtWindow(QMainWindow):
 
         self.canvas = QWidget()
 
-        #Main layout with canvas and tools
+        #Main layout with canvas and left_tools
         central_widget = QWidget()
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)  #Remove margins on all sides
 
         self.main_layout.addWidget(self.canvas, stretch=3)
 
-        #Add tools box to the right
+        #Add left_tools box to the right
         self.tools_widget = QWidget()
         tools_layout = QVBoxLayout()
         tools_layout.setContentsMargins(10, 10, 10, 10)  #Consistent padding
-        tools_layout.setAlignment(Qt.AlignTop)  #Align tools to the top
+        tools_layout.setAlignment(Qt.AlignTop)  #Align left_tools to the top
 
-        #Add title to the tools box
+        #Add title to the left_tools box
         title = QLabel("Tools")
         title.setStyleSheet(
             "font-size: 20px; font-weight: bold; color: #333; padding: 10px; text-align: center; background-color: #EDEDED; border-radius: 5px;")
@@ -53,7 +53,7 @@ class MyQtWindow(QMainWindow):
 
 
 
-        #Add buttons to the tools box
+        #Add buttons to the left_tools box
         self.mask_toggle_button = QPushButton("Mask: ON")
         self.mask_toggle_button.setCheckable(True)
         self.mask_toggle_button.setChecked(True)
