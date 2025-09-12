@@ -40,6 +40,8 @@ class ModuleGUI(ft.GestureDetector):
             self.update_user_attr(module_dict)
         if self.module.settings is None and hasattr(self.module, "_settings"):
             self.module._settings = self.generate_options_overlay()
+        else:
+            self.module.settings.on_dismiss=lambda e: self.close_options(e)
         if show_mode:
             if index is None:
                 self.pipeline_gui.show_room_modules.append(self)

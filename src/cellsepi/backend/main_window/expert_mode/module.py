@@ -59,6 +59,7 @@ class Categories(Enum):
     INPUTS = ft.Colors.ORANGE
     OUTPUTS = ft.Colors.LIGHT_BLUE
     FILTERS = ft.Colors.PURPLE_ACCENT
+    MANUAL = ft.Colors.PINK_ACCENT
     SEGMENTATION = ft.Colors.YELLOW
 
 class ModuleGuiConfig:

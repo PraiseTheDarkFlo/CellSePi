@@ -7,6 +7,7 @@ from cellsepi.backend.main_window.expert_mode.modules.batch_image_seg import Bat
 from cellsepi.backend.main_window.expert_mode.modules.project_3d_to_2d import Project3dTo2d
 from cellsepi.backend.main_window.expert_mode.modules.read_lif import ReadLif
 from cellsepi.backend.main_window.expert_mode.modules.read_tif import ReadTif
+from cellsepi.backend.main_window.expert_mode.modules.review import Review
 
 BUILDER_WIDTH = 1000
 BUILDER_HEIGHT = 400
@@ -15,7 +16,7 @@ MODULE_HEIGHT = 80
 SPACING_X = 10
 SPACING_Y = 20
 SHOWROOM_PADDING_X = 20
-SHOWROOM_MODULE_COUNT = 3
+SHOWROOM_MODULE_COUNT = 4
 ARROW_LENGTH = 23
 ARROW_ANGLE = math.radians(40)
 ARROW_PADDING = -1
@@ -32,4 +33,5 @@ class ModuleType(Enum):
     READ_LIF = ReadLif
     READ_TIF = ReadTif
     PROJECTION_3D_TO_2D = Project3dTo2d
+    REVIEW = Review
 
