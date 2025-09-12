@@ -63,11 +63,11 @@
     "view": {
       "type": "object",
       "properties": {
-        "zoom": {"type": "number"},
         "offset_x": {"type": "number"},
-        "offset_y": {"type": "number"}
+        "offset_y": {"type": "number"},
+        "scale": {"type": "number"}
       },
-      "required": ["zoom","offset_x","offset_y"]
+      "required": ["offset_x","offset_y","scale"]
     }
   },
   "required": [ "version", "modules", "pipes", "view"]
