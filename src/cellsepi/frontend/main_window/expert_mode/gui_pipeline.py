@@ -116,12 +116,12 @@ class PipelineGUI(ft.Stack):
 
     def add_show_room_module(self,module_type:ModuleType,x:float,y:float,visible:bool=True,show_room_id:int=None):
         module_gui = ModuleGUI(self, module_type, x, y,True,visible,id_number=show_room_id)
-        self.page_stack.controls.append(module_gui)
+        self.page_stack.controls.insert(2,module_gui)
         return module_gui
 
     def refill_show_room(self,module_gui:ModuleGUI,visible:bool=True,index:int=None,show_room_id:int=None):
         new_module_gui = ModuleGUI(self, module_gui.module_type, x=SPACING_X + SHOWROOM_PADDING_X / 2, y=module_gui.show_offset_y, show_mode=True, visible=visible, index=index,id_number=show_room_id)
-        self.page_stack.controls.append(new_module_gui)
+        self.page_stack.controls.insert(3,new_module_gui)
         self.page_stack.update()
         self.update_all_port_icons()
 
@@ -130,7 +130,7 @@ class PipelineGUI(ft.Stack):
         x = SPACING_X + SHOWROOM_PADDING_X / 2
         y = SPACING_Y
         self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10),blur=10)
-        self.page_stack.controls.append(self.show_room_container)
+        self.page_stack.controls.insert(1,self.show_room_container)
         self.show_room_max_page_number = math.ceil(len(ModuleType) / SHOWROOM_MODULE_COUNT)
         for i,module_type in enumerate(ModuleType):
             visible = i < SHOWROOM_MODULE_COUNT

@@ -173,21 +173,21 @@ class Builder:
             ], tight=True, spacing=2
         ), bgcolor=MENU_COLOR, expand=True
         ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
-            bottom=40, right=SPACING_X, width=40, blur=10)
+            bottom=40, right=SPACING_X+10, width=40, blur=10)
 
         self.interactive_view = None
         self.zoom_menu = ft.Container(ft.Container(ft.Row(
             [
                 ft.IconButton(icon=ft.Icons.ZOOM_IN, icon_color=WHITE60,
                                              style=ft.ButtonStyle(
-                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0+ZOOM_VALUE),tooltip="Zoom in\n[Ctrl + .]",),
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0+ZOOM_VALUE),tooltip="Zoom in\n[Ctrl + .]",hover_color=ft.Colors.WHITE12),
                 ft.IconButton(icon=ft.Icons.ZOOM_OUT, icon_color=WHITE60,
                                              style=ft.ButtonStyle(
-                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0-ZOOM_VALUE),tooltip="Zoom out\n[Ctrl + ,]",),
+                                                 shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e: self.interactive_view.zoom(1.0-ZOOM_VALUE),tooltip="Zoom out\n[Ctrl + ,]",hover_color=ft.Colors.WHITE12),
                 ft.IconButton(icon=ft.Icons.CROP_FREE, icon_color=WHITE60,
                            style=ft.ButtonStyle(
                                shape=ft.RoundedRectangleBorder(radius=12), ),
-                           on_click=lambda e: self.interactive_view.reset(400),tooltip="Reset view\n[Ctrl + -]",),
+                           on_click=lambda e: self.interactive_view.reset(400),tooltip="Reset view\n[Ctrl + -]",hover_color=ft.Colors.WHITE12),
             ], spacing=2
         ), bgcolor=MENU_COLOR, expand=True
         ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
@@ -230,7 +230,7 @@ class Builder:
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
                     top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
                     left=self.pipeline_gui.show_room_container.left,blur=10)
-        self.builder_page_stack.controls.insert(2, self.switch_pages)
+        self.builder_page_stack.controls.insert(1, self.switch_pages)
         self.add_all_listeners()
 
     def run(self,ignore_check=False):
@@ -516,16 +516,16 @@ class Builder:
 
 
     def setup(self):
-        self.work_area = ft.Container(
+        self.work_area = ft.Stack([self.help_text,ft.Container(
             content=self.pipeline_gui,
             width=10000,
             height=10000,
             bgcolor=ft.Colors.TRANSPARENT,
-        )
+        )])
 
         self.interactive_view = FletExtendedInteractiveViewer(content=self.work_area, constrained=False,
                                                               height=self.page.window.height,
-                                                              width=self.page.window.width, scale_enabled=False)
+                                                              width=self.page.window.width, scale_enabled=False,)
 
         def on_resize(e: ft.WindowResizeEvent):
             self.interactive_view.height = e.height-20
@@ -539,7 +539,6 @@ class Builder:
         self.page.on_resized = on_resize
 
         self.builder_page_stack = ft.Stack([
-                self.help_text,
                 self.interactive_view,
                 self.left_tools,
                 self.right_tools,
