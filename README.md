@@ -156,7 +156,7 @@ This command automatically installs all required dependencies as specified in th
 - `bioio-base==1.0.4`
 - `torchvision==0.23.0`
 - `jsonschema == 4.25.1`
-- `flet-extended-interactive-viewer @ git+https://github.com/PraiseTheDarkFlo/flet-extended-interactive-viewer.git@older-flet-version`
+- `flet-extended-interactive-viewer == 0.1.1`
 
 ## 📚 Citations
 
