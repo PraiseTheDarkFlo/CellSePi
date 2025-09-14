@@ -1,4 +1,5 @@
 import math
+import platform
 from enum import Enum
 import flet as ft
 
@@ -27,6 +28,8 @@ MENU_COLOR = ft.Colors.BLACK54
 DISABLED_BUTTONS_COLOR = ft.Colors.BLACK12
 USER_OPTIONS_LIMIT = 3
 ZOOM_VALUE = 0.20
+BOTTOM_SPACING = 20 if not platform.system() == "Linux" else 40
+MAIN_ACTIVE_COLOR = ft.Colors.WHITE60
 
 class ModuleType(Enum):
     BATCH_IMAGE_READOUT = BatchImageReadoutModule

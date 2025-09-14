@@ -1,11 +1,12 @@
 import math
+import threading
+
 import flet as ft
 from typing import List
 
-from PyQt5.QtCore import QPointF
 from flet_core import canvas
+from shapely import Polygon, LineString
 
-from cellsepi.backend.drawing_window.drawing_util import bresenham_line
 from cellsepi.frontend.main_window.expert_mode.expert_constants import MODULE_WIDTH, ARROW_PADDING, MODULE_HEIGHT, BUILDER_WIDTH, BUILDER_HEIGHT, \
     ARROW_COLOR, ARROW_LENGTH, ARROW_ANGLE, VALID_COLOR
 from cellsepi.frontend.main_window.expert_mode.gui_module import ModuleGUI
@@ -19,20 +20,36 @@ def calc_angle(x1, y1, x2, y2):
     delta_y = y2 - y1
     return math.atan2(delta_y, delta_x)
 
-def calc_line_point_outside_module(pixels:List[int], module_x, module_y,target:bool=False):
-    min_x = module_x - (MODULE_WIDTH / 2 + ARROW_PADDING)
-    max_x = module_x + (MODULE_WIDTH / 2 + ARROW_PADDING)
-    min_y = module_y - (MODULE_HEIGHT / 2 + ARROW_PADDING)
-    max_y = module_y + (MODULE_HEIGHT / 2 + ARROW_PADDING)
+def calc_line_point_outside_module(source_x,source_y, target_x, target_y,padding:float = 0):
+    target_rect = [(target_x-(MODULE_WIDTH/2+padding), target_y-(MODULE_HEIGHT/2+padding)), (target_x+(MODULE_WIDTH/2+padding), target_y-(MODULE_HEIGHT/2+padding)), (target_x+(MODULE_WIDTH/2+padding), target_y+(MODULE_HEIGHT/2+padding)), (target_x-(MODULE_WIDTH/2+padding), target_y+(MODULE_HEIGHT/2+padding))]
+    source_rect = [(source_x-(MODULE_WIDTH/2+padding), source_y-(MODULE_HEIGHT/2+padding)), (source_x+(MODULE_WIDTH/2+padding), source_y-(MODULE_HEIGHT/2+padding)), (source_x+(MODULE_WIDTH/2+padding), source_y+(MODULE_HEIGHT/2+padding)), (source_x-(MODULE_WIDTH/2+padding), source_y+(MODULE_HEIGHT/2+padding))]
 
-    pixels_list = reversed(pixels) if target else pixels
-    for x,y in pixels_list:
-        if x < min_x or x > max_x or y < min_y or y > max_y:
-            return x,y
-    return module_x,module_y
+    target = (target_x, target_y)
+    source = (source_x, source_y)
 
-def calc_mid_outside(pixels:List[int],source_x, source_y,arrow_end_x, arrow_end_y):
-    start_point_x,start_point_y = calc_line_point_outside_module(pixels,source_x,source_y,False)
+    target_poly = Polygon(target_rect)
+    source_poly = Polygon(source_rect)
+
+    line = LineString([target, source])
+
+    intersections_target = line.intersection(target_poly.boundary)
+    intersections_source = line.intersection(source_poly.boundary)
+    def first_point(inter):
+        if inter.is_empty:
+            return 0, 0
+        if inter.geom_type == 'Point':
+            return inter.x, inter.y
+        elif inter.geom_type == 'MultiPoint':
+            return inter.geoms[0].x, inter.geoms[0].y
+        else:
+            return inter.coords[0]
+
+    target_point = first_point(intersections_target)
+    source_point = first_point(intersections_source)
+
+    return target_point, source_point
+
+def calc_mid_outside(start_point_x,start_point_y,arrow_end_x, arrow_end_y):
     return (start_point_x+arrow_end_x)/2, (start_point_y + arrow_end_y)/2
 
 class LinesGUI(canvas.Canvas):
@@ -47,16 +64,19 @@ class LinesGUI(canvas.Canvas):
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
         self.expand = True
+        self._debounce_timer = None
 
     def update_line(self,source_module_gui: ModuleGUI ,target_module_gui: ModuleGUI,ports: List[str]):
         """
         Adds a line between two modules or updates them if it already exists.
         """
-        if (source_module_gui.name,target_module_gui.name) in self.edges:
-            self.shapes.remove(self.edges[(source_module_gui.name,target_module_gui.name)])
-            self.shapes.remove(self.arrows[(source_module_gui.name,target_module_gui.name)])
-            self.shapes.remove(self.ports_txt[(source_module_gui.name,target_module_gui.name)])
-            self.pipeline_gui.delete_stack.controls.remove(self.delete_buttons.pop((source_module_gui.name, target_module_gui.name)))
+        key = (source_module_gui.name, target_module_gui.name)
+        if key in self.edges and self.edges[key] in self.shapes:
+            self.shapes.remove(self.edges[key])
+        if key in self.arrows and self.arrows[key] in self.shapes:
+            self.shapes.remove(self.arrows[key])
+        if key in self.ports_txt and self.ports_txt[key] in self.shapes:
+            self.shapes.remove(self.ports_txt[key])
 
         source_x = source_module_gui.left + (MODULE_WIDTH / 2)
         source_y = source_module_gui.top + (MODULE_HEIGHT / 2)
@@ -69,25 +89,21 @@ class LinesGUI(canvas.Canvas):
         )
         edge_angle = calc_angle(source_x,source_y,target_x,target_y)
 
-        pixels_edge = bresenham_line(QPointF(source_x,source_y), QPointF(target_x,target_y))
+        (target_x_outside,target_y_outside),(source_x_outside,source_y_outside) = calc_line_point_outside_module(source_x,source_y, target_x, target_y,padding=ARROW_PADDING)
 
+        arrow_line_x1 = target_x_outside - ARROW_LENGTH * math.cos(edge_angle - ARROW_ANGLE)
+        arrow_line_y1 = target_y_outside - ARROW_LENGTH * math.sin(edge_angle - ARROW_ANGLE)
 
-
-        arrow_x,arrow_y = calc_line_point_outside_module(pixels_edge, target_x, target_y,True)
-
-        arrow_line_x1 = arrow_x - ARROW_LENGTH * math.cos(edge_angle - ARROW_ANGLE)
-        arrow_line_y1 = arrow_y - ARROW_LENGTH * math.sin(edge_angle - ARROW_ANGLE)
-
-        arrow_line_x2 = arrow_x - ARROW_LENGTH * math.cos(edge_angle + ARROW_ANGLE)
-        arrow_line_y2 = arrow_y - ARROW_LENGTH * math.sin(edge_angle + ARROW_ANGLE)
+        arrow_line_x2 = target_x_outside - ARROW_LENGTH * math.cos(edge_angle + ARROW_ANGLE)
+        arrow_line_y2 = target_y_outside - ARROW_LENGTH * math.sin(edge_angle + ARROW_ANGLE)
 
         arrow_end_x = (arrow_line_x1 + arrow_line_x2)/2 #End is the Flat side of the Arrow
         arrow_end_y = (arrow_line_y1 + arrow_line_y2)/2
-        port_x,port_y = calc_mid_outside(pixels_edge, source_x, source_y,arrow_end_x, arrow_end_y)
+        port_x,port_y = calc_mid_outside(source_x_outside, source_y_outside,arrow_end_x, arrow_end_y)
 
         arrow = canvas.Path(
                 [
-                    canvas.Path.MoveTo(arrow_x,arrow_y),
+                    canvas.Path.MoveTo(target_x_outside,target_y_outside),
                     canvas.Path.LineTo(arrow_line_x1,arrow_line_y1),
                     canvas.Path.LineTo(arrow_line_x2, arrow_line_y2),
                     canvas.Path.Close()
@@ -166,6 +182,16 @@ class LinesGUI(canvas.Canvas):
             self.update_line(self.pipeline_gui.modules[pipe.source_module.module_id],module_gui,pipe.ports)
         for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module.module_id]:
             self.update_line(module_gui,self.pipeline_gui.modules[pipe.target_module.module_id],pipe.ports)
+
+    def update_lines_debounced(self, module_gui, delay=0.009):
+        if self._debounce_timer:
+            self._debounce_timer.cancel()
+
+        def do_update():
+            self.update_lines(module_gui)
+
+        self._debounce_timer = threading.Timer(delay, do_update)
+        self._debounce_timer.start()
 
     def update_all(self):
         for module in self.pipeline_gui.modules.values():

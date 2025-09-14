@@ -466,7 +466,7 @@ class ModuleGUI(ft.GestureDetector):
         """
         self.old_left = self.left
         self.old_top = self.top
-        self.pipeline_gui.lines_gui.update_lines(self)
+        self.pipeline_gui.lines_gui.update_lines_debounced(self)
         self.update()
 
     def drag(self, e: ft.DragUpdateEvent):
@@ -489,7 +489,7 @@ class ModuleGUI(ft.GestureDetector):
 
         self.top = max(0, self.top + e.delta_y)
         self.left = max(0, self.left + e.delta_x)
-        self.pipeline_gui.lines_gui.update_lines(self)
+        self.pipeline_gui.lines_gui.update_lines_debounced(self)
         self.update()
 
     def drop(self,e: ft.DragEndEvent):
@@ -562,7 +562,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.update()
 
         e.control.update()
-        self.pipeline_gui.lines_gui.update_lines(self)
+        self.pipeline_gui.lines_gui.update_lines_debounced(self)
 
     def generate_options_overlay(self):
         """
