@@ -45,8 +45,7 @@ def copy_to_clipboard(page,value: str,name: str):
         name (str): Name of the thing that got copied.
     """
     page.set_clipboard(value)
-    page.snack_bar = ft.SnackBar(ft.Text(f"{name} copied to clipboard!"))
-    page.snack_bar.open = True
+    page.open(ft.SnackBar(ft.Text(f"{name} copied to clipboard!")))
     page.update()
 
 
