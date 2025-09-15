@@ -1,13 +1,15 @@
 import math
-import threading
+import time
+from threading import RLock
 
 import flet as ft
-from typing import List
+from typing import List, Dict
 
 from flet_core import canvas
 
-from cellsepi.frontend.main_window.expert_mode.expert_constants import MODULE_WIDTH, ARROW_PADDING, MODULE_HEIGHT, BUILDER_WIDTH, BUILDER_HEIGHT, \
-    ARROW_COLOR, ARROW_LENGTH, ARROW_ANGLE, VALID_COLOR
+from cellsepi.frontend.main_window.expert_mode.expert_constants import MODULE_WIDTH, ARROW_PADDING, MODULE_HEIGHT, \
+    BUILDER_WIDTH, BUILDER_HEIGHT, \
+    ARROW_COLOR, ARROW_LENGTH, ARROW_ANGLE, VALID_COLOR, THROTTLE_UPDATE_LINES
 from cellsepi.frontend.main_window.expert_mode.gui_module import ModuleGUI
 
 
@@ -19,81 +21,82 @@ def calc_angle(x1, y1, x2, y2):
     delta_y = y2 - y1
     return math.atan2(delta_y, delta_x)
 
-def calc_line_point_outside_module(source_x, source_y, target_x, target_y, padding: float = 0):
-    def rect_sides(x, y):
-        w = MODULE_WIDTH / 2 + padding
-        h = MODULE_HEIGHT / 2 + padding
+def calc_line_points_outside_modules(source_x, source_y, target_x, target_y, padding: float = 0):
+    """
+    Calculate the points placed outside modules between two points with optional padding for the target side.
+    """
+    def rect_sides(x, y, target:bool=False):
+        w = MODULE_WIDTH / 2 + (padding if target else 0)
+        h = MODULE_HEIGHT / 2 + (padding if target else 0)
         return x - w, x + w, y - h, y + h
 
-    def intersect_line_rect(x1, y1, x2, y2, xmin, xmax, ymin, ymax):
-        dx = x2 - x1
-        dy = y2 - y1
+    def intersect_line_rect(x_1, y_1, x_2, y_2, x_min, x_max, y_min, y_max):
+        dx = x_2 - x_1
+        dy = y_2 - y_1
         points = []
 
         if dx != 0:
-            t = (xmin - x1) / dx
-            y = y1 + t * dy
-            if ymin <= y <= ymax:
-                points.append((xmin, y))
+            t = (x_min - x_1) / dx
+            y = y_1 + t * dy
+            if y_min <= y <= y_max:
+                points.append((x_min, y))
 
-            t = (xmax - x1) / dx
-            y = y1 + t * dy
-            if ymin <= y <= ymax:
-                points.append((xmax, y))
+            t = (x_max - x_1) / dx
+            y = y_1 + t * dy
+            if y_min <= y <= y_max:
+                points.append((x_max, y))
 
         if dy != 0:
-            t = (ymin - y1) / dy
-            x = x1 + t * dx
-            if xmin <= x <= xmax:
-                points.append((x, ymin))
+            t = (y_min - y_1) / dy
+            x = x_1 + t * dx
+            if x_min <= x <= x_max:
+                points.append((x, y_min))
 
-            t = (ymax - y1) / dy
-            x = x1 + t * dx
-            if xmin <= x <= xmax:
-                points.append((x, ymax))
+            t = (y_max - y_1) / dy
+            x = x_1 + t * dx
+            if x_min <= x <= x_max:
+                points.append((x, y_max))
 
         if not points:
             return 0, 0
-        points.sort(key=lambda p: (p[0]-x1)**2 + (p[1]-y1)**2)
+        points.sort(key=lambda p: (p[0] - x_1) ** 2 + (p[1] - y_1) ** 2)
         return points[0]
 
-    t_xmin, t_xmax, t_ymin, t_ymax = rect_sides(target_x, target_y)
-    s_xmin, s_xmax, s_ymin, s_ymax = rect_sides(source_x, source_y)
+    target_x_min, target_x_max, target_y_min, target_y_max = rect_sides(target_x, target_y, True)
+    source_x_min, source_x_max, source_y_min, source_y_max = rect_sides(source_x, source_y, False)
 
-    target_point = intersect_line_rect(source_x, source_y, target_x, target_y, t_xmin, t_xmax, t_ymin, t_ymax)
-    source_point = intersect_line_rect(target_x, target_y, source_x, source_y, s_xmin, s_xmax, s_ymin, s_ymax)
+    target_point = intersect_line_rect(source_x, source_y, target_x, target_y, target_x_min, target_x_max, target_y_min, target_y_max)
+    source_point = intersect_line_rect(target_x, target_y, source_x, source_y, source_x_min, source_x_max, source_y_min, source_y_max)
 
     return target_point, source_point
 
 
-def calc_mid_outside(start_point_x,start_point_y,arrow_end_x, arrow_end_y):
+def calc_middle_point(start_point_x,start_point_y,arrow_end_x, arrow_end_y):
+    """
+    Calculate the middle point between two points.
+    """
     return (start_point_x+arrow_end_x)/2, (start_point_y + arrow_end_y)/2
 
 class LinesGUI(canvas.Canvas):
     def __init__(self, pipeline_gui):
         super().__init__()
         self.shapes = []
-        self.edges = {} #identiefier Tuple of source name and target name
-        self.arrows = {} #identiefier Tuple of source name and target name
-        self.ports_txt = {} #identiefier Tuple of source name and target name
-        self.delete_buttons = {} #identiefier Tuple of source name and target name
+        self.connections: Dict[(str, str),Dict[str]] = {}
         self.pipeline_gui = pipeline_gui
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
         self.expand = True
-        self._lock = threading.Lock()
+        self._lock = RLock()
+        self._last_update_per_module = {}
 
     def update_line(self,source_module_gui: ModuleGUI ,target_module_gui: ModuleGUI,ports: List[str]):
         """
         Adds a line between two modules or updates them if it already exists.
         """
         key = (source_module_gui.name, target_module_gui.name)
-        if key in self.edges and self.edges[key] in self.shapes:
-            self.shapes.remove(self.edges[key])
-        if key in self.arrows and self.arrows[key] in self.shapes:
-            self.shapes.remove(self.arrows[key])
-        if key in self.ports_txt and self.ports_txt[key] in self.shapes:
-            self.shapes.remove(self.ports_txt[key])
+
+        if key in self.connections:
+            del self.connections[key]
 
         source_x = source_module_gui.left + (MODULE_WIDTH / 2)
         source_y = source_module_gui.top + (MODULE_HEIGHT / 2)
@@ -106,7 +109,8 @@ class LinesGUI(canvas.Canvas):
         )
         edge_angle = calc_angle(source_x,source_y,target_x,target_y)
 
-        (target_x_outside,target_y_outside),(source_x_outside,source_y_outside) = calc_line_point_outside_module(source_x,source_y, target_x, target_y,padding=ARROW_PADDING)
+        (target_x_outside,target_y_outside),(source_x_outside,source_y_outside) = calc_line_points_outside_modules(
+            source_x, source_y, target_x, target_y, padding=ARROW_PADDING)
 
         arrow_line_x1 = target_x_outside - ARROW_LENGTH * math.cos(edge_angle - ARROW_ANGLE)
         arrow_line_y1 = target_y_outside - ARROW_LENGTH * math.sin(edge_angle - ARROW_ANGLE)
@@ -116,7 +120,7 @@ class LinesGUI(canvas.Canvas):
 
         arrow_end_x = (arrow_line_x1 + arrow_line_x2)/2 #End is the Flat side of the Arrow
         arrow_end_y = (arrow_line_y1 + arrow_line_y2)/2
-        port_x,port_y = calc_mid_outside(source_x_outside, source_y_outside,arrow_end_x, arrow_end_y)
+        port_x,port_y = calc_middle_point(source_x_outside, source_y_outside, arrow_end_x, arrow_end_y)
 
         arrow = canvas.Path(
                 [
@@ -131,7 +135,6 @@ class LinesGUI(canvas.Canvas):
             )
 
         port_str = ", ".join(ports)
-
         port_txt = canvas.Text(
             port_x,port_y,
             str(port_str),max_width=220, style=ft.TextStyle(size=15,weight=ft.FontWeight.BOLD,bgcolor=ft.Colors.WHITE38),
@@ -149,26 +152,28 @@ class LinesGUI(canvas.Canvas):
             icon=ft.Icons.CLOSE,tooltip="Delete Connection",hover_color=VALID_COLOR,icon_color=ft.Colors.WHITE,bgcolor=ft.Colors.RED_ACCENT,opacity=opacity,on_click=lambda e,source=source_module_gui,target=target_module_gui:self.pipeline_gui.remove_connection(source,target)
             ),visible=self.pipeline_gui.show_delete_button,disabled=disabled)
 
-        self.shapes.append(edge)
-        self.shapes.append(arrow)
-        self.shapes.append(port_txt)
-        self.pipeline_gui.delete_stack.controls.append(delete_button)
-        self.edges[(source_module_gui.name,target_module_gui.name)] = edge
-        self.arrows[(source_module_gui.name,target_module_gui.name)] = arrow
-        self.ports_txt[(source_module_gui.name,target_module_gui.name)] = port_txt
-        self.delete_buttons[(source_module_gui.name,target_module_gui.name)] = delete_button
-        self.update()
-        self.pipeline_gui.delete_stack.update()
+        self.connections[key] = {
+            "edge": edge,
+            "arrow": arrow,
+            "port_txt": port_txt,
+            "delete_button": delete_button,
+        }
 
     def update_delete_button(self,source_module_gui: ModuleGUI, target_module_gui: ModuleGUI,set_all: bool = False):
+        """
+        Checks and updates the delete button for the connection between the source module and the target module.
+        """
         disabled = False
         opacity = 1
         if ((source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running) or set_all:
             disabled = True
             opacity = 0.4
-        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.opacity = opacity
-        self.delete_buttons[(source_module_gui.name, target_module_gui.name)].content.disabled = disabled
-        self.delete_buttons[(source_module_gui.name,target_module_gui.name)].content.update()
+        key = (source_module_gui.name,target_module_gui.name)
+        if key in self.connections:
+            delete_button = self.connections[key]["delete_button"]
+            delete_button.content.opacity = opacity
+            delete_button.content.disabled = disabled
+            delete_button.content.update()
 
     def update_delete_buttons(self,module_gui: ModuleGUI,set_all: bool = False):
         """
@@ -183,15 +188,18 @@ class LinesGUI(canvas.Canvas):
         """
         Removes a line between two modules.
         """
-        if (source_module_gui.name, target_module_gui.name) in self.edges:
-            self.shapes.remove(self.edges.pop((source_module_gui.name, target_module_gui.name)))
-            self.shapes.remove(self.arrows.pop((source_module_gui.name, target_module_gui.name)))
-            self.shapes.remove(self.ports_txt.pop((source_module_gui.name, target_module_gui.name)))
-            self.pipeline_gui.delete_stack.controls.remove(self.delete_buttons.pop((source_module_gui.name, target_module_gui.name)))
-            self.update()
-            self.pipeline_gui.delete_stack.update()
+        key = (source_module_gui.name, target_module_gui.name)
+        conn = self.connections.pop(key, None)
+        if conn is not None:
+            with self._lock:
+                self.shapes.remove(conn["edge"])
+                self.shapes.remove(conn["arrow"])
+                self.shapes.remove(conn["port_txt"])
+                self.pipeline_gui.delete_stack.controls.remove(conn["delete_button"])
+                self.update()
+                self.pipeline_gui.delete_stack.update()
 
-    def update_lines(self,module_gui: ModuleGUI):
+    def _update_lines(self,module_gui: ModuleGUI):
         """
         Updates all lines that are connected to the given module.
         """
@@ -200,10 +208,39 @@ class LinesGUI(canvas.Canvas):
         for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module.module_id]:
             self.update_line(module_gui,self.pipeline_gui.modules[pipe.target_module.module_id],pipe.ports)
 
-    def update_lines_with_lock(self, module_gui):
+    def update_lines(self,module_gui: ModuleGUI):
+        """
+        Updates all lines connected to the given module,
+        but only if enough time has passed since the last update
+        (for throttling purposes to improve performance during drag/move).
+        """
+        now = time.time()
+        last = self._last_update_per_module.get(module_gui.name, 0)
+        if now - last > THROTTLE_UPDATE_LINES:
+            self._last_update_per_module[module_gui.name] = now
+            self._update_lines(module_gui)
+            self.update_gui()
+
+    def update_gui(self):
+        """
+        Updates the GUI to reflect the current connections.
+        Uses a lock to ensure thread-safety while rebuilding the newest state.
+        """
         with self._lock:
-            self.update_lines(module_gui)
+            self.shapes.clear()
+            self.pipeline_gui.delete_stack.controls.clear()
+            for key, data in self.connections.copy().items():
+                self.shapes.append(data["edge"])
+                self.shapes.append(data["arrow"])
+                self.shapes.append(data["port_txt"])
+                self.pipeline_gui.delete_stack.controls.append(data["delete_button"])
+            self.update()
+            self.pipeline_gui.delete_stack.update()
 
     def update_all(self):
+        """
+        Updates all connections for every module in the pipeline.
+        """
         for module in self.pipeline_gui.modules.values():
-            self.update_lines(module)
+            self._update_lines(module)
+        self.update_gui()
