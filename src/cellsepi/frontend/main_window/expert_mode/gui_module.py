@@ -458,6 +458,8 @@ class ModuleGUI(ft.GestureDetector):
         """Returns card to its original position"""
         self.left = self.old_left
         self.top = self.old_top
+        self.pipeline_gui.lines_gui._update_lines(self)
+        self.pipeline_gui.lines_gui.update_gui()
         self.update()
 
     def start_drag(self, e: ft.DragStartEvent):
