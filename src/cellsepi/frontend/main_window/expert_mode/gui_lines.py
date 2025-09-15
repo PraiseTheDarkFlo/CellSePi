@@ -5,7 +5,6 @@ import flet as ft
 from typing import List
 
 from flet_core import canvas
-from shapely import Polygon, LineString
 
 from cellsepi.frontend.main_window.expert_mode.expert_constants import MODULE_WIDTH, ARROW_PADDING, MODULE_HEIGHT, BUILDER_WIDTH, BUILDER_HEIGHT, \
     ARROW_COLOR, ARROW_LENGTH, ARROW_ANGLE, VALID_COLOR
@@ -20,34 +19,52 @@ def calc_angle(x1, y1, x2, y2):
     delta_y = y2 - y1
     return math.atan2(delta_y, delta_x)
 
-def calc_line_point_outside_module(source_x,source_y, target_x, target_y,padding:float = 0):
-    target_rect = [(target_x-(MODULE_WIDTH/2+padding), target_y-(MODULE_HEIGHT/2+padding)), (target_x+(MODULE_WIDTH/2+padding), target_y-(MODULE_HEIGHT/2+padding)), (target_x+(MODULE_WIDTH/2+padding), target_y+(MODULE_HEIGHT/2+padding)), (target_x-(MODULE_WIDTH/2+padding), target_y+(MODULE_HEIGHT/2+padding))]
-    source_rect = [(source_x-(MODULE_WIDTH/2+padding), source_y-(MODULE_HEIGHT/2+padding)), (source_x+(MODULE_WIDTH/2+padding), source_y-(MODULE_HEIGHT/2+padding)), (source_x+(MODULE_WIDTH/2+padding), source_y+(MODULE_HEIGHT/2+padding)), (source_x-(MODULE_WIDTH/2+padding), source_y+(MODULE_HEIGHT/2+padding))]
+def calc_line_point_outside_module(source_x, source_y, target_x, target_y, padding: float = 0):
+    def rect_sides(x, y):
+        w = MODULE_WIDTH / 2 + padding
+        h = MODULE_HEIGHT / 2 + padding
+        return x - w, x + w, y - h, y + h
 
-    target = (target_x, target_y)
-    source = (source_x, source_y)
+    def intersect_line_rect(x1, y1, x2, y2, xmin, xmax, ymin, ymax):
+        dx = x2 - x1
+        dy = y2 - y1
+        points = []
 
-    target_poly = Polygon(target_rect)
-    source_poly = Polygon(source_rect)
+        if dx != 0:
+            t = (xmin - x1) / dx
+            y = y1 + t * dy
+            if ymin <= y <= ymax:
+                points.append((xmin, y))
 
-    line = LineString([target, source])
+            t = (xmax - x1) / dx
+            y = y1 + t * dy
+            if ymin <= y <= ymax:
+                points.append((xmax, y))
 
-    intersections_target = line.intersection(target_poly.boundary)
-    intersections_source = line.intersection(source_poly.boundary)
-    def first_point(inter):
-        if inter.is_empty:
+        if dy != 0:
+            t = (ymin - y1) / dy
+            x = x1 + t * dx
+            if xmin <= x <= xmax:
+                points.append((x, ymin))
+
+            t = (ymax - y1) / dy
+            x = x1 + t * dx
+            if xmin <= x <= xmax:
+                points.append((x, ymax))
+
+        if not points:
             return 0, 0
-        if inter.geom_type == 'Point':
-            return inter.x, inter.y
-        elif inter.geom_type == 'MultiPoint':
-            return inter.geoms[0].x, inter.geoms[0].y
-        else:
-            return inter.coords[0]
+        points.sort(key=lambda p: (p[0]-x1)**2 + (p[1]-y1)**2)
+        return points[0]
 
-    target_point = first_point(intersections_target)
-    source_point = first_point(intersections_source)
+    t_xmin, t_xmax, t_ymin, t_ymax = rect_sides(target_x, target_y)
+    s_xmin, s_xmax, s_ymin, s_ymax = rect_sides(source_x, source_y)
+
+    target_point = intersect_line_rect(source_x, source_y, target_x, target_y, t_xmin, t_xmax, t_ymin, t_ymax)
+    source_point = intersect_line_rect(target_x, target_y, source_x, source_y, s_xmin, s_xmax, s_ymin, s_ymax)
 
     return target_point, source_point
+
 
 def calc_mid_outside(start_point_x,start_point_y,arrow_end_x, arrow_end_y):
     return (start_point_x+arrow_end_x)/2, (start_point_y + arrow_end_y)/2
@@ -64,7 +81,7 @@ class LinesGUI(canvas.Canvas):
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
         self.expand = True
-        self._debounce_timer = None
+        self._lock = threading.Lock()
 
     def update_line(self,source_module_gui: ModuleGUI ,target_module_gui: ModuleGUI,ports: List[str]):
         """
@@ -183,15 +200,9 @@ class LinesGUI(canvas.Canvas):
         for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module.module_id]:
             self.update_line(module_gui,self.pipeline_gui.modules[pipe.target_module.module_id],pipe.ports)
 
-    def update_lines_debounced(self, module_gui, delay=0.009):
-        if self._debounce_timer:
-            self._debounce_timer.cancel()
-
-        def do_update():
+    def update_lines_with_lock(self, module_gui):
+        with self._lock:
             self.update_lines(module_gui)
-
-        self._debounce_timer = threading.Timer(delay, do_update)
-        self._debounce_timer.start()
 
     def update_all(self):
         for module in self.pipeline_gui.modules.values():
