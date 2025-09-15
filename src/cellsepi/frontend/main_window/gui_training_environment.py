@@ -280,9 +280,8 @@ class Training(ft.Container):
 
         # checks if the right model type was selected
         if self.re_train_model.value and self.re_train_model_name is None:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"The model you inserted is not a retrained model!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text(f"The model you inserted is not a retrained model!")))
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
             self.progress_ring.visible = False
@@ -302,9 +301,8 @@ class Training(ft.Container):
             images, labels, image_names, test_images, test_labels, image_names_test = output
 
         except Exception as e:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Something went wrong while gather training data: {str(e)}"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text(f"Something went wrong while gather training data: {str(e)}")))
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
             self.progress_ring.visible = False
@@ -316,9 +314,8 @@ class Training(ft.Container):
                 self.gui.training_event.set()
             return
         if len(images) == 0 or len(labels) == 0:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"You need images and suitable masks to train a model!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text(f"You need images and suitable masks to train a model!")))
             self.gui.directory.enable_path_choosing()
             self.start_button.disabled = False
             self.progress_ring.visible = False
@@ -350,9 +347,8 @@ class Training(ft.Container):
             self.progress_bar_text.value = "Finished Training"
 
         except Exception as e:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Something went wrong while training: {str(e)}"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text(f"Something went wrong while training: {str(e)}")))
             self.progress_bar_text.value = ""
             self.page.update()
         self.gui.directory.enable_path_choosing()

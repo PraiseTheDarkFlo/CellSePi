@@ -6,7 +6,6 @@ fluorescence_button= ft.ElevatedButton(text= "Readout",
                                        visible=False)
 
 def error_banner(gui, message):
-    gui.page.snack_bar = ft.SnackBar(
-        ft.Text(message))
-    gui.page.snack_bar.open = True
+    gui.page.open(ft.SnackBar(
+        ft.Text(message)))
     gui.page.update()

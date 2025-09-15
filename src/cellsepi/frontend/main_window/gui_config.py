@@ -115,9 +115,8 @@ class GUIConfig:
         try:
             renamed = self.config_class.rename_profile(self.config_class.index_to_name(idx), e.control.value)
             if not renamed:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text("The name is already taken!"))
-                self.page.snack_bar.open = True
+                self.page.open(ft.SnackBar(
+                    ft.Text("The name is already taken!")))
                 self.page.update()
             else:
                 self.name_items[idx]["textfield"].visible = False
@@ -127,9 +126,8 @@ class GUIConfig:
                 self.update_overlay()
                 self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("The name must be not empty!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text("The name must be not empty!")))
             self.page.update()
 
     def create_name_items_profiles(self):
@@ -326,8 +324,7 @@ class GUIConfig:
             if not self.gui.csp.readout_running and not self.gui.csp.segmentation_running:
                 self.gui.page.run_task(self.gui.directory.check_masks)
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Bright field channel must be not empty!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(ft.Text("Bright field channel must be not empty!")))
             self.txt_bf_ref.current.color = ft.Colors.RED
             self.page.update()
 
@@ -347,8 +344,7 @@ class GUIConfig:
             self.txt_ms_ref.current.color = None
             self.page.update()
         else:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Mask suffix must be not empty!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(ft.Text("Mask suffix must be not empty!")))
             self.txt_ms_ref.current.color = ft.Colors.RED
             self.page.update()
 
@@ -368,8 +364,7 @@ class GUIConfig:
             self.txt_cp_ref.current.color = None
             self.page.update()
         else:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Channel prefix must be not empty!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(ft.Text("Channel prefix must be not empty!")))
             self.txt_cp_ref.current.color = ft.Colors.RED
             self.page.update()
 
@@ -389,8 +384,7 @@ class GUIConfig:
             self.txt_d_ref.current.color = None
             self.page.update()
         except ValueError:
-            self.page.snack_bar = ft.SnackBar(ft.Text("Diameter only allows decimals numbers, greater than 0!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(ft.Text("Diameter only allows decimals numbers, greater than 0!")))
             self.txt_d_ref.current.color = ft.Colors.RED
             self.page.update()
 

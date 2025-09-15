@@ -237,8 +237,7 @@ class DirectoryCard(ft.Card):
                 if event_manager is not None:
                     raise PipelineRunningException("Directory Error","Directory ’output’ is not supported!")
                 else:
-                    self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory path output is not allowed!"))
-                    self.gui.page.snack_bar.open = True
+                    self.gui.page.open(ft.SnackBar(ft.Text("The directory path output is not allowed!")))
                     self.output_dir = True
                     self.gui.page.update()
                     self.gui.csp.image_paths = {}
@@ -320,9 +319,8 @@ class DirectoryCard(ft.Card):
 
         if not self.is_supported_lif:
             self.gui.ready_to_start = False
-            self.gui.page.snack_bar = ft.SnackBar(
-                ft.Text("The selected file is not supported! Only .lif are supported."))
-            self.gui.page.snack_bar.open = True
+            self.gui.page.open(ft.SnackBar(
+                ft.Text("The selected file is not supported! Only .lif are supported.")))
             image_paths = {}
             mask_paths = {}
             self.gui.progress_ring.visible = False
@@ -331,8 +329,7 @@ class DirectoryCard(ft.Card):
             image_paths, mask_paths = load_directory(working_directory, channel_prefix=cp, mask_suffix=ms)
             if len(image_paths) == 0:
                 self.gui.ready_to_start = False
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains no valid files with the current channel prefix!"))
-                self.gui.page.snack_bar.open = True
+                self.gui.page.open(ft.SnackBar(ft.Text("The directory contains no valid files with the current channel prefix!")))
                 self.gui.page.update()
                 self.count_results_txt.color = ft.Colors.RED
                 self.gui.progress_ring.visible = False
@@ -340,8 +337,7 @@ class DirectoryCard(ft.Card):
                     os.rmdir(self.gui.csp.working_directory)
             elif not is_supported_tif:
                 self.gui.ready_to_start = False
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed."))
-                self.gui.page.snack_bar.open = True
+                self.gui.page.open(ft.SnackBar(ft.Text("The directory contains an unsupported file type. Only 8 or 16 bit .tiff files allowed.")))
                 self.count_results_txt.color = ft.Colors.RED
                 self.gui.progress_ring.visible = False
                 self.gui.page.update()

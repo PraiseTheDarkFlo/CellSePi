@@ -192,7 +192,7 @@ class GUI:
                     self.process_drawing_window.terminate()
                     self.process_drawing_window.join()
                 except Exception as e:
-                    ft.SnackBar(ft.Text(f"Error while terminating process: {e}"))
+                    self.page.open(ft.SnackBar(ft.Text(f"Error while terminating process: {e}")))
             self.queue = multiprocessing.Queue()
             parent_conn, child_conn = multiprocessing.Pipe()
             self.parent_conn, self.child_conn = parent_conn, child_conn
@@ -209,9 +209,8 @@ class GUI:
             self.csp.window_mask_path= os.path.join(directory, mask_file_name)
             self.queue.put((self.csp.config.get_mask_color(), self.csp.config.get_outline_color(),self.csp.color_opacity, self.csp.window_bf_channel, self.csp.mask_paths, self.csp.window_image_id, self.csp.adjusted_image_path, self.csp.window_mask_path,self.csp.window_channel_id,self.csp.current_channel_prefix))
         else:
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel} has no image!"))
-            self.page.snack_bar.open = True
+            self.page.open(ft.SnackBar(
+                ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel} has no image!")))
             self.page.update()
 
     def handle_closing_event(self, e):

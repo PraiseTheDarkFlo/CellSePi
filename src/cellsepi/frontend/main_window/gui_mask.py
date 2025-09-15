@@ -1,9 +1,8 @@
 import flet as ft
 
 def error_banner(gui,message):
-    gui.page.snack_bar = ft.SnackBar(
-        ft.Text(message))
-    gui.page.snack_bar.open = True
+    gui.page.open(ft.SnackBar(
+        ft.Text(message)))
     gui.page.update()
 
 def handle_image_switch_mask_on(gui):

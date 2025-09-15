@@ -129,8 +129,7 @@ class GUISegmentation():
                 self.gui.page.update()
                 self.segmentation.run() # this will throw an error if something other than a model was chosen
             except:
-                self.gui.page.snack_bar = ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model."))
-                self.gui.page.snack_bar.open = True
+                self.gui.page.open(ft.SnackBar(ft.Text("You have selected an incompatible file for the segmentation model.")))
                 self.gui.training_environment.enable_switch_environment()
                 start_button.visible = True
                 start_button.disabled = True
