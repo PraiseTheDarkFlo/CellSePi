@@ -26,7 +26,7 @@ class PipelineGUI(ft.Stack):
         self.pipeline_dict = {} #last saved pipeline dict
         self.page = page
         self.modules = {} #identiefierer is the module_id
-        self.show_room_size = SHOWROOM_MODULE_COUNT*2+1
+        self.show_room_size = len(ModuleType) if len(ModuleType) < SHOWROOM_MODULE_COUNT else SHOWROOM_MODULE_COUNT
         self.show_room_modules = []
         self.width = BUILDER_WIDTH
         self.height = BUILDER_HEIGHT
@@ -127,7 +127,7 @@ class PipelineGUI(ft.Stack):
         self.page_stack = page_stack
         x = SPACING_X + SHOWROOM_PADDING_X / 2
         y = SPACING_Y
-        self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(((self.show_room_size - 1) / 2) * MODULE_HEIGHT) + (((self.show_room_size - 1) / 2) * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10),blur=10)
+        self.show_room_container = ft.Container(top=y - SPACING_Y / 2, left=SPACING_X, width=MODULE_WIDTH + SHOWROOM_PADDING_X, height=(self.show_room_size * MODULE_HEIGHT) + (self.show_room_size * SPACING_Y), bgcolor=MENU_COLOR, border_radius=ft.border_radius.all(10),blur=10)
         self.page_stack.controls.insert(1,self.show_room_container)
         self.show_room_max_page_number = math.ceil(len(ModuleType) / SHOWROOM_MODULE_COUNT)
         for i,module_type in enumerate(ModuleType):

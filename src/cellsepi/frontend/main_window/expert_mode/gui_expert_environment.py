@@ -48,3 +48,4 @@ class ExpertEnvironment(ft.Container):
         self.gui.page.update()
         self.text.value = "Exit Expert Mode"
         self.gui.training_environment.text.value = "Go To Training"
+        self.gui.builder_environment.interactive_view.set_transformation_data(offset_x=-100.0,offset_y=-100.0,scale=3.0)

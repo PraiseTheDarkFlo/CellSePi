@@ -182,13 +182,12 @@ class Builder:
                                           icon_color=MAIN_ACTIVE_COLOR,
                                           style=ft.ButtonStyle(
                                          shape=ft.RoundedRectangleBorder(radius=12), ),
-                                          visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False,
                                           tooltip="Get to the next page\n[Ctrl + E]", hover_color=ft.Colors.WHITE12)
         self.page_backward = ft.IconButton(icon=ft.Icons.CHEVRON_LEFT_SHARP, on_click=lambda e: self.press_page_backward(),
                                            icon_color=ft.Colors.WHITE24,
                                            style=ft.ButtonStyle(
                                            shape=ft.RoundedRectangleBorder(radius=12), ), disabled=True,
-                                           tooltip="Return to the last page\n[Ctrl + Q]", hover_color=ft.Colors.WHITE12, visible=True if self.pipeline_gui.show_room_max_page_number != 1 else False)
+                                           tooltip="Return to the last page\n[Ctrl + Q]", hover_color=ft.Colors.WHITE12,)
         self.pipeline_gui.build_show_room(self.builder_page_stack)
         self.pipeline_gui.interactive_view = self.interactive_view
         self.switch_pages = ft.Container(ft.Container(ft.Row(
@@ -198,7 +197,7 @@ class Builder:
                 ), bgcolor=MENU_COLOR, expand=True, height=40
                 ), bgcolor=ft.Colors.TRANSPARENT, border_radius=ft.border_radius.all(10),
                     top=self.pipeline_gui.show_room_container.top + self.pipeline_gui.show_room_container.height + 5,
-                    left=self.pipeline_gui.show_room_container.left,blur=10)
+                    left=self.pipeline_gui.show_room_container.left,blur=10,visible=True if self.pipeline_gui.show_room_max_page_number > 1 else False)
         self.builder_page_stack.controls.insert(1, self.switch_pages)
         self.add_all_listeners()
 
