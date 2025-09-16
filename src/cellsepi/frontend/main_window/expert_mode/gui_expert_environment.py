@@ -43,7 +43,7 @@ class ExpertEnvironment(ft.Container):
         self.gui.ref_gallery_environment.current.visible = False
         self.gui.ref_training_environment.current.visible = False
         self.gui.ref_seg_environment.current.visible = False
-        star = "*" if not self.gui.builder_environment.save_button.disabled else ""
+        star = "*" if not self.gui.builder_environment.pipeline_storage.check_saved() else ""
         self.page.title = f"CellSePi - {self.gui.builder_environment.pipeline_gui.pipeline_name}{star}"
         self.gui.page.update()
         self.text.value = "Exit Expert Mode"
