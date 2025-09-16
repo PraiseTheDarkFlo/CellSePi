@@ -64,38 +64,7 @@ class Builder:
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                             tooltip="Save as pipeline\n[Ctrl + Shift + S]", hover_color=ft.Colors.WHITE12)
 
-        def on_keyboard(e: ft.KeyboardEvent):
-            if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
-                if not self.save_as_button.disabled:
-                    self.click_save_as_file()
-            if e.ctrl and e.key == "S" and not e.alt and not e.shift and not e.meta:
-                if not self.save_button.disabled:
-                    self.click_save_file()
-            if e.ctrl and e.key == "L" and not e.alt and not e.shift and not e.meta:
-                if not self.load_button.disabled:
-                    self.click_load_file()
-            if e.ctrl and e.key == "R" and not e.alt and not e.shift and not e.meta:
-                self.run_menu_click()
-            if e.ctrl and e.key == "D" and not e.alt and not e.shift and not e.meta:
-                self.delete_button_click()
-            if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
-                self.port_button_click()
-            if e.ctrl and e.key == "Q" and not e.alt and not e.shift and not e.meta:
-                if not self.page_backward.disabled:
-                    self.press_page_backward()
-            if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
-                if not self.page_forward.disabled:
-                    self.press_page_forward()
-            if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
-                self.zoom_menu_click()
-            if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.zoom(1.0+ZOOM_VALUE)
-            if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.zoom(1.0-ZOOM_VALUE)
-            if e.ctrl and e.key == "-" and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.reset(400)
-
-        self.page.on_keyboard_event = on_keyboard
+        self.page.on_keyboard_event = lambda e: self.on_keyboard(e)
         self.save_button = ft.IconButton(icon=ft.Icons.SAVE_ROUNDED, on_click=lambda e: self.click_save_file(),
                                          icon_color=MAIN_ACTIVE_COLOR if self.pipeline_gui.pipeline_directory != "" else ft.Colors.WHITE24,
                                          disabled=False if self.pipeline_gui.pipeline_directory != "" else True,
@@ -309,6 +278,39 @@ class Builder:
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_error_listener)
         drag_and_drop_listener =DragAndDropListener(self)
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=drag_and_drop_listener)
+
+    def on_keyboard(self,e: ft.KeyboardEvent):
+            if not self.gui.ref_builder_environment.current.visible:
+                return
+            if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
+                if not self.save_as_button.disabled:
+                    self.click_save_as_file()
+            if e.ctrl and e.key == "S" and not e.alt and not e.shift and not e.meta:
+                if not self.save_button.disabled:
+                    self.click_save_file()
+            if e.ctrl and e.key == "L" and not e.alt and not e.shift and not e.meta:
+                if not self.load_button.disabled:
+                    self.click_load_file()
+            if e.ctrl and e.key == "R" and not e.alt and not e.shift and not e.meta:
+                self.run_menu_click()
+            if e.ctrl and e.key == "D" and not e.alt and not e.shift and not e.meta:
+                self.delete_button_click()
+            if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
+                self.port_button_click()
+            if e.ctrl and e.key == "Q" and not e.alt and not e.shift and not e.meta:
+                if not self.page_backward.disabled:
+                    self.press_page_backward()
+            if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
+                if not self.page_forward.disabled:
+                    self.press_page_forward()
+            if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
+                self.zoom_menu_click()
+            if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
+                self.interactive_view.zoom(1.0+ZOOM_VALUE)
+            if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
+                self.interactive_view.zoom(1.0-ZOOM_VALUE)
+            if e.ctrl and e.key == "-" and not e.alt and not e.shift and not e.meta:
+                self.interactive_view.reset(400)
 
     def update_modules_executed(self):
         current =self.pipeline_gui.modules_executed
