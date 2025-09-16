@@ -213,11 +213,36 @@ class GUI:
                 ft.Text(f"Selected bright-field channel {self.csp.window_bf_channel} has no image!")))
             self.page.update()
 
-    def handle_closing_event(self, e):
+    def handle_closing_event(self, e,saved_checked:bool=False):
         """
         Handle the closing event of Flet GUI.
         """
         if e.data == "close" and not self.closing_event:
+            if not self.builder_environment.pipeline_storage.check_saved() and not saved_checked:
+                def cancel_dialog(a):
+                    cupertino_alert_dialog.open = False
+                    a.control.page.update()
+
+                def ok_dialog(a,gui):
+                    cupertino_alert_dialog.open = False
+                    a.control.page.update()
+                    gui.handle_closing_event(e,True)
+
+                cupertino_alert_dialog = ft.CupertinoAlertDialog(
+                    title=ft.Text("Unsaved Changes"),
+                    content=ft.Text("Closing CellSePi will discard any unsaved changes to the currently opened pipeline."),
+                    actions=[
+                        ft.CupertinoDialogAction(
+                            "Cancel", is_default_action=True, on_click=cancel_dialog
+                        ),
+                        ft.CupertinoDialogAction(text="Ok", is_destructive_action=True, on_click=lambda a: ok_dialog(a,self)),
+                    ],
+                )
+                self.page.overlay.append(cupertino_alert_dialog)
+                cupertino_alert_dialog.open = True
+                self.page.update()
+                return
+
             self.closing_event = True
             self.page.open(self.closing_sheet)
             if self.csp.segmentation_running:

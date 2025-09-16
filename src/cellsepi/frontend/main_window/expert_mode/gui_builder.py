@@ -370,7 +370,7 @@ class Builder:
 
                 cupertino_alert_dialog = ft.CupertinoAlertDialog(
                     title=ft.Text("Unsaved Changes"),
-                    content=ft.Text("Loading will overwrite the currently opened pipeline."),
+                    content=ft.Text("Loading will discard any unsaved changes to the currently opened pipeline."),
                     actions=[
                         ft.CupertinoDialogAction(
                             "Cancel",is_default_action=True, on_click=cancel_dialog
