@@ -9,10 +9,11 @@ from cellsepi.frontend.main_window.expert_mode.gui_pipeline_listener import Pipe
 from cellsepi.backend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
 class Builder:
-    def __init__(self,page: ft.Page):
-        self.page = page
+    def __init__(self,gui):
+        self.gui = gui
+        self.page = gui.page
         self.builder_page_stack = None
-        self.pipeline_gui = PipelineGUI(page)
+        self.pipeline_gui = PipelineGUI(self.page)
         self.pipeline_gui.interactive_view = None
         self.pipeline_running_event = None
         self.help_text =  ft.Container(
@@ -280,8 +281,10 @@ class Builder:
             module.error_stack.visible = False
             module.error_stack.update()
             module.check_warning()
+        self.gui.training_environment.disable_switch_environment()
 
         self.pipeline_gui.pipeline.run(show_room_names)
+
         self.pipeline_gui.modules_executed = 0
         self.update_modules_executed()
         self.start_button.disabled = False
@@ -289,6 +292,7 @@ class Builder:
         self.load_button.disabled = False
         self.load_button.icon_color = MAIN_ACTIVE_COLOR
         self.load_button.update()
+        self.gui.training_environment.enable_switch_environment()
         if self.pipeline_running_event is not None:
             self.pipeline_running_event.set()
 

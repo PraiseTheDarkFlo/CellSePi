@@ -100,7 +100,7 @@ class GUI:
         self.training_environment=Training(self)
         self.ref_seg_environment = ft.Ref[ft.Column]()
         self.ref_training_environment = ft.Ref[ft.Column]()
-        self.builder_environment = Builder(self.page)
+        self.builder_environment = Builder(self)
         self.ref_builder_environment = ft.Ref[ft.Column]()
         self.ref_gallery_environment = ft.Ref[ft.Column]()
         if self.csp.config.get_auto_button():
@@ -273,7 +273,7 @@ class GUI:
             self.page.window.prevent_close = False
             self.page.window.on_event = None
             self.page.update()
-            self.page.window.destroy()
+            self.page.window.close()
 
     def child_conn_listener(self):
         """

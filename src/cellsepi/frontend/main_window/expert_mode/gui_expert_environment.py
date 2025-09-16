@@ -17,13 +17,13 @@ class ExpertEnvironment(ft.Container):
             on_click=lambda e: self.change_environment(e),
         )
         self.switch_icon = ft.Icon(ft.Icons.REBASE_EDIT) #Icon options: Icons.MODE, Icons.HANDYMAN, Icons.NOW_WIDGETS, Icons.PLUMBING, Icons.POLYLINE_OUTLINED, Icons.REBASE_EDIT
-        self.button_training_environment_menu = ft.PopupMenuButton(
+        self.button_expert_environment_menu = ft.PopupMenuButton(
             items=[self.button_event],
             content=self.switch_icon,
             tooltip="Expert Mode",
             on_open=lambda _: self.text.update(),
         )
-        self.content = self.button_training_environment_menu
+        self.content = self.button_expert_environment_menu
         self.padding = 10
         self.alignment = ft.alignment.top_right
 

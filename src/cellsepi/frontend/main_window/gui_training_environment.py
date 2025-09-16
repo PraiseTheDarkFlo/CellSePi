@@ -364,8 +364,14 @@ class Training(ft.Container):
         self.switch_icon.color = ft.Colors.GREY_400
         self.button_training_environment_menu.disabled = True
         self.button_training_environment_menu.update()
+        self.gui.ex_mode.switch_icon.color = ft.Colors.GREY_400
+        self.gui.ex_mode.button_expert_environment_menu.disabled = True
+        self.gui.ex_mode.button_expert_environment_menu.update()
 
     def enable_switch_environment(self):
         self.switch_icon.color = None
         self.button_training_environment_menu.disabled = False
         self.button_training_environment_menu.update()
+        self.gui.ex_mode.switch_icon.color = None
+        self.gui.ex_mode.button_expert_environment_menu.disabled = False
+        self.gui.ex_mode.button_expert_environment_menu.update()

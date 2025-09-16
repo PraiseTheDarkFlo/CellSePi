@@ -32,6 +32,13 @@ class PipelineChangeListener(EventListener):
                         self.builder.save_button.icon_color = ft.Colors.WHITE60
                         self.builder.save_button.disabled = False
                         self.builder.page.update()
+                else:
+                    if self.builder.pipeline_storage.check_saved():
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
+                        self.builder.page.update()
+                    else:
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}*"
+                        self.builder.page.update()
         else:
             if len(self.builder.pipeline_gui.pipeline.modules)-len(self.builder.pipeline_gui.show_room_modules) > 0:
                 self.builder.help_text.opacity = 0
@@ -49,6 +56,13 @@ class PipelineChangeListener(EventListener):
                         self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}*"
                         self.builder.save_button.icon_color = ft.Colors.WHITE60
                         self.builder.save_button.disabled = False
+                        self.builder.page.update()
+                else:
+                    if self.builder.pipeline_storage.check_saved():
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
+                        self.builder.page.update()
+                    else:
+                        self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}*"
                         self.builder.page.update()
 
 
