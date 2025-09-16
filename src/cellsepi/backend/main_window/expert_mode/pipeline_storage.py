@@ -65,11 +65,14 @@ class PipelineStorage:
 
         return file_path
 
-    def generate_pipline_dict(self):
+    def generate_pipline_dict(self,without_view:bool=False):
         modules: List[Dict[str, Any]] = []
         pipes: List[Dict[str, Any]] = []
-        offset_x, offset_y, scale = self.pipeline_gui.interactive_view.get_transformation_data()
-        view = {"offset_x": offset_x, "offset_y": offset_y,"scale": scale}
+        if not without_view:
+            offset_x, offset_y, scale = self.pipeline_gui.interactive_view.get_transformation_data()
+            view = {"offset_x": offset_x, "offset_y": offset_y,"scale": scale}
+        else:
+            view = {"offset_x": 0, "offset_y": 0, "scale": 1}
 
         for module in self.pipeline_gui.modules.values():
             modules.append(module.to_dict())
@@ -98,7 +101,7 @@ class PipelineStorage:
         if self.pipeline_gui.pipeline_dict == {}:
             return False
 
-        new_pipeline_dict = get_major_dict(self.generate_pipline_dict())
+        new_pipeline_dict = get_major_dict(self.generate_pipline_dict(without_view=True))
         old_pipeline_dict = get_major_dict(self.pipeline_gui.pipeline_dict)
         return new_pipeline_dict==old_pipeline_dict
 
