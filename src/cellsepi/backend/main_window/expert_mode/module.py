@@ -51,6 +51,10 @@ class Port:
         else:
             raise TypeError(f"Expected data of type {self.data_type}, got {type(value)}!")
 
+    def __str__(self):
+        return f"port_name: '{self.name}', port_data_type: '{self.data_type}', opt: {self.opt}, data: {self.data}"
+
+
 class Categories(Enum):
     """
     Categories of the different modules, each with its own color.
@@ -94,7 +98,7 @@ class IdManager:
     def free_id(self, id_number: int) -> None:
         if id_number in self._occupied_ids:
             self._occupied_ids.discard(id_number)
-            if self._next_id > id_number > 0:
+            if self._next_id > id_number >= 0:
                 self._next_id = id_number
 
 
@@ -220,4 +224,8 @@ class Module(ABC):
         Returns True if the pipeline should stop.
         """
         pass
+
+    def __str__(self):
+        return f"module_id: '{self.module_id}', category: '{self.gui_config().category}', module_name: {self.gui_config().name}, inputs: {self.inputs}, outputs: {self.outputs}, user_attributes: {self.get_user_attributes}"
+
 

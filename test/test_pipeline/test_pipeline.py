@@ -133,7 +133,7 @@ def test_cycled_graph(two_module_pipeline):
     two_module_pipeline.add_connection(Pipe(mod2, mod4, ["port2"]))
     two_module_pipeline.add_connection(Pipe(mod4, mod2, ["port1"]))
     with pytest.raises(RuntimeError):
-        two_module_pipeline.run()
+        two_module_pipeline.get_run_order()
 
 def test_free_number(two_module_pipeline):
     mod1 = two_module_pipeline.module_map["test10"]

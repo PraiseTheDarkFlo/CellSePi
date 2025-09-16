@@ -110,7 +110,7 @@ def test_module_listener():
     assert manager._listeners[type(event)] == [listener]
     manager.notify(event)
     assert listener.last_event is not None, "Listener was not notified"
-    assert listener.last_event.module_name == "test", "Something went wrong when notifying the listener"
+    assert listener.last_event.module_id == "test", "Something went wrong when notifying the listener"
 
 def test_event_listener_update_wrong_type():
     listener = DummyListener()
