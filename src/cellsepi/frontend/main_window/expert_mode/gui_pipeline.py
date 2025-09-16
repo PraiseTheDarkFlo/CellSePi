@@ -90,11 +90,7 @@ class PipelineGUI(ft.Stack):
         if  module.name in self.pipeline.run_order or module.name == self.pipeline.executing:
             return False
 
-        for pipe in self.pipeline.pipes_out[module.name]:
-            if pipe.target_module.module_id in self.pipeline.run_order or pipe.target_module.module_id == self.pipeline.executing:
-                return False
-
-        return True
+        return all(not(pipe.target_module.module_id in self.pipeline.run_order or pipe.target_module.module_id == self.pipeline.executing) for pipe in self.pipeline.pipes_out[module.name])
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
