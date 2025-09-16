@@ -229,7 +229,7 @@ class GUI:
                     gui.handle_closing_event(e,True)
 
                 cupertino_alert_dialog = ft.CupertinoAlertDialog(
-                    title=ft.Text("Unsaved Changes Expert Mode"),
+                    title=ft.Text("Expert Mode:\nUnsaved Changes"),
                     content=ft.Text("Closing CellSePi will discard any unsaved changes to the currently opened pipeline."),
                     actions=[
                         ft.CupertinoDialogAction(
