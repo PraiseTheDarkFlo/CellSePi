@@ -51,12 +51,13 @@ class GUIConfig:
         """
         return PageOverlay(self.page,
             content=ft.Stack([ft.Row([ft.Column(
-                [ft.ListView(
+                [ft.Card(ft.Container(ft.ListView(
                     controls=self.create_list_items(),
                     height=self.calc_height(),
                     width=350,
-                    spacing=10
-                )],
+                    spacing=10,
+                    padding=10,
+                ),padding=15),height=self.calc_height()+60)],
                 alignment=ft.MainAxisAlignment.CENTER,
             )],alignment=ft.MainAxisAlignment.CENTER),]),
             on_dismiss=lambda e: self.update_overlay(),
@@ -212,12 +213,18 @@ class GUIConfig:
         """
         new_picker_items = self.create_list_items()
         new_content = ft.Stack([ft.Row([ft.Column(
-            controls=[
-                ft.ListView(
-                    controls=new_picker_items,
-                    height=self.calc_height(),
-                    width=350,
-                    spacing=10
+            controls=[ft.Card(
+                    ft.Container(
+                        ft.ListView(
+                            controls=new_picker_items,
+                            height=self.calc_height(),
+                            width=350,
+                            spacing=10,
+                            padding=10,
+                        )
+                    ,padding=15
+                    )
+                ,height=self.calc_height()+60
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,
