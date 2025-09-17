@@ -132,7 +132,7 @@ class Builder:
                                               icon_color=MAIN_ACTIVE_COLOR,
                                               style=ft.ButtonStyle(
                                                  shape=ft.RoundedRectangleBorder(radius=12), ),
-                                              tooltip="Show zoom menu\n[Ctrl + Z]", hover_color=ft.Colors.WHITE12)
+                                              tooltip="Show zoom menu\n[Ctrl + M]", hover_color=ft.Colors.WHITE12)
 
 
 
@@ -302,7 +302,7 @@ class Builder:
             if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
                 if not self.page_forward.disabled:
                     self.press_page_forward()
-            if e.ctrl and e.key == "Z" and not e.alt and not e.shift and not e.meta:
+            if e.ctrl and e.key == "M" and not e.alt and not e.shift and not e.meta:
                 self.zoom_menu_click()
             if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
                 self.interactive_view.zoom(1.0+ZOOM_VALUE)
@@ -489,14 +489,14 @@ class Builder:
     def zoom_menu_click(self):
         if self.zoom_menu.opacity==1:
             self.zoom_menu_button.icon_color = MAIN_ACTIVE_COLOR
-            self.zoom_menu_button.tooltip = f"Show zoom menu\n[Ctrl + R]"
+            self.zoom_menu_button.tooltip = f"Show zoom menu\n[Ctrl + M]"
             self.zoom_menu_button.update()
             self.zoom_menu.width = 0
             self.zoom_menu.opacity = 0
             self.zoom_menu.update()
         else:
             self.zoom_menu_button.icon_color = ft.Colors.BLUE_400
-            self.zoom_menu_button.tooltip = f"Hide zoom menu\n[Ctrl + R]"
+            self.zoom_menu_button.tooltip = f"Hide zoom menu\n[Ctrl + M]"
             self.zoom_menu_button.update()
             self.zoom_menu.width = 122
             self.zoom_menu.opacity = 1
