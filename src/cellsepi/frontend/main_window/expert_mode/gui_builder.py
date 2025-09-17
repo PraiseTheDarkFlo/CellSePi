@@ -380,7 +380,6 @@ class Builder:
                                         color=ft.Colors.WHITE),
                                 bgcolor=ft.Colors.RED))
                         self.pipeline_gui.page.update()
-                        return
 
                 cupertino_alert_dialog = ft.CupertinoAlertDialog(
                     title=ft.Text("Unsaved Changes"),
@@ -414,7 +413,6 @@ class Builder:
                                     color=ft.Colors.WHITE),
                             bgcolor=ft.Colors.RED))
                     self.pipeline_gui.page.update()
-                    return
 
         self.load_button.icon_color = MAIN_ACTIVE_COLOR
         self.load_button.update()
