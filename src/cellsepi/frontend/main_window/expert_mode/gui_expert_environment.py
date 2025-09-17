@@ -1,5 +1,5 @@
 import flet as ft
-
+import asyncio
 
 class ExpertEnvironment(ft.Container):
 
@@ -26,11 +26,13 @@ class ExpertEnvironment(ft.Container):
         self.content = self.button_expert_environment_menu
         self.padding = 10
         self.alignment = ft.alignment.top_right
+        self.old_view: (float, float,float) = (0.0, 0.0, 1.0)
 
     def change_environment(self, e):
         if self.text.value == "Go To Expert Mode":
             self.go_to_training_environment(e)
         else:
+            self.old_view = self.gui.builder_environment.interactive_view.get_transformation_data()
             self.gui.ref_builder_environment.current.visible = False
             self.gui.ref_seg_environment.current.visible = True
             self.gui.ref_gallery_environment.current.visible = True
@@ -48,4 +50,10 @@ class ExpertEnvironment(ft.Container):
         self.gui.page.update()
         self.text.value = "Exit Expert Mode"
         self.gui.training_environment.text.value = "Go To Training"
-        self.gui.builder_environment.interactive_view.set_transformation_data(offset_x=-100.0,offset_y=-100.0,scale=3.0)
+        self.page.run_task(self._update_view)
+
+    async def _update_view(self):
+        await asyncio.sleep(0.01)
+        self.gui.builder_environment.interactive_view.set_transformation_data(self.old_view[0], self.old_view[1],self.old_view[2])
+        self.gui.builder_environment.interactive_view.update()
+
