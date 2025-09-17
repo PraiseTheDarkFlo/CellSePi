@@ -371,7 +371,16 @@ class Builder:
                                 bgcolor=ft.Colors.RED))
                         self.pipeline_gui.page.update()
                         return
-                    self.pipeline_storage.load_pipeline(e.files[0].path)
+                    try:
+                        self.pipeline_storage.load_pipeline(e.files[0].path)
+                    except Exception as exception2:
+                        self.pipeline_gui.page.open(
+                            ft.SnackBar(
+                                ft.Text(f"Failed to load pipeline: {exception2}",
+                                        color=ft.Colors.WHITE),
+                                bgcolor=ft.Colors.RED))
+                        self.pipeline_gui.page.update()
+                        return
 
                 cupertino_alert_dialog = ft.CupertinoAlertDialog(
                     title=ft.Text("Unsaved Changes"),
@@ -396,7 +405,16 @@ class Builder:
                                     bgcolor=ft.Colors.RED))
                     self.pipeline_gui.page.update()
                     return
-                self.pipeline_storage.load_pipeline(e.files[0].path)
+                try:
+                    self.pipeline_storage.load_pipeline(e.files[0].path)
+                except Exception as exception1:
+                    self.pipeline_gui.page.open(
+                        ft.SnackBar(
+                            ft.Text(f"Failed to load pipeline: {exception1}",
+                                    color=ft.Colors.WHITE),
+                            bgcolor=ft.Colors.RED))
+                    self.pipeline_gui.page.update()
+                    return
 
         self.load_button.icon_color = MAIN_ACTIVE_COLOR
         self.load_button.update()

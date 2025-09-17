@@ -122,7 +122,7 @@ class PipelineStorage:
         try:
             validate(instance=pipeline_dict, schema=self.schema)
         except ValidationError as e:
-            raise ValueError(f"Pipeline json doesn't match with: {e.message}")
+            raise ValueError(f"Pipeline json doesn't match with schema: {self.schema_directory}")
 
         self.pipeline_gui.pipeline_directory = filename.parent
         self.pipeline_gui.pipeline_name = filename.stem
