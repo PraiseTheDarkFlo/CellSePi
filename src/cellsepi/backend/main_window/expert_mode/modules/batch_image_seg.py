@@ -19,7 +19,7 @@ class BatchImageSegModule(Module, ABC):
         self._outputs = {
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
-        self._settings: ft.CupertinoBottomSheet = None
+        self._settings: ft.Stack = None
         self.user_model_path: FilePath = FilePath()
         self.user_segmentation_channel: str = "2"
         self.user_diameter: float = 125.0
@@ -46,7 +46,7 @@ class BatchImageSegModule(Module, ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         return self._settings
 
     @property

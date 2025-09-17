@@ -5,6 +5,7 @@ from flet_contrib.color_picker import ColorPicker
 from enum import Enum
 
 from cellsepi.frontend.main_window.gui_mask import handle_mask_update
+from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 
 
 def hex_to_rgb(hex_color):
@@ -45,35 +46,32 @@ class ColorSelection:
         self.color_picker.r.border_color=ft.Colors.BLUE_ACCENT
         self.color_picker.g.border_color=ft.Colors.BLUE_ACCENT
         self.color_picker.b.border_color=ft.Colors.BLUE_ACCENT
-        self.color_icon_mask = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED,icon_color=color_mask, on_click=self.open_color_picker_mask)
-        self.color_icon_outline = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED, icon_color=color_outline, on_click=self.open_color_picker_outline)
+        self.color_icon_mask = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED,icon_color=color_mask,disabled=True,mouse_cursor=ft.MouseCursor.CLICK)
+        self.color_icon_outline = ft.IconButton(icon=ft.Icons.BRIGHTNESS_1_ROUNDED, icon_color=color_outline,disabled=True,mouse_cursor=ft.MouseCursor.CLICK)
         self.color_type = None
-        self.dialog = ft.CupertinoBottomSheet(
-            content=ft.Column([ft.Card(content=ft.Stack([ft.Container(ft.ListTile(height=370,width=430),padding=10),ft.Container(ft.Column(
+        self.dialog = PageOverlay(self.gui.page,ft.Stack([ft.Row([
+            ft.Column([ft.Card(content=ft.Stack([ft.Container(ft.ListTile(height=370,width=430),padding=10),ft.Container(ft.Column(
                 [self.color_picker,
                 ft.Container(ft.Row([ft.TextButton("Save", on_click=self.change_color)
                  ],alignment=ft.MainAxisAlignment.END),padding=10)
                 ]
-            ),height=430,width=450,padding=10)]))],horizontal_alignment=ft.CrossAxisAlignment.CENTER,alignment=ft.MainAxisAlignment.CENTER),
+            ),height=430,width=450,padding=10)]))],horizontal_alignment=ft.CrossAxisAlignment.CENTER,alignment=ft.MainAxisAlignment.CENTER)],alignment=ft.MainAxisAlignment.CENTER)]),
             on_dismiss=self.close_dialog,
         )
     def open_color_picker_mask(self,e):
-        e.control.page.open(self.dialog)
+        self.dialog.open()
         self.color_picker.color = rgb_to_hex(self.config.get_mask_color())
         self.color_type = ColorTypes.Mask
-        self.dialog.open = True
         e.control.page.update()
 
 
     def open_color_picker_outline(self, e):
-        e.control.page.open(self.dialog)
+        self.dialog.open()
         self.color_picker.color = rgb_to_hex(self.config.get_outline_color())
         self.color_type = ColorTypes.Outline
-        self.dialog.open = True
         e.control.page.update()
 
     def change_color(self, e):
-
         """
         Standard color: Mask outline= green, Filling: red
             if it is reasonable, change the color to the liking
@@ -92,12 +90,10 @@ class ColorSelection:
             self.gui.mask.mask_outputs = defaultdict(dict)
             handle_mask_update(self.gui)
             self.gui.queue.put(("color_change", self.config.get_mask_color(), self.config.get_outline_color()))
-        e.control.page.close(self.dialog)
-        e.control.page.update()
+        self.dialog.close()
 
     def close_dialog(self, e):
-        e.control.page.close(self.dialog)
-        self.dialog.update()
+        self.dialog.close()
 
 class ColorOpacity:
     def __init__(self,gui):

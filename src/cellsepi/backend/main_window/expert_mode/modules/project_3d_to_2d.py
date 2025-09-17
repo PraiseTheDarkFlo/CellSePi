@@ -23,7 +23,7 @@ class Project3dTo2d(Module, ABC):
         self._outputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
         }
-        self._settings: ft.CupertinoBottomSheet = None
+        self._settings: ft.Stack = None
 
     @classmethod
     def gui_config(cls) -> ModuleGuiConfig:
@@ -46,7 +46,7 @@ class Project3dTo2d(Module, ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         return self._settings
 
     @property

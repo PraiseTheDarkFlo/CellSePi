@@ -194,7 +194,7 @@ class Module(ABC):
 
     @property
     @abstractmethod
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         """
         The settings overlay of the module in the gui.
         """

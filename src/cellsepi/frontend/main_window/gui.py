@@ -7,6 +7,7 @@ import flet as ft
 from cellsepi.backend.main_window.avg_diameter import AverageDiameter
 from cellsepi.frontend.main_window.expert_mode.gui_builder import Builder
 from cellsepi.frontend.main_window.expert_mode.gui_expert_environment import ExpertEnvironment
+from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 from cellsepi.frontend.main_window.gui_segmentation import GUISegmentation
 from cellsepi.frontend.main_window.gui_options import Options
 from cellsepi.frontend.drawing_window.gui_drawing import open_qt_window
@@ -18,6 +19,7 @@ from cellsepi.backend.main_window.mask import Mask
 from cellsepi.frontend.main_window.gui_mask import error_banner, handle_image_switch_mask_on, handle_mask_update, reset_mask
 from cellsepi.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
 from cellsepi.frontend.main_window.gui_training_environment import Training
+from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 
 
 class GUI:
@@ -69,12 +71,11 @@ class GUI:
         self.mask=Mask(self.csp)
         self.image_tuning = ImageTuning(self)
         self.progress_ring = ft.ProgressRing(visible=False)
-        self.closing_sheet = ft.CupertinoBottomSheet(
-            content=ft.Column([ft.Container(ft.ProgressRing(),alignment=ft.alignment.center)],
+        self.closing_sheet = ft.Stack([
+            ft.Column([ft.Container(ft.ProgressRing(),alignment=ft.alignment.center)],
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            modal=True,
-        )
+        ])
         self.brightness_slider = ft.Slider(
             min=0, max=2.0, value=1.0, disabled= True,
             on_change=lambda e: asyncio.run(self.image_tuning.update_brightness_and_contrast_async())
@@ -159,7 +160,7 @@ class GUI:
                     ),
                 ],
                 expand=True
-            )
+            ),
         )
 
     def update_view_mask(self):
@@ -244,7 +245,8 @@ class GUI:
                 return
 
             self.closing_event = True
-            self.page.open(self.closing_sheet)
+            overlay = PageOverlay(self.page,content=self.closing_sheet,modal=True)
+            overlay.open()
             if self.csp.segmentation_running:
                 self.cancel_event = multiprocessing.Event()
                 self.cancel_segmentation()

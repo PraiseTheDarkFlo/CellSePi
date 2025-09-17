@@ -26,7 +26,7 @@ class Review(Module, ABC):
         }
         spacing = 10
         padding = 20
-        self._settings: ft.CupertinoBottomSheet = ft.CupertinoBottomSheet(ft.Column([ft.Card(
+        self._settings: ft.Stack = ft.Stack([ft.Row([ft.Column([ft.Card(
                 content=ft.Column(
                     [ft.Container(ft.ListView(
                         controls=[ft.Text("test")],
@@ -35,8 +35,7 @@ class Review(Module, ABC):
                     ),padding=padding)]
                 )
             )],
-                    alignment=ft.MainAxisAlignment.CENTER,)
-            ,padding=ft.padding.only(top=6))
+                    alignment=ft.MainAxisAlignment.CENTER,)],alignment=ft.MainAxisAlignment.CENTER),])
         self.user_3d_on: bool = False
 
 
@@ -61,7 +60,7 @@ class Review(Module, ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         return self._settings
 
     @property

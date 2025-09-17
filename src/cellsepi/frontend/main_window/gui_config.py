@@ -1,6 +1,7 @@
 import flet as ft
 from cellsepi.frontend.main_window.gui_canvas import update_main_image
 from cellsepi.backend.main_window.config_file import ConfigFile, create_default_config
+from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 
 
 class GUIConfig:
@@ -11,7 +12,7 @@ class GUIConfig:
         config_class (ConfigFile): The instance of the ConfigFile class used to read and update profile data.
         page (Page): The page instance to display GUI elements.
         name_items (List): A list of buttons and text fields for editing or selecting profiles.
-        profile_chooser_overlay (CupertinoBottomSheet): The overlay shown when the profile name button is clicked.
+        profile_chooser_overlay (PageOverlay): The overlay shown when the profile name button is clicked.
         profile_ref (Ref): Reference to the currently selected profile name button.
         txt_bf_ref (Ref): Reference to the bright-field channel text field.
         txt_ms_ref (Ref): Reference to the mask suffix text field.
@@ -48,8 +49,8 @@ class GUIConfig:
         Returns:
             overlay (CupertinoBottomSheet): The configured overlay for profile selection and editing.
         """
-        return ft.CupertinoBottomSheet(
-            content=ft.Column(
+        return PageOverlay(self.page,
+            content=ft.Stack([ft.Row([ft.Column(
                 [ft.ListView(
                     controls=self.create_list_items(),
                     height=self.calc_height(),
@@ -57,10 +58,8 @@ class GUIConfig:
                     spacing=10
                 )],
                 alignment=ft.MainAxisAlignment.CENTER,
-            ),
-            height=300,
+            )],alignment=ft.MainAxisAlignment.CENTER),]),
             on_dismiss=lambda e: self.update_overlay(),
-            padding=ft.padding.only(top=6),
         )
 
     def calc_height(self):
@@ -184,7 +183,7 @@ class GUIConfig:
         self.txt_cp_ref.current.color = None
         self.txt_d_ref.current.color = None
         if called_by_overlay:
-            self.page.close(self.profile_chooser_overlay)
+            self.profile_chooser_overlay.close()
         self.page.update()
 
     def remove_profile(self,e, idx):
@@ -212,7 +211,7 @@ class GUIConfig:
         changes and ensures the profile list is displayed correctly.
         """
         new_picker_items = self.create_list_items()
-        new_content = ft.Column(
+        new_content = ft.Stack([ft.Row([ft.Column(
             controls=[
                 ft.ListView(
                     controls=new_picker_items,
@@ -222,7 +221,7 @@ class GUIConfig:
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER,
-        )
+        )],alignment=ft.MainAxisAlignment.CENTER),])
         self.profile_chooser_overlay.content = new_content
 
     def add_profile_pressed(self,e):
@@ -458,9 +457,7 @@ class GUIConfig:
                 ft.TextButton(
                     content=ft.Text(self.config_class.get_selected_profile_name(), size=18, ref=self.profile_ref),
                     style=ft.ButtonStyle(color=ft.Colors.BLUE),
-                    on_click=lambda e: e.control.page.open(
-                        self.profile_chooser_overlay
-                    ),
+                    on_click=lambda e: self.profile_chooser_overlay.open()
                 ),
                 ft.IconButton(
                     icon=ft.Icons.LIBRARY_ADD_ROUNDED,

@@ -16,7 +16,7 @@ class BatchImageReadoutModule(Module, ABC):
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
-        self._settings: ft.CupertinoBottomSheet = None
+        self._settings: ft.Stack = None
         self.user_directory_path: DirectoryPath = DirectoryPath()
         self.user_segmentation_channel: str = "2"
         self.user_channel_prefix: str = "c"
@@ -42,7 +42,7 @@ class BatchImageReadoutModule(Module, ABC):
         return {}
 
     @property
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         return self._settings
 
     @property

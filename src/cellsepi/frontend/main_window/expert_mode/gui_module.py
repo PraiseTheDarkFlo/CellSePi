@@ -11,6 +11,7 @@ from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent, 
 from cellsepi.backend.main_window.expert_mode.module import FilePath, DirectoryPath
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
 from cellsepi.frontend.main_window.gui_directory import format_directory_path
+from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 
 
 class ModuleGUI(ft.GestureDetector):
@@ -189,6 +190,7 @@ class ModuleGUI(ft.GestureDetector):
         ],tight=True
         )],height=self.module_container.height,
         )
+        self.page_overlay = PageOverlay(self.pipeline_gui.page,self.module.settings,self.close_options)
 
     def disable_tools(self):
         if self.port_selection:
@@ -577,7 +579,7 @@ class ModuleGUI(ft.GestureDetector):
         height = element_height* len(user_attributes) + spacing * (len(user_attributes)-1)
         limit_reached = len(user_attributes) > USER_OPTIONS_LIMIT
         if len(user_attributes) != 0:
-            return ft.CupertinoBottomSheet(ft.Column([ft.Card(
+            return ft.Stack([ft.Row([ft.Column([ft.Card(
                 content=ft.Column(
                     [ft.Container(ft.ListView(
                         controls=self.create_attribute_list(user_attributes),
@@ -587,8 +589,7 @@ class ModuleGUI(ft.GestureDetector):
                     ),padding=padding)]
                 )
             )],
-                    alignment=ft.MainAxisAlignment.CENTER,)
-            ,padding=ft.padding.only(top=6),on_dismiss=lambda e: self.close_options(e))
+            alignment=ft.MainAxisAlignment.CENTER,)],alignment=ft.MainAxisAlignment.CENTER)],alignment=ft.alignment.center)
         else:
             return None
 
@@ -701,11 +702,12 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.update()
 
     def open_options(self,e):
-        e.control.page.open(self.module.settings)
+        self.page_overlay.open()
         self.options_button.icon_color = ft.Colors.BLACK38
         self.options_button.update()
 
     def close_options(self,e):
+        self.page_overlay.close()
         self.options_button.icon_color = ft.Colors.WHITE60
         self.options_button.update()
 

@@ -12,7 +12,7 @@ class ReadTif(Module,ABC):
             "image_paths": Port("image_paths", dict),
             "mask_paths": Port("mask_paths", dict),
         }
-        self._settings: ft.CupertinoBottomSheet = None
+        self._settings: ft.Stack = None
         self.user_directory_path: DirectoryPath = DirectoryPath()
         self.user_channel_prefix: str = "c"
         self.user_mask_suffix: str = "_seg"
@@ -38,7 +38,7 @@ class ReadTif(Module,ABC):
         return self._outputs
 
     @property
-    def settings(self) -> ft.CupertinoBottomSheet:
+    def settings(self) -> ft.Stack:
         return self._settings
 
     @property
