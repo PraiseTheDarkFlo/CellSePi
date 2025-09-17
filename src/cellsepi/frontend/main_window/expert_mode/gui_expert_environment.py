@@ -53,7 +53,7 @@ class ExpertEnvironment(ft.Container):
         self.page.run_task(self._update_view)
 
     async def _update_view(self):
-        await asyncio.sleep(0.01)
-        self.gui.builder_environment.interactive_view.set_transformation_data(self.old_view[0], self.old_view[1],self.old_view[2])
+        await asyncio.sleep(0.1)
+        self.gui.builder_environment.interactive_view.set_transformation_data(self.old_view[0], self.old_view[1],self.old_view[2],300)
         self.gui.builder_environment.interactive_view.update()
 
