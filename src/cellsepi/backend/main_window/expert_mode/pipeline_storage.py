@@ -101,6 +101,7 @@ class PipelineStorage:
         if self.pipeline_gui.pipeline_dict == {}:
             return False
 
+        print("test")
         new_pipeline_dict = get_major_dict(self.generate_pipline_dict(without_view=True))
         old_pipeline_dict = get_major_dict(self.pipeline_gui.pipeline_dict)
         return new_pipeline_dict==old_pipeline_dict

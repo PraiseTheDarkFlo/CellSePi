@@ -189,6 +189,7 @@ class PipelineGUI(ft.Stack):
         gui_module = self.modules.pop(module_id)
         self.controls.remove(gui_module)
         self.pipeline.remove_module(gui_module.module)
+        del gui_module
         self.update()
 
     def toggle_all_module_detection(self,module_id: str):

@@ -20,7 +20,7 @@ from cellsepi.frontend.main_window.gui_mask import error_banner, handle_image_sw
 from cellsepi.backend.main_window.image_tuning import ImageTuning, AutoImageTuning
 from cellsepi.frontend.main_window.gui_training_environment import Training
 from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
-
+from cellsepi.frontend.main_window.expert_mode.expert_constants import ModuleType
 
 class GUI:
     """
@@ -162,6 +162,10 @@ class GUI:
                 expand=True
             ),
         )
+        #set the colors for the review module from the config file
+        ModuleType.REVIEW.value.mask_color = self.csp.config.get_mask_color()
+        ModuleType.REVIEW.value.outline_color = self.csp.config.get_outline_color()
+        ModuleType.REVIEW.value.update_class()
 
     def update_view_mask(self):
         """

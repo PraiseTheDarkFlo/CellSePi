@@ -135,6 +135,22 @@ class ImageTuning:
             image = Image.open(buffer)
             image.save(self.gui.csp.adjusted_image_path, format="PNG")
 
+
+def auto_adjust(image_path,get_slice=-1):
+    image = tifffile.imread(image_path)
+    if image.ndim == 3:
+        if not get_slice == -1:
+            image = np.take(image, get_slice, axis=2)
+        else:
+            image = np.max(image, axis=2)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    normalized_image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+
+    _, buffer = cv2.imencode('.png', normalized_image)
+
+    return base64.b64encode(buffer).decode('utf-8')
+
+
 class AutoImageTuning:
     def __init__(self, gui):
         self.gui = gui
@@ -166,19 +182,7 @@ class AutoImageTuning:
             if self.gui.csp.image_id is not None:
                 update_main_image(self.gui.csp.image_id, self.gui.csp.channel_id, self.gui, False)
 
-    def update_main_image_auto(self):
-        self.gui.canvas.main_image.content.src_base64 = self.auto_adjust()
+    def update_main_image_auto(self,image_path):
+        self.gui.canvas.main_image.content.src_base64 = auto_adjust(image_path)
         self.gui.canvas.main_image.update()
-
-    def auto_adjust(self):
-        image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id]
-        image = tifffile.imread(image_path)
-        if image.ndim == 3:
-            image = np.max(image, axis=2)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        normalized_image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-
-        _, buffer = cv2.imencode('.png', normalized_image)
-
-        return base64.b64encode(buffer).decode('utf-8')
 

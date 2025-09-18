@@ -33,7 +33,7 @@ def update_main_image(img_id,channel_id,gui,on_click = True):
         gui.page.update()
         asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(on_click=on_click, linux=gui.csp.linux))
     else:
-        gui.auto_image_tuning.update_main_image_auto()
+        gui.auto_image_tuning.update_main_image_auto(image_path = self.gui.csp.image_paths[self.gui.csp.image_id][self.gui.csp.channel_id])
 
 
 
