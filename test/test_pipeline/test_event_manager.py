@@ -67,7 +67,6 @@ class DummyErrorListener(EventListener):
         return self.event_type
 
     def _update(self,event: Event) -> None:
-        print("ERROR")
         self.last_event = event
 
 class DummyModuleListener(EventListener):

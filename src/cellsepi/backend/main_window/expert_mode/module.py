@@ -197,6 +197,7 @@ class Module(ABC):
     def settings(self) -> ft.Stack:
         """
         The settings overlay of the module in the gui.
+        If you plan to make your custom settings initials it here so the user_attributes can be updated!
         """
         pass
 

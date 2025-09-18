@@ -22,7 +22,7 @@ class Review(Module, ABC):
     _gui_config = ModuleGuiConfig("Review",Categories.MANUAL,"This module allows you to manually review the given masks.")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
-        self._event_manager: EventManager = None
+        self._event_manager: EventManager | None = None
         self._inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]],
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
@@ -30,87 +30,24 @@ class Review(Module, ABC):
         self._outputs = {
             #"mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]] when i allow editing
         }
-
-        padding = 20
         self._icon_x = {}
         self._icon_check = {}
-        self.image_id = None
-        self.channel_id = None
+        self.image_id: str | None = None
+        self.channel_id: str | None = None
         self._selected_images_visualise = {}
         self._image_gallery = ft.ListView()
         self.user_segmentation_channel: str = "2"
-        self._container_mask = ft.Container(
-            ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
-                     fit=ft.ImageFit.SCALE_DOWN, ), visible=False, alignment=ft.alignment.center,width=632,height=632)
-
-        self._main_image = ft.Container(
-            ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
-                     fit=ft.ImageFit.SCALE_DOWN), alignment=ft.alignment.center,width=632,height=632)
-
-
-        self._interactive_viewer = FletExtendedInteractiveViewer(content=ft.Stack([self._main_image, self._container_mask]),constrained=False,min_scale=0.1,width=632,height=632)
-        zoom_value = 0.20
-        self._mask_button = ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, icon_color=ft.Colors.WHITE24,
-                              style=ft.ButtonStyle(
-                                  shape=ft.RoundedRectangleBorder(radius=12), ),
-                              on_click=lambda e: self.show_mask(),
-                              tooltip="Show mask", hover_color=ft.Colors.WHITE12,disabled=True)
-        self._slider_2d = ft.CupertinoSlidingSegmentedButton(
-            selected_index=0,
-            thumb_color=ft.Colors.BLUE_400,
-            bgcolor=ft.Colors.WHITE12,
-            on_change=lambda e:self.slider_update(e),
-            padding=ft.padding.symmetric(0, 0),
-            controls=[
-                ft.Text("2D"),
-                ft.Text("2.5D")
-            ],
-        )
-        self._text_field_segmentation_channel = ft.TextField(
-            border_color=ft.Colors.BLUE_ACCENT,
-            value=self.user_segmentation_channel,
-            on_blur=lambda e: self.on_change_sc(e),
-            tooltip="Segmentation channel",
-            height=30,width=70,content_padding=ft.padding.symmetric(0, 5),
-        )
-        self._slider_2_5d = ft.Slider(
-            min=0, max=100, divisions=None, label="Slice: {value}", on_change=lambda e: self.slider_change(),visible=False,height=20,
-            active_color=ft.Colors.BLUE_400,thumb_color=ft.Colors.BLUE_400
-        )
-        self._control_menu = ft.Container(ft.Container(ft.Row(
-            [
-                ft.IconButton(icon=ft.Icons.ZOOM_IN, icon_color=ft.Colors.WHITE60,
-                              style=ft.ButtonStyle(
-                                  shape=ft.RoundedRectangleBorder(radius=12), ),
-                              on_click=lambda e:self._interactive_viewer.zoom(1.0 + zoom_value), tooltip="Zoom in",
-                              hover_color=ft.Colors.WHITE12),
-                ft.IconButton(icon=ft.Icons.ZOOM_OUT, icon_color=ft.Colors.WHITE60,
-                              style=ft.ButtonStyle(
-                                  shape=ft.RoundedRectangleBorder(radius=12), ), on_click=lambda e:self._interactive_viewer.zoom(1.0 - zoom_value), tooltip="Zoom out",
-                              hover_color=ft.Colors.WHITE12),
-                ft.IconButton(icon=ft.Icons.CROP_FREE, icon_color=ft.Colors.WHITE60,
-                              style=ft.ButtonStyle(
-                                  shape=ft.RoundedRectangleBorder(radius=12), ),on_click=lambda e:self._interactive_viewer.reset(400),
-                              tooltip="Reset view", hover_color=ft.Colors.WHITE12),
-                self._text_field_segmentation_channel,
-                self._mask_button,
-                self._slider_2d,
-                self._slider_2_5d,
-            ], spacing=2
-        ), bgcolor=ft.Colors.BLACK54, expand=True, border_radius=ft.border_radius.vertical(top=0, bottom=12),
-        )
-        )
-        self._main_image_view = ft.Card(
-            content=ft.Column([ft.Container(self._interactive_viewer,padding=ft.padding.only(top=10),alignment=ft.alignment.top_center),self._control_menu]),
-            width = 660, height = 700,
-            expand=True,
-        )
-
-        self._settings: ft.Stack = ft.Stack([ft.Row([ft.Column([ft.Row([
-                        self._main_image_view,ft.Card(content=ft.Container(self._image_gallery,width=600,height=700,expand=True,padding=20),expand=True),
-                    ])
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,)],alignment=ft.MainAxisAlignment.CENTER),])
+        self.user_2_5d = False
+        self._container_mask: ft.Container | None = None
+        self._main_image: ft.Container | None = None
+        self._interactive_viewer:FletExtendedInteractiveViewer | None = None
+        self._mask_button:ft.IconButton | None = None
+        self._slider_2d: ft.CupertinoSlidingSegmentedButton | None = None
+        self._text_field_segmentation_channel: ft.TextField | None = None
+        self._slider_2_5d:ft.Slider | None = None
+        self._control_menu: ft.Container | None = None
+        self._main_image_view: ft.Card | None = None
+        self._settings: ft.Stack | None = None
         Review._instances.append(self)
 
     @classmethod
@@ -135,6 +72,103 @@ class Review(Module, ABC):
 
     @property
     def settings(self) -> ft.Stack:
+        if self._settings is None:
+            self._container_mask = ft.Container(
+                ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+                         fit=ft.ImageFit.SCALE_DOWN, ), visible=False, alignment=ft.alignment.center, width=632, height=632)
+
+            self._main_image = ft.Container(
+                ft.Image(src=r"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA\AAAFCAIAAAFe0wxPAAAAAElFTkSuQmCC",
+                         fit=ft.ImageFit.SCALE_DOWN), alignment=ft.alignment.center, width=632, height=632)
+
+            self._interactive_viewer = FletExtendedInteractiveViewer(
+                content=ft.Stack([self._main_image, self._container_mask]), constrained=False, min_scale=0.1, width=632,
+                height=632)
+            zoom_value = 0.20
+            self._mask_button = ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, icon_color=ft.Colors.WHITE24,
+                                              style=ft.ButtonStyle(
+                                                  shape=ft.RoundedRectangleBorder(radius=12), ),
+                                              on_click=lambda e: self.show_mask(),
+                                              tooltip="Show mask", hover_color=ft.Colors.WHITE12, disabled=True)
+            self._slider_2d = ft.CupertinoSlidingSegmentedButton(
+                selected_index=0 if not self.user_2_5d else 1,
+                thumb_color=ft.Colors.WHITE,
+                bgcolor=ft.Colors.WHITE60,
+                on_change=lambda e: self.slider_update(e),
+                padding=ft.padding.symmetric(0, 0),
+                controls=[
+                    ft.Text("2D",color=ft.Colors.BLACK),
+                    ft.Text("2.5D",color=ft.Colors.BLACK)
+                ],
+            )
+            self._text_field_segmentation_channel = ft.TextField(
+                border_color=ft.Colors.WHITE60,
+                value=self.user_segmentation_channel,
+                on_blur=lambda e: self.on_change_sc(e),
+                tooltip="Segmentation channel",
+                height=30, width=70, content_padding=ft.padding.symmetric(0, 5),
+                fill_color=ft.Colors.WHITE12,
+                filled=True,
+                text_align=ft.TextAlign.CENTER,
+                border_width=2,
+                focused_border_color=ft.Colors.WHITE
+            )
+            self._slider_2_5d = ft.Slider(
+                min=0, max=100, divisions=None, label="Slice: {value}", on_change=lambda e: self.slider_change(),
+                visible=self.user_2_5d, height=20,
+                active_color=ft.Colors.WHITE60, thumb_color=ft.Colors.WHITE, disabled=True
+            )
+            self._control_menu = ft.Container(ft.Container(ft.Row(
+                [
+                    ft.IconButton(icon=ft.Icons.ZOOM_IN, icon_color=ft.Colors.WHITE60,
+                                  style=ft.ButtonStyle(
+                                      shape=ft.RoundedRectangleBorder(radius=12), ),
+                                  on_click=lambda e: self._interactive_viewer.zoom(1.0 + zoom_value), tooltip="Zoom in",
+                                  hover_color=ft.Colors.WHITE12),
+                    ft.IconButton(icon=ft.Icons.ZOOM_OUT, icon_color=ft.Colors.WHITE60,
+                                  style=ft.ButtonStyle(
+                                      shape=ft.RoundedRectangleBorder(radius=12), ),
+                                  on_click=lambda e: self._interactive_viewer.zoom(1.0 - zoom_value), tooltip="Zoom out",
+                                  hover_color=ft.Colors.WHITE12),
+                    ft.IconButton(icon=ft.Icons.CROP_FREE, icon_color=ft.Colors.WHITE60,
+                                  style=ft.ButtonStyle(
+                                      shape=ft.RoundedRectangleBorder(radius=12), ),
+                                  on_click=lambda e: self._interactive_viewer.reset(400),
+                                  tooltip="Reset view", hover_color=ft.Colors.WHITE12),
+                    self._text_field_segmentation_channel,
+                    self._mask_button,
+                    self._slider_2d,
+                    ft.Container(
+                        content=self._slider_2_5d,
+                        theme=ft.Theme(
+                            slider_theme=ft.SliderTheme(
+                                value_indicator_text_style=ft.TextStyle(color=ft.Colors.BLACK, size=15,weight=ft.FontWeight.BOLD),
+                            )
+                        ),
+                        dark_theme=ft.Theme(
+                            slider_theme=ft.SliderTheme(
+                                value_indicator_text_style=ft.TextStyle(color=ft.Colors.BLACK, size=15,weight=ft.FontWeight.BOLD),
+                            )
+                        ),
+                    ),
+                ], spacing=2
+            ), bgcolor=ft.Colors.BLUE_400, expand=True, border_radius=ft.border_radius.vertical(top=0, bottom=12),
+            )
+            )
+            self._main_image_view = ft.Card(
+                content=ft.Column([ft.Container(self._interactive_viewer, padding=ft.padding.only(top=10),
+                                                alignment=ft.alignment.top_center), self._control_menu]),
+                width=660, height=700,
+                expand=True,
+            )
+
+            self._settings: ft.Stack = ft.Stack([ft.Row([ft.Column([ft.Row([
+                self._main_image_view,
+                ft.Card(content=ft.Container(self._image_gallery, width=600, height=700, expand=True, padding=20),
+                        expand=True),
+            ])
+            ],
+                alignment=ft.MainAxisAlignment.CENTER, )], alignment=ft.MainAxisAlignment.CENTER), ])
         return self._settings
 
     @property
@@ -264,7 +298,7 @@ class Review(Module, ABC):
         self._selected_images_visualise[img_id][channel_id].update()
 
 
-        self._main_image.content.src_base64 = auto_adjust(self.inputs["image_paths"].data[img_id][channel_id], get_slice=int(self._slider_2_5d.value))
+        self._main_image.content.src_base64 = auto_adjust(self.inputs["image_paths"].data[img_id][channel_id], get_slice=int(self._slider_2_5d.value) if self.user_2_5d else -1)
         self._main_image.update()
         if self.inputs["mask_paths"].data is not None and self.image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[img_id]:
             if not self._container_mask.visible:
@@ -340,8 +374,10 @@ class Review(Module, ABC):
     def slider_update(self, e):
         if int(e.data) == 1:
             self._slider_2_5d.visible = True
+            self.user_2_5d = True
         else:
             self._slider_2_5d.visible = False
+            self.user_2_5d = False
 
         self.slider_change()
         self._slider_2_5d.update()
