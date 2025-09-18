@@ -40,6 +40,7 @@ class Pipeline:
     def _add_module(self, module: Module,module_class: Type[Module]) -> Module:
         self.modules.append(module)
         self.module_map[module.module_id] = module
+        module.event_manager = self.event_manager
         self.pipes_in[module.module_id] = []
         self.pipes_out[module.module_id] = []
         self.event_manager.notify(OnPipelineChangeEvent(f"Added module {module_class.gui_config().name}"))
@@ -225,7 +226,6 @@ class Pipeline:
             if module_name in show_room:
                 continue
             module = self.module_map[module_name]
-            module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.module_id]
             for pipe in module_pipes:
                 pipe.run()
@@ -266,7 +266,6 @@ class Pipeline:
                 continue
             self.found = True
             module = self.module_map[module_name]
-            module.event_manager = self.event_manager
             module_pipes = self.pipes_in[module.module_id]
             for pipe in module_pipes:
                 pipe.run()

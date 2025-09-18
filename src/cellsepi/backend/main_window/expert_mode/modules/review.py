@@ -1,5 +1,4 @@
 import base64
-import weakref
 from io import BytesIO
 from pathlib import Path
 
@@ -9,7 +8,7 @@ from PIL import Image
 from flet_extended_interactive_viewer import FletExtendedInteractiveViewer
 
 from cellsepi.backend.main_window.data_util import convert_tiffs_to_png_parallel
-from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
+from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent, OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.module import *
 from cellsepi.backend.main_window.image_tuning import auto_adjust
 
@@ -85,7 +84,7 @@ class Review(Module, ABC):
                 content=ft.Stack([self._main_image, self._container_mask]), constrained=False, min_scale=0.1, width=632,
                 height=632)
             zoom_value = 0.20
-            self._mask_button = ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, icon_color=ft.Colors.WHITE24,
+            self._mask_button = ft.IconButton(icon=ft.Icons.REMOVE_RED_EYE, icon_color=ft.Colors.BLACK12,
                                               style=ft.ButtonStyle(
                                                   shape=ft.RoundedRectangleBorder(radius=12), ),
                                               on_click=lambda e: self.show_mask(),
@@ -107,16 +106,19 @@ class Review(Module, ABC):
                 on_blur=lambda e: self.on_change_sc(e),
                 tooltip="Segmentation channel",
                 height=30, width=70, content_padding=ft.padding.symmetric(0, 5),
-                fill_color=ft.Colors.WHITE12,
+                fill_color=ft.Colors.WHITE38,
                 filled=True,
                 text_align=ft.TextAlign.CENTER,
                 border_width=2,
-                focused_border_color=ft.Colors.WHITE
+                focused_border_color=ft.Colors.WHITE,
+                text_style=ft.TextStyle(color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD),
+                cursor_color=ft.Colors.BLACK,
             )
             self._slider_2_5d = ft.Slider(
                 min=0, max=100, divisions=None, label="Slice: {value}", on_change=lambda e: self.slider_change(),
-                visible=self.user_2_5d, height=20,
-                active_color=ft.Colors.WHITE60, thumb_color=ft.Colors.WHITE, disabled=True
+                opacity=1.0 if self.user_2_5d else 0.0, height=20,
+                active_color=ft.Colors.WHITE60, thumb_color=ft.Colors.WHITE, disabled=True,
+                animate_opacity= ft.Animation(duration=600, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             )
             self._control_menu = ft.Container(ft.Container(ft.Row(
                 [
@@ -151,7 +153,7 @@ class Review(Module, ABC):
                             )
                         ),
                     ),
-                ], spacing=2
+                ], spacing=2,alignment=ft.MainAxisAlignment.CENTER,
             ), bgcolor=ft.Colors.BLUE_400, expand=True, border_radius=ft.border_radius.vertical(top=0, bottom=12),
             )
             )
@@ -306,6 +308,7 @@ class Review(Module, ABC):
                 self._mask_button.tooltip = "Show mask"
                 self._mask_button.disabled = False
                 self._mask_button.update()
+
             mask_data = np.load(Path(self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel]), allow_pickle=True).item()
 
             mask= mask_data["masks"]
@@ -314,18 +317,18 @@ class Review(Module, ABC):
             self._container_mask.update()
         else:
             self._mask_button.tooltip = "Show mask"
-            self._mask_button.icon_color = ft.Colors.WHITE24
+            self._mask_button.icon_color = ft.Colors.BLACK12
             self._mask_button.disabled = True
             self._mask_button.update()
             self._container_mask.visible = False
             self._container_mask.update()
 
     def show_mask(self):
-        self._mask_button.icon_color = ft.Colors.BLUE_400 if not self._container_mask.visible else ft.Colors.WHITE60
-        self._mask_button.update()
-        self._mask_button.tooltip="Show mask" if self._container_mask.visible else "Hide mask"
         self._container_mask.visible = not self._container_mask.visible
         self._container_mask.update()
+        self._mask_button.icon_color = ft.Colors.WHITE if self._container_mask.visible else ft.Colors.WHITE60
+        self._mask_button.tooltip="Hide mask" if self._container_mask.visible else "Show mask"
+        self._mask_button.update()
 
 
     def convert_npy_to_canvas(self,mask, outline):
@@ -339,7 +342,7 @@ class Review(Module, ABC):
         buffer= BytesIO()
 
         if mask.ndim == 3:
-            if self._slider_2_5d.visible:
+            if self._slider_2_5d.opacity == 1.0:
                 mask = np.transpose(mask, (1, 2, 0))
                 mask = np.take(mask, int(self._slider_2_5d.value), axis=2)
             else:
@@ -347,7 +350,7 @@ class Review(Module, ABC):
                 mask = np.max(mask, axis=2)
 
         if outline.ndim == 3:
-            if self._slider_2_5d.visible:
+            if self._slider_2_5d.opacity == 1.0:
                 outline = np.transpose(outline, (1, 2, 0))
                 outline = np.take(outline, int(self._slider_2_5d.value), axis=2)
             else:
@@ -373,14 +376,15 @@ class Review(Module, ABC):
 
     def slider_update(self, e):
         if int(e.data) == 1:
-            self._slider_2_5d.visible = True
+            self._slider_2_5d.opacity = 1.0
             self.user_2_5d = True
         else:
-            self._slider_2_5d.visible = False
+            self._slider_2_5d.opacity = 0.0
             self.user_2_5d = False
 
         self.slider_change()
         self._slider_2_5d.update()
+        self.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     def slider_change(self):
         if self.image_id is not None:
@@ -391,6 +395,7 @@ class Review(Module, ABC):
         self.update_all_masks_check()
         if self.image_id is not None:
             self.update_main_image(self.image_id, self.channel_id)
+        self.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     @classmethod
     def update_class(cls):
