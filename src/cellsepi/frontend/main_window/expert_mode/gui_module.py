@@ -717,8 +717,10 @@ class ModuleGUI(ft.GestureDetector):
         copy = self.pipeline_gui.add_module(ModuleType(type(self.module)),self.left+20,self.top+20)
         user_attributes = copy.module.get_user_attributes
         for attr_name in user_attributes:
+            print(attr_name)
             setattr(copy.module,attr_name,getattr(self.module, attr_name))
         if hasattr(copy.module, "_settings"):
+            print("2")
             copy.module._settings = copy.generate_options_overlay()
         self.copy_button.icon_color = ft.Colors.WHITE60
         self.copy_button.update()
