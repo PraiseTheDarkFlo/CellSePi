@@ -617,6 +617,21 @@ class ModuleGUI(ft.GestureDetector):
                             on_blur=lambda e,attr_name= attribute_name,reference=ref,type_atr = typ: self.on_change(e,attr_name,reference,type_atr),
                             height=60,
                         ))
+            elif typ == bool:
+                text = ft.Text(attribute_name.removeprefix("user_"),weight=ft.FontWeight.BOLD)
+                index = 0 if not value else 1
+                slider_bool = ft.CupertinoSlidingSegmentedButton(
+                    selected_index=index,
+                    thumb_color=ft.Colors.BLUE_400,
+                    on_change=lambda e: self.update_bool(e,attribute_name),
+                    padding=ft.padding.symmetric(0, 0),
+                    controls=[
+                        ft.Text("False"),
+                        ft.Text("True")
+                    ],
+                )
+                bool_chosing = ft.Container(ft.Row([text,slider_bool],alignment=ft.MainAxisAlignment.SPACE_BETWEEN),padding=ft.Padding(0,10,0,10))
+                items.append(bool_chosing)
             elif typ == FilePath:
                 text_field = ft.TextField(
                     label=attribute_name.removeprefix("user_"),
@@ -700,6 +715,15 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
             reference.current.value = getattr(self.module, attr_name)
             self.pipeline_gui.page.update()
+
+    def update_bool(self,e,attr_name):
+        if int(e.data) == 1:
+            setattr(self.module, attr_name, True)
+        else:
+            setattr(self.module, attr_name, False)
+
+        self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
+        print(getattr(self.module, attr_name))
 
     def open_options(self,e):
         self.page_overlay.open()
