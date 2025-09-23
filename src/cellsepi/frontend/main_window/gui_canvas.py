@@ -1,6 +1,8 @@
 import asyncio
 
 import flet as ft
+import tifffile
+
 from cellsepi.frontend.main_window.gui_mask import handle_image_switch_mask_on
 
 def update_main_image(img_id,channel_id,gui,on_click = True):
@@ -23,7 +25,10 @@ def update_main_image(img_id,channel_id,gui,on_click = True):
     gui.contrast_slider.update()
     gui.brightness_slider.update()
     if img_id is not None:
-        gui.drawing_button.disabled = False
+        if tifffile.imread(gui.csp.image_paths[img_id][channel_id]).ndim == 3: #check if 3d, because z_max projection is not editable in the drawing tool only 2.5 sliced 3d images.
+            gui.drawing_button.disabled = True
+        else:
+            gui.drawing_button.disabled = False
     else:
         gui.drawing_button.disabled = True
     gui.drawing_button.update()
@@ -31,7 +36,8 @@ def update_main_image(img_id,channel_id,gui,on_click = True):
         gui.contrast_slider.disabled = False
         gui.brightness_slider.disabled = False
         gui.page.update()
-        asyncio.run(gui.image_tuning.update_brightness_and_contrast_async(on_click=on_click, linux=gui.csp.linux))
+        asyncio.run(
+            gui.image_tuning.update_brightness_and_contrast_async(on_click=on_click, linux_or_3d=gui.csp.linux_or_3d))
     else:
         gui.auto_image_tuning.update_main_image_auto(image_path = gui.csp.image_paths[gui.csp.image_id][gui.csp.channel_id])
 

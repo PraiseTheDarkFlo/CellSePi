@@ -24,7 +24,7 @@ class ImageTuning:
         self.gui = gui
         self.running_tasks = set()
         self.cached_image = None
-    async def update_brightness_and_contrast_async(self, on_click=False,linux = False):
+    async def update_brightness_and_contrast_async(self, on_click=False,linux_or_3d = False):
         """
         Updates the main image brightness and contrast with the current selected values with the sliders.
 
@@ -32,9 +32,9 @@ class ImageTuning:
 
         Args:
             on_click (bool): if a new main image is clicked or not.
-            linux (bool): if the program is running on Linux.
+            linux_or_3d (bool): if the program is running on Linux or the images are 3d.
         """
-        if linux and on_click:
+        if linux_or_3d and on_click:
             self.cancel_all_tasks()
             self.gui.canvas.main_image.content.src_base64 = self.gui.csp.linux_images[self.gui.csp.image_id][self.gui.csp.channel_id]
             self.gui.canvas.main_image.update()

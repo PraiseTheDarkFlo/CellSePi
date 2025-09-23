@@ -7,6 +7,7 @@ import concurrent.futures
 from json.encoder import INFINITY
 from time import time
 import flet as ft
+import tifffile
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
@@ -49,16 +50,16 @@ def copy_to_clipboard(page,value: str,name: str):
     page.update()
 
 
-def get_Image(linux: bool, src):
+def get_image(linux_or_3d: bool, src):
     """
-    Adjust the method of reading the image, depending on whether the system is Linux or not (src_Base64 or src).
+    Adjust the method of reading the image, depending on whether the system is Linux and if the images are 3d or not (src_Base64 or src).
     Args:
-        linux (bool): Whether the system is Linux or not.
+        linux_or_3d (bool): Whether the system is Linux or the files are 3d.
         src (str): The path of the image to load.
     Returns:
           ft.Image: the image at the src path.
     """
-    if linux:
+    if linux_or_3d:
         return ft.Image(
             src_base64=src,
             height=150,
@@ -365,13 +366,20 @@ class DirectoryCard(ft.Card):
         self.gui.page.update()
 
         src = self.gui.csp.image_paths
-        if platform.system() == "Linux":
+
+        is_3d = any(
+            tifffile.imread(channel_path).ndim == 3
+            for outer_dict in src.values()
+            for channel_path in outer_dict.values()
+        )
+
+        if platform.system() == "Linux" or is_3d:
             self.gui.csp.linux_images = convert_tiffs_to_png_parallel(self.gui.csp.image_paths)
-            self.gui.csp.linux = True
+            self.gui.csp.linux_or_3d = True
             src = self.gui.csp.linux_images
 
         self.selected_images_visualise = {}
-        # Display groups with side-by-side images for linux
+        # Display groups with side-by-side images for linux_or_3d
         for image_id in src:
             cur_image_paths = src[image_id]
             self.selected_images_visualise[image_id] = {}
@@ -389,7 +397,8 @@ class DirectoryCard(ft.Card):
                     ft.Column(
                     [
                             ft.GestureDetector(
-                                content=ft.Container(ft.Stack([get_Image(self.gui.csp.linux,cur_image_paths[channel_id]),self.selected_images_visualise[image_id][channel_id]]),width=156,height=156),
+                                content=ft.Container(ft.Stack([get_image(self.gui.csp.linux_or_3d,
+                                                                         cur_image_paths[channel_id]), self.selected_images_visualise[image_id][channel_id]]), width=156, height=156),
                                 on_tap=lambda e, img_id=image_id, c_id=channel_id: update_main_image(img_id, c_id,
                                                                                                      self.gui),
                             ),

@@ -13,7 +13,7 @@ class CellSePi:
         self.readout_running = False
         self.readout_thread = None
         self.readout_path = None
-        self.linux = False
+        self.linux_or_3d = False
 
         self.image_id = None
         self.channel_id = None
