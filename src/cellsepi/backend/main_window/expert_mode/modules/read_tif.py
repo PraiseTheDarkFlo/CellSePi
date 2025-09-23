@@ -42,6 +42,13 @@ class ReadTif(Module,ABC):
         return self._settings
 
     @property
+    def on_settings_dismiss(self):
+        return None
+
+    def finished(self):
+        pass
+
+    @property
     def event_manager(self) -> EventManager:
         return self._event_manager
 

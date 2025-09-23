@@ -41,6 +41,19 @@ class DragAndDropEvent(Event):
     def __init__(self,drag:bool):
         self.drag = drag #False if it is no longer dragging or not valid dragging
 
+class PipelinePauseEvent(Event):
+    def __init__(self,module_id: str):
+        self.module_id = module_id
+
+class PipelineCancelEvent(Event):
+    def __init__(self,module_id: str):
+        self.module_id = module_id
+
+class PipelineErrorEvent(Event):
+    def __init__(self,error_name: str,error_msg:str):
+        self.error_name = error_name
+        self.error_msg = error_msg
+
 class EventListener(ABC):
     """
     Abstract base class for event listeners.

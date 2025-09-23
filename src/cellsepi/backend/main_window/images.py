@@ -562,7 +562,7 @@ class BatchImageReadout(Notifier):
             # 4. For each cell readout fluorescence
             # 5. Store values in a pandas dataframe "readout" (Layout: Image ID | Cell ID | Channels ... | Background)
 
-            if not image_id in mask_paths:
+            if not image_id in mask_paths or not segmentation_channel in mask_paths[image_id]:
                 continue
             mask_path = mask_paths[image_id][segmentation_channel]
             mask_data = np.load(mask_path,allow_pickle=True).item()

@@ -1,4 +1,8 @@
+import asyncio
 import base64
+import multiprocessing
+import os
+import threading
 from io import BytesIO
 from pathlib import Path
 
@@ -11,6 +15,7 @@ from cellsepi.backend.main_window.data_util import convert_tiffs_to_png_parallel
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent, OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.module import *
 from cellsepi.backend.main_window.image_tuning import auto_adjust
+from cellsepi.frontend.drawing_window.gui_drawing import open_qt_window
 
 
 class Review(Module, ABC):
@@ -27,7 +32,7 @@ class Review(Module, ABC):
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
         self._outputs = {
-            #"mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]] when i allow editing
+            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
         self._icon_x = {}
         self._icon_check = {}
@@ -41,12 +46,23 @@ class Review(Module, ABC):
         self._main_image: ft.Container | None = None
         self._interactive_viewer:FletExtendedInteractiveViewer | None = None
         self._mask_button:ft.IconButton | None = None
+        self._edit_allowed = False
+        self._edit_button:ft.IconButton | None = None
         self._slider_2d: ft.CupertinoSlidingSegmentedButton | None = None
         self._text_field_segmentation_channel: ft.TextField | None = None
         self._slider_2_5d:ft.Slider | None = None
         self._control_menu: ft.Container | None = None
         self._main_image_view: ft.Card | None = None
         self._settings: ft.Stack | None = None
+        self.pipe_listener_running = True
+        self.queue = None
+        self.parent_conn, self.child_conn = None, None
+        self.process_drawing_window = None
+        self.window_image_id = ""
+        self.window_bf_channel = ""
+        self.window_channel_id = ""
+        self.window_mask_path = ""
+        self.thread = None
         Review._instances.append(self)
 
     @classmethod
@@ -89,6 +105,11 @@ class Review(Module, ABC):
                                                   shape=ft.RoundedRectangleBorder(radius=12), ),
                                               on_click=lambda e: self.show_mask(),
                                               tooltip="Show mask", hover_color=ft.Colors.WHITE12, disabled=True)
+            self._edit_button = ft.IconButton(icon=ft.Icons.EDIT_SHARP, icon_color=ft.Colors.BLACK12,
+                                  style=ft.ButtonStyle(
+                                      shape=ft.RoundedRectangleBorder(radius=12),),
+                                  on_click=lambda e: self.set_queue_drawing_window(),
+                                  tooltip="Edit Mask", hover_color=ft.Colors.WHITE12,disabled=True)
             self._slider_2d = ft.CupertinoSlidingSegmentedButton(
                 selected_index=0 if not self.user_2_5d else 1,
                 thumb_color=ft.Colors.WHITE,
@@ -138,6 +159,7 @@ class Review(Module, ABC):
                                   on_click=lambda e: self._interactive_viewer.reset(400),
                                   tooltip="Reset view", hover_color=ft.Colors.WHITE12),
                     self._text_field_segmentation_channel,
+                    self._edit_button,
                     self._mask_button,
                     self._slider_2d,
                     ft.Container(
@@ -170,8 +192,32 @@ class Review(Module, ABC):
                         expand=True),
             ])
             ],
-                alignment=ft.MainAxisAlignment.CENTER, )], alignment=ft.MainAxisAlignment.CENTER), ])
+                alignment=ft.MainAxisAlignment.CENTER, )], alignment=ft.MainAxisAlignment.CENTER),])
         return self._settings
+
+    @property
+    def on_settings_dismiss(self):
+        return self.dismiss
+
+    def finished(self):
+        self._edit_allowed = False
+        self._edit_button.icon_color = ft.Colors.BLACK12
+        self._edit_button.disabled = True
+        self._edit_button.update()
+        self.pipe_listener_running = False
+        self.queue.put("close")
+        if self.process_drawing_window is not None and self.process_drawing_window.is_alive():
+            self.process_drawing_window.join()
+        self.child_conn.send("close")
+
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join()
+        self.child_conn.close()
+        self.parent_conn.close()
+        self.queue = None
+        self.parent_conn, self.child_conn = None, None
+        self.process_drawing_window = None
+        self.thread = None
 
     @property
     def event_manager(self) -> EventManager:
@@ -194,6 +240,19 @@ class Review(Module, ABC):
         self._main_image.update()
         self._container_mask.visible = False
         self._container_mask.update()
+        self._edit_allowed = True
+
+        self.pipe_listener_running = True
+        self.queue = multiprocessing.Queue()
+        parent_conn, child_conn = multiprocessing.Pipe()
+        self.parent_conn, self.child_conn = parent_conn, child_conn
+        self.process_drawing_window = self.start_drawing_window()
+        self.window_image_id = ""
+        self.window_bf_channel = ""
+        self.window_channel_id = ""
+        self.window_mask_path = ""
+        self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
+        self.thread.start()
 
         self.event_manager.notify(ProgressEvent(percent=0, process=f"Loading Images: Starting"))
         src  = convert_tiffs_to_png_parallel(self.inputs["image_paths"].data)
@@ -211,21 +270,6 @@ class Review(Module, ABC):
                     visible=False,
                     padding=5
                 )
-                if iN == 0 and iN2 == 0:
-                    image = tifffile.imread(self.inputs["image_paths"].data[image_id][channel_id])
-                    if image.ndim == 3:
-                        self._slider_2_5d.value = 0
-                        self._slider_2_5d.max = image.shape[2] - 1
-                        self._slider_2_5d.divisions = image.shape[2] - 2
-                        self._slider_2_5d.disabled = False
-                        self._slider_2_5d.update()
-                    else:
-                        self._slider_2_5d.value = 0
-                        self._slider_2_5d.max = 1
-                        self._slider_2_5d.divisions = None
-                        self._slider_2_5d.disabled = True
-                        self._slider_2_5d.update()
-
             group_row = ft.Row(
                 [
                     ft.Column(
@@ -261,6 +305,8 @@ class Review(Module, ABC):
             self.event_manager.notify(ProgressEvent(percent=int((iN+1) / n_series * 100), process=f"Loading Images: {iN+1}/{n_series}"))
 
         self.event_manager.notify(ProgressEvent(percent=100, process=f"Loading Images: Finished"))
+
+        return True
 
 
     def update_mask_check(self, image_id):
@@ -302,6 +348,33 @@ class Review(Module, ABC):
 
         self._main_image.content.src_base64 = auto_adjust(self.inputs["image_paths"].data[img_id][channel_id], get_slice=int(self._slider_2_5d.value) if self.user_2_5d else -1)
         self._main_image.update()
+        image = tifffile.imread(self.inputs["image_paths"].data[self.image_id][self.channel_id])
+
+        if image.ndim == 3:
+            if self._slider_2_5d.opacity == 1.0 and self._edit_allowed:
+                self._edit_button.icon_color = ft.Colors.WHITE60
+                self._edit_button.disabled = False
+                self._edit_button.update()
+            else:
+                self._edit_button.icon_color = ft.Colors.BLACK12
+                self._edit_button.disabled = True
+                self._edit_button.update()
+            self._slider_2_5d.value = 0 if image.shape[-2] - 1 < self._slider_2_5d.value else self._slider_2_5d.value
+            self._slider_2_5d.max = image.shape[2] - 1
+            self._slider_2_5d.divisions = image.shape[2] - 2
+            self._slider_2_5d.disabled = False
+            self._slider_2_5d.update()
+        else:
+            if self._edit_allowed:
+                self._edit_button.icon_color = ft.Colors.WHITE60
+                self._edit_button.disabled = False
+                self._edit_button.update()
+            self._slider_2_5d.value = 0
+            self._slider_2_5d.max = 1
+            self._slider_2_5d.divisions = None
+            self._slider_2_5d.disabled = True
+            self._slider_2_5d.update()
+
         if self.inputs["mask_paths"].data is not None and self.image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[img_id]:
             if not self._container_mask.visible:
                 self._mask_button.icon_color = ft.Colors.WHITE60
@@ -329,7 +402,6 @@ class Review(Module, ABC):
         self._mask_button.icon_color = ft.Colors.WHITE if self._container_mask.visible else ft.Colors.WHITE60
         self._mask_button.tooltip="Hide mask" if self._container_mask.visible else "Show mask"
         self._mask_button.update()
-
 
     def convert_npy_to_canvas(self,mask, outline):
         """
@@ -406,3 +478,87 @@ class Review(Module, ABC):
     def destroy(self):
         self._instances.remove(self)
         super().destroy()
+
+
+    def start_drawing_window(self):
+        """
+        Start the drawing window in multiprocessing.
+        """
+        process = multiprocessing.Process(target=open_qt_window,
+                                args=(self.queue,self.child_conn))
+        process.start()
+        return process
+
+    def set_queue_drawing_window(self):
+        """
+        Sets queue for drawing window with the current selected image and mask.
+        """
+        adjusted_image_path = os.path.join(
+            Path(self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel]).parent,
+            "adjusted_image.png")
+        image_data = base64.b64decode(self._main_image.content.src_base64)
+        buffer = BytesIO(image_data)
+        image = Image.open(buffer)
+        image.save(adjusted_image_path, format="PNG")
+
+        if self.process_drawing_window is None or not self.process_drawing_window.is_alive(): #make sure that the process is running before putting new image in the queue
+            if self.process_drawing_window is not None:
+                try:
+                    self.process_drawing_window.terminate()
+                    self.process_drawing_window.join()
+                except Exception as e:
+                    self._settings.page.open(ft.SnackBar(ft.Text(f"Error while terminating process: {e}")))
+            self.queue = multiprocessing.Queue()
+            parent_conn, child_conn = multiprocessing.Pipe()
+            self.parent_conn, self.child_conn = parent_conn, child_conn
+            self.process_drawing_window = self.start_drawing_window()
+        self.window_image_id = self.image_id
+        self.window_bf_channel = self.user_segmentation_channel
+        self.window_channel_id = self.channel_id
+
+        if self.window_bf_channel in self.inputs["mask_paths"].data[self.image_id]:#check if the bf has an image
+            self.window_mask_path = self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel]
+            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value))
+        else:
+            self._settings.page.open(ft.SnackBar(
+                ft.Text(f"Selected bright-field channel {self.window_bf_channel} has no image!")))
+            self._settings.page.update()
+
+    def child_conn_listener(self):
+        """
+        Listener for the child connection.
+        """
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        async def pipe_listener():
+            while self.pipe_listener_running:
+                data = await asyncio.to_thread(self.parent_conn.recv)
+                split_data = data.split(".")
+                if data == "close":
+                    break
+                elif split_data[0] == "new_mask":
+                    if self.window_image_id not in self.inputs["mask_paths"].data:
+                        self.inputs["mask_paths"].data[self.window_image_id] = {}
+                    self.inputs["mask_paths"].data[self.window_image_id][
+                        self.window_bf_channel] = self.window_mask_path
+                    self.update_mask_check(split_data[1])
+                else:
+                    if self.window_image_id == self.image_id and self.window_bf_channel == self.user_segmentation_channel:
+                        self.update_main_image(self.image_id,self.channel_id)
+                    else:
+                        self.reset_mask(self.window_image_id, self.window_bf_channel)
+
+        try:
+            loop.run_until_complete(pipe_listener())
+        finally:
+            loop.stop()
+            loop.close()
+
+    def reset_mask(self, image_id, segmentation_channel):
+        if image_id in self.inputs["mask_paths"].data and segmentation_channel in self.inputs["mask_paths"].data[image_id]:
+            del self.inputs["mask_paths"].data[image_id][segmentation_channel]
+
+    def dismiss(self):
+        if self.queue is not None:
+            self.queue.put("hide")

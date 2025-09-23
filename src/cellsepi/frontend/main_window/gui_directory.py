@@ -251,7 +251,7 @@ class DirectoryCard(ft.Card):
             # Copy .tif, .tiff and .npy files into subdirectory
             working_directory = path / "output/"
             os.makedirs(working_directory, exist_ok=True)
-            copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"])
+            copy_files_between_directories(path, working_directory, file_types=[".tif", ".tiff", ".npy"],event_manager=event_manager)
             tiff_paths = [p for p in working_directory.iterdir() if
                           p.suffix.lower() in [".tif", ".tiff"] and p.is_file()]
             total = len(tiff_paths)

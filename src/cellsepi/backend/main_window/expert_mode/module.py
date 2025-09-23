@@ -201,6 +201,19 @@ class Module(ABC):
         """
         pass
 
+    @abstractmethod
+    def finished(self):
+        """
+        Gets executed when the module is complety finished include possible pausing.
+        """
+
+    @property
+    @abstractmethod
+    def on_settings_dismiss(self):
+        """
+        The function called when the settings get dismiss.
+        """
+
     @property
     def get_user_attributes(self) -> list[str]:
         """

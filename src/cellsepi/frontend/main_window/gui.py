@@ -262,7 +262,7 @@ class GUI:
                 self.readout_event = multiprocessing.Event()
                 self.readout_event.wait()
             if self.builder_environment.pipeline_gui.pipeline.running:
-                #TODO: maybe canceln und darauf warten
+                self.builder_environment.pipeline_gui.pipeline.cancel()
                 self.expert_running_event = multiprocessing.Event()
                 self.builder_environment.pipeline_running_event = self.expert_running_event
                 self.expert_running_event.wait()

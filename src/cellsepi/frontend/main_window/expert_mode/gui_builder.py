@@ -5,7 +5,7 @@ from flet_extended_interactive_viewer import FletExtendedInteractiveViewer
 from cellsepi.frontend.main_window.expert_mode.gui_pipeline import PipelineGUI
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
 from cellsepi.frontend.main_window.expert_mode.gui_pipeline_listener import PipelineChangeListener, ModuleExecutedListener, ModuleStartedListener, \
-    ModuleProgressListener, ModuleErrorListener, DragAndDropListener
+    ModuleProgressListener, ModuleErrorListener, DragAndDropListener, PipelinePauseListener, PipelineCancelListener, PipelineErrorListener
 from cellsepi.backend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
 class Builder:
@@ -104,11 +104,51 @@ class Builder:
             on_click=lambda e:self.run(),
             opacity=0.75,
         )
+
+        def resume():
+            self.pipeline_gui.pipeline.resume()
+            self.running_module.value = self.running_module.value.removeprefix("Paused: ")
+            self.running_module.update()
+            self.cancel_button.visible = True
+            self.cancel_button.update()
+            self.resume_button.visible = False
+            self.resume_button.update()
+            self.info_text.text = ""
+            self.info_text.spans = []
+            self.info_text.update()
+
         self.resume_button = ft.ElevatedButton(  # button to resume the pipeline
-            text="Resume the pipeline",
+            text="Resume",
+            tooltip="Resume the pipeline",
             icon=ft.Icons.PLAY_CIRCLE,
             visible=False,
-            on_click=self.pipeline_gui.pipeline.run(resume=True),
+            on_click=lambda e: resume(),
+            opacity=0.75
+        )
+
+        def cancel():
+            self.pipeline_gui.pipeline.cancel()
+            self.running_module.value = f"Pipeline"
+            self.running_module.update()
+            self.category_icon.color = ft.Colors.RED
+            self.category_icon.update()
+            self.cancel_button.disabled = True
+            self.cancel_button.color = None
+            self.cancel_button.update()
+            self.info_text.value = ""
+            self.info_text.spans = [
+                ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+                ft.TextSpan("...", style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
+            self.info_text.update()
+            self.page.update()
+
+        self.cancel_button = ft.ElevatedButton(  # button to cancel the pipeline
+            text="Cancel",
+            tooltip="Cancel the pipeline",
+            icon=ft.Icons.STOP_CIRCLE_ROUNDED,
+            color=ft.Colors.RED,
+            on_click=lambda e: cancel(),
+            visible=False,
             opacity=0.75
         )
         self.progress_bar_module = ft.ProgressBar(value=0, width=220,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
@@ -118,7 +158,7 @@ class Builder:
         self.progress_bar_module_text = ft.Text("0%", color=MAIN_ACTIVE_COLOR)
         self.progress_and_start = ft.Column([ft.Container(self.progress_stack,alignment=ft.alignment.center),
             ft.Container(
-                content=ft.Stack([self.start_button, self.resume_button]),alignment=ft.alignment.center)],width=85,spacing=20
+                content=ft.Stack([self.start_button, self.resume_button,self.cancel_button]),alignment=ft.alignment.center)],width=95,spacing=20
         )
         self.running_module = ft.Text("Module",color=ft.Colors.WHITE70,width=230,overflow=ft.TextOverflow.ELLIPSIS,max_lines=1,style=ft.TextThemeStyle.HEADLINE_SMALL)
         self.info_text = ft.Text("Idle, waiting for start.", color=MAIN_ACTIVE_COLOR, width=250, overflow=ft.TextOverflow.ELLIPSIS, max_lines=2)
@@ -232,8 +272,10 @@ class Builder:
         self.info_text.spans = []
         self.info_text.value = "Idle, waiting for start."
         self.info_text.update()
-        self.start_button.disabled = True
+        self.start_button.visible = False
         self.start_button.update()
+        self.cancel_button.visible = True
+        self.cancel_button.update()
         self.load_button.disabled = True
         self.load_button.icon_color = ft.Colors.WHITE24
         self.load_button.update()
@@ -255,8 +297,10 @@ class Builder:
 
         self.pipeline_gui.modules_executed = 0
         self.update_modules_executed()
-        self.start_button.disabled = False
+        self.start_button.visible = True
         self.start_button.update()
+        self.cancel_button.visible = False
+        self.cancel_button.update()
         self.load_button.disabled = False
         self.load_button.icon_color = MAIN_ACTIVE_COLOR
         self.load_button.update()
@@ -277,6 +321,12 @@ class Builder:
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=module_error_listener)
         drag_and_drop_listener =DragAndDropListener(self)
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=drag_and_drop_listener)
+        pipeline_pause_listener =PipelinePauseListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_pause_listener)
+        pipeline_cancel_listener =PipelineCancelListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_cancel_listener)
+        pipeline_error_listener =PipelineErrorListener(self)
+        self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_error_listener)
 
     def on_keyboard(self,e: ft.KeyboardEvent):
             if not self.gui.ref_builder_environment.current.visible:
@@ -482,7 +532,7 @@ class Builder:
             self.run_menu_button.icon_color = ft.Colors.BLUE_400
             self.run_menu_button.tooltip = f"Hide run menu\n[Ctrl + R]"
             self.run_menu_button.update()
-            self.run_menu.width = 420
+            self.run_menu.width = 430
             self.run_menu.opacity = 1
             self.run_menu.update()
 

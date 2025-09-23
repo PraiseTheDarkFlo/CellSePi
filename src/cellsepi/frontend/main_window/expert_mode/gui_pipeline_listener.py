@@ -2,7 +2,8 @@ import textwrap
 from typing import Type
 import flet as ft
 from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnPipelineChangeEvent, Event, \
-    ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent, DragAndDropEvent
+    ModuleExecutedEvent, ProgressEvent, ErrorEvent, ModuleStartedEvent, DragAndDropEvent, PipelinePauseEvent, \
+    PipelineCancelEvent, PipelineErrorEvent
 
 class PipelineChangeListener(EventListener):
     def __init__(self,builder):
@@ -150,6 +151,29 @@ class ModuleStartedListener(EventListener):
         self.builder.running_module.value = self.builder.pipeline_gui.modules[event.module_id].module.gui_config().name
         self.builder.running_module.update()
 
+class PipelinePauseListener(EventListener):
+    def __init__(self,builder):
+        self.event_type = PipelinePauseEvent
+        self.builder = builder
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def update(self, event: Event) -> None:
+        if not isinstance(event, self.get_event_type()):
+            raise TypeError("The given event is not the right event type!")
+        self._update(event)
+
+    def _update(self, event: Event) -> None:
+        self.builder.running_module.value = f"Paused: {self.builder.running_module.value}"
+        self.builder.running_module.update()
+        self.builder.info_text.value = "Pipeline paused: press resume button to carry on"
+        self.builder.info_text.spans = []
+        self.builder.info_text.update()
+        self.builder.resume_button.visible = True
+        self.builder.resume_button.update()
+        self.builder.cancel_button.visible = False
+        self.builder.cancel_button.update()
+
 class ModuleProgressListener(EventListener):
     def __init__(self, builder):
         self.event_type = ProgressEvent
@@ -164,13 +188,19 @@ class ModuleProgressListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+        if self.builder.pipeline_gui.pipeline._cancel_event.is_set():
+            self.builder.info_text.value = ""
+            self.builder.info_text.spans = [
+                ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+                ft.TextSpan(event.process, style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
+            self.builder.info_text.update()
+        else:
+            self.builder.info_text.value = event.process
+            self.builder.info_text.spans = []
+            self.builder.info_text.update()
         self.builder.progress_bar_module.value = event.percent / 100
         self.builder.progress_bar_module.update()
         self.builder.progress_bar_module_text.value = f"{event.percent}%"
-        self.builder.progress_bar_module_text.update()
-        self.builder.info_text.value = event.process
-        self.builder.info_text.spans = []
-        self.builder.info_text.update()
         self.builder.page.update()
 
 class ModuleErrorListener(EventListener):
@@ -187,21 +217,81 @@ class ModuleErrorListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
-        wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.tooltip = f"An error occurred while executing!\nError: {wrapped_text}"
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.update()
-        self.builder.pipeline_gui.modules[
-            self.builder.pipeline_gui.pipeline.executing].module_container.border = ft.border.all(4,
-                                                                                                  ft.Colors.RED)
-        self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].module_container.update()
+            self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
+            self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
+            wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
+            self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.tooltip = f"An error occurred while executing!\nError: {wrapped_text}"
+            self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_icon.update()
+            self.builder.pipeline_gui.modules[
+                self.builder.pipeline_gui.pipeline.executing].module_container.border = ft.border.all(4,
+                                                                                                      ft.Colors.RED)
+            self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].module_container.update()
+            self.builder.pipeline_gui.toggle_all_stuck_in_running()
+            self.builder.info_text.value = ""
+            self.builder.info_text.spans = [
+            ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+            ft.TextSpan(event.error_msg, style=ft.TextStyle(color=ft.Colors.WHITE60)),]
+            self.builder.info_text.update()
+            self.builder.category_icon.color = ft.Colors.RED
+            self.builder.category_icon.update()
+            self.builder.progress_bar_module_text.value = f"{0}%"
+            self.builder.progress_bar_module.value = 0
+            self.builder.page.update()
+
+
+class PipelineCancelListener(EventListener):
+    def __init__(self, builder):
+        self.event_type = PipelineCancelEvent
+        self.builder = builder
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def update(self, event: Event) -> None:
+        if not isinstance(event, self.get_event_type()):
+            raise TypeError("The given event is not the right event type!")
+        self._update(event)
+
+    def _update(self, event: Event) -> None:
+        self.builder.info_text.spans = []
+        self.builder.info_text.value = "Idle, waiting for start."
+        self.builder.info_text.update()
         self.builder.pipeline_gui.toggle_all_stuck_in_running()
+        self.builder.running_module.value = "Module"
+        self.builder.running_module.update()
+        self.builder.category_icon.color = ft.Colors.GREEN
+        self.builder.category_icon.update()
+        self.builder.cancel_button.disabled = False
+        self.builder.cancel_button.color = ft.Colors.RED
+        self.builder.cancel_button.update()
+        self.builder.progress_bar_module_text.value = f"{0}%"
+        self.builder.progress_bar_module.value = 0
+        self.builder.page.update()
+
+class PipelineErrorListener(EventListener):
+    def __init__(self, builder):
+        self.event_type = PipelineErrorEvent
+        self.builder = builder
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def update(self, event: Event) -> None:
+        if not isinstance(event, self.get_event_type()):
+            raise TypeError("The given event is not the right event type!")
+        self._update(event)
+
+    def _update(self, event: Event) -> None:
         self.builder.info_text.value = ""
         self.builder.info_text.spans = [
-        ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
-        ft.TextSpan(event.error_msg, style=ft.TextStyle(color=ft.Colors.WHITE60)),]
+            ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+            ft.TextSpan(event.error_msg, style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
         self.builder.info_text.update()
-        self.builder.page.update()
+        self.builder.pipeline_gui.toggle_all_stuck_in_running()
+        self.builder.running_module.value = "Pipeline"
+        self.builder.running_module.update()
         self.builder.category_icon.color = ft.Colors.RED
         self.builder.category_icon.update()
+        self.builder.progress_bar_module_text.value = f"{0}%"
+        self.builder.progress_bar_module.value = 0
+        self.builder.page.update()
