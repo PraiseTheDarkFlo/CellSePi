@@ -335,6 +335,7 @@ def open_qt_window(queue, conn):
         window = MyQtWindow()
         window.setVisible(False)
         updater = Updater(window)
+        conn.send("ready")
 
         def background_listener():
             loop = asyncio.new_event_loop()
@@ -398,7 +399,7 @@ class DrawingCanvas(QGraphicsView):
         self.bf_channel = bf_channel
         self.mask_paths = mask_paths
         self.image_id = image_id
-        self.slice_id = slice_id
+        self.slice_id= slice_id
         self.adjusted_image_path = adjusted_image_path
         self.mask_path = mask_path
         self.scene = QGraphicsScene(self)
@@ -545,13 +546,10 @@ class DrawingCanvas(QGraphicsView):
         outline = self.mask_data["outlines"]
 
         if mask.ndim == 3:
-            mask = np.transpose(mask, (1, 2, 0))
             mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=2)
 
         if outline.ndim == 3:
-            outline = np.transpose(outline, (1, 2, 0))
             outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=2)
-
 
         # Save current state of the cell for restoration (undo)
         new_mask = mask.copy()
@@ -573,12 +571,10 @@ class DrawingCanvas(QGraphicsView):
         outline = self.mask_data["outlines"]
 
         if mask.ndim == 3:
-            mask = np.transpose(mask, (1, 2, 0))
-            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         if outline.ndim == 3:
-            outline = np.transpose(outline, (1, 2, 0))
-            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         #Save current complete state before deletion
         old_state = (mask.copy(), outline.copy())
@@ -589,9 +585,23 @@ class DrawingCanvas(QGraphicsView):
         mask[cell_mask] = 0
         outline[cell_outline] = 0
         if self.check_box.isChecked():
-            mask_shifting(self.mask_data, cell_id)
+            mask_shifting(self.mask_data, cell_id,self.slice_id)
+
         #Save new state after deletion
-        np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
+        mask_3d = None
+        outline_3d = None
+        if self.slice_id is not None:
+            mask_3d = self.mask_data["masks"]
+            outline_3d = self.mask_data["outlines"]
+
+            if mask_3d.ndim == 3:
+                mask_3d[int(self.slice_id),:,:] = mask
+
+            if outline_3d.ndim == 3:
+                outline_3d[int(self.slice_id),:,:] = outline
+
+        #Redo: restore the new state
+        np.save(mask_path, {"masks": mask if self.slice_id is None else mask_3d, "outlines": outline if self.slice_id is None else outline_3d}, allow_pickle=True)
         new_state = (mask.copy(), outline.copy())
 
         self.load_mask_to_scene()
@@ -616,8 +626,21 @@ class DrawingCanvas(QGraphicsView):
         #Retrieve the last state transition from undo history
         old_state, new_state = self.cell_history.pop()
 
-        #Restore the old state (undo)
-        np.save(mask_path, {"masks": old_state[0], "outlines": old_state[1]}, allow_pickle=True)
+        mask_3d = None
+        outline_3d = None
+        if self.slice_id is not None:
+            mask_data = np.load(mask_path, allow_pickle=True).item()
+            mask_3d = mask_data["masks"]
+            outline_3d = mask_data["outlines"]
+
+            if mask_3d.ndim == 3:
+                mask_3d[ int(self.slice_id),:,:] = old_state[0]
+
+            if outline_3d.ndim == 3:
+                outline_3d[int(self.slice_id),:,:] = old_state[1]
+
+        #Redo: restore the new state
+        np.save(mask_path, {"masks": old_state[0] if self.slice_id is None else mask_3d, "outlines": old_state[1] if self.slice_id is None else outline_3d}, allow_pickle=True)
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
@@ -637,8 +660,21 @@ class DrawingCanvas(QGraphicsView):
         #Retrieve the state transition from redo history
         old_state, new_state = self.redo_history.pop()
 
+        mask_3d = None
+        outline_3d = None
+        if self.slice_id is not None:
+            mask_data = np.load(mask_path, allow_pickle=True).item()
+            mask_3d = mask_data["masks"]
+            outline_3d = mask_data["outlines"]
+
+            if mask_3d.ndim == 3:
+                mask_3d[int(self.slice_id),:, :] = new_state[0]
+
+            if outline_3d.ndim == 3:
+                outline_3d[int(self.slice_id),:, :] = new_state[1]
+
         #Redo: restore the new state
-        np.save(mask_path, {"masks": new_state[0], "outlines": new_state[1]}, allow_pickle=True)
+        np.save(mask_path, {"masks": new_state[0] if self.slice_id is None else mask_3d, "outlines": new_state[1] if self.slice_id is None else outline_3d}, allow_pickle=True)
         self.load_mask_to_scene()
         self.conn.send("update_mask")
 
@@ -671,12 +707,10 @@ class DrawingCanvas(QGraphicsView):
         outline = self.mask_data["outlines"]
 
         if mask.ndim == 3:
-            mask = np.transpose(mask, (1, 2, 0))
-            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         if outline.ndim == 3:
-            outline = np.transpose(outline, (1, 2, 0))
-            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         #Create RGBA mask
         image_mask = np.zeros((mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
@@ -741,6 +775,12 @@ class DrawingCanvas(QGraphicsView):
         mask = self.mask_data["masks"]
         outline = self.mask_data["outlines"]
 
+        if mask.ndim == 3:
+            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=0)
+
+        if outline.ndim == 3:
+            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=0)
+
         #Save current state before drawing for undo
         old_state = (mask.copy(), outline.copy())
 
@@ -766,8 +806,20 @@ class DrawingCanvas(QGraphicsView):
                 mask[y, x] = 0
                 outline[y, x] = free_id
 
+        mask_3d = None
+        outline_3d = None
+        if self.slice_id is not None:
+            mask_3d = self.mask_data["masks"]
+            outline_3d = self.mask_data["outlines"]
+
+            if mask_3d.ndim == 3:
+                mask_3d[int(self.slice_id),:,:] = mask
+
+            if outline_3d.ndim == 3:
+                outline_3d[int(self.slice_id),:,:] = outline
+
         #Save new state after drawing
-        np.save(mask_path, {"masks": mask, "outlines": outline}, allow_pickle=True)
+        np.save(mask_path, {"masks": mask if self.slice_id is None else mask_3d, "outlines": outline if self.slice_id is None else outline_3d}, allow_pickle=True)
         new_state = (mask.copy(), outline.copy())
         self.load_mask_to_scene()
         self.conn.send("update_mask")

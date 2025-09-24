@@ -262,7 +262,7 @@ class GUI:
                 self.readout_event = multiprocessing.Event()
                 self.readout_event.wait()
             if self.builder_environment.pipeline_gui.pipeline.running:
-                self.builder_environment.pipeline_gui.pipeline.cancel()
+                self.builder_environment.cancel()
                 self.expert_running_event = multiprocessing.Event()
                 self.builder_environment.pipeline_running_event = self.expert_running_event
                 self.expert_running_event.wait()
@@ -299,6 +299,8 @@ class GUI:
                     self.csp.mask_paths[self.csp.window_image_id][self.csp.window_bf_channel] = self.csp.window_mask_path
                     self.directory.update_mask_check(split_data[1])
                     self.page.run_task(self.directory.check_masks)
+                elif split_data[0] == "ready":
+                    pass
                 else:
                     if self.csp.window_image_id == self.csp.image_id and self.csp.window_bf_channel == self.csp.config.get_bf_channel() and self.switch_mask.value:
                         handle_mask_update(self)

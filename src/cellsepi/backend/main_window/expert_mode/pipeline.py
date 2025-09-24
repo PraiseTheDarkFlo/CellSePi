@@ -223,11 +223,6 @@ class Pipeline:
             self.event_manager.notify(PipelineErrorEvent("Cycle in Pipeline",e.args[0]))
             return
         while self.run_order:
-            if self._cancel_event.is_set():
-                self.running = False
-                self.event_manager.notify(PipelineCancelEvent(self.executing))
-                self._cancel_event.clear()
-                return
             self.running = True
             module_name = self.run_order.popleft()
             if show_room is None or module_name in show_room:
@@ -249,6 +244,12 @@ class Pipeline:
                         self._pause_event.clear()
                     module.finished()
 
+                    if self._cancel_event.is_set():
+                        self.running = False
+                        self.event_manager.notify(PipelineCancelEvent(self.executing))
+                        self._cancel_event.clear()
+                        return
+
                 except PipelineRunningException as e:
                     self.running = False
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
@@ -263,8 +264,8 @@ class Pipeline:
         self._pause_event.set()
 
     def cancel(self):
-        self._pause_event.set()
         self._cancel_event.set()
+        self._pause_event.set()
 
 class PipelineRunningException(Exception):
     """

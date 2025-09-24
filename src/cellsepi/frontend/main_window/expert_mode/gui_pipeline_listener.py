@@ -261,6 +261,9 @@ class PipelineCancelListener(EventListener):
         self.builder.running_module.update()
         self.builder.category_icon.color = ft.Colors.GREEN
         self.builder.category_icon.update()
+        self.builder.resume_button.visible = False
+        self.builder.resume_button.update()
+        self.builder.cancel_button.visible = True
         self.builder.cancel_button.disabled = False
         self.builder.cancel_button.color = ft.Colors.RED
         self.builder.cancel_button.update()

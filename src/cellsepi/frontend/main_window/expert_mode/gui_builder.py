@@ -126,28 +126,13 @@ class Builder:
             opacity=0.75
         )
 
-        def cancel():
-            self.pipeline_gui.pipeline.cancel()
-            self.running_module.value = f"Pipeline"
-            self.running_module.update()
-            self.category_icon.color = ft.Colors.RED
-            self.category_icon.update()
-            self.cancel_button.disabled = True
-            self.cancel_button.color = None
-            self.cancel_button.update()
-            self.info_text.value = ""
-            self.info_text.spans = [
-                ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
-                ft.TextSpan("...", style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
-            self.info_text.update()
-            self.page.update()
 
         self.cancel_button = ft.ElevatedButton(  # button to cancel the pipeline
             text="Cancel",
             tooltip="Cancel the pipeline",
             icon=ft.Icons.STOP_CIRCLE_ROUNDED,
             color=ft.Colors.RED,
-            on_click=lambda e: cancel(),
+            on_click=lambda e: self.cancel(),
             visible=False,
             opacity=0.75
         )
@@ -240,6 +225,22 @@ class Builder:
                     left=self.pipeline_gui.show_room_container.left,blur=10,visible=True if self.pipeline_gui.show_room_max_page_number > 1 else False)
         self.builder_page_stack.controls.insert(1, self.switch_pages)
         self.add_all_listeners()
+
+    def cancel(self):
+        self.pipeline_gui.pipeline.cancel()
+        self.running_module.value = f"Pipeline"
+        self.running_module.update()
+        self.category_icon.color = ft.Colors.RED
+        self.category_icon.update()
+        self.cancel_button.disabled = True
+        self.cancel_button.color = None
+        self.cancel_button.update()
+        self.info_text.value = ""
+        self.info_text.spans = [
+            ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+            ft.TextSpan("...", style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
+        self.info_text.update()
+        self.page.update()
 
     def run(self,ignore_check=False):
         show_room_names = [m.name for m in self.pipeline_gui.show_room_modules]

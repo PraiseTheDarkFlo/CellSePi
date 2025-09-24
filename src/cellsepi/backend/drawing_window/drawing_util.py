@@ -1,13 +1,14 @@
 import numpy as np
 from PyQt5.QtCore import QPointF
 
-def mask_shifting(mask_data,deleted_mask_id:int):
+def mask_shifting(mask_data,deleted_mask_id:int,slice_id:int|None = None):
     """
     Shifts the mask when a mask got deleted to restore an order without gaps.
 
     Args:
         mask_data (np.array): the mask data.
         deleted_mask_id (int): the id of the deleted mask.
+        slice_id (int): the id of the slice when the mask is 3d.
 
     Raises:
           ValueError: if the deleted_mask_id is smaller or equal to 0.
@@ -18,8 +19,19 @@ def mask_shifting(mask_data,deleted_mask_id:int):
     mask = mask_data["masks"]
     outline = mask_data["outlines"]
 
-    mask[mask>deleted_mask_id] -= 1
-    outline[outline>deleted_mask_id] -= 1
+    if mask.ndim == 3:
+        mask_slice = np.take(mask, int(slice_id if slice_id is not None else 0), axis=0)
+        mask_slice[mask_slice>deleted_mask_id] -= 1
+        mask[int(slice_id if slice_id is not None else 0), :, :] = mask_slice
+    else:
+        mask[mask > deleted_mask_id] -= 1
+
+    if outline.ndim == 3:
+        outline_slice = np.take(outline, int(slice_id if slice_id is not None else 0), axis=0)
+        outline_slice[outline_slice>deleted_mask_id] -= 1
+        outline[int(slice_id if slice_id is not None else 0), :, :] = outline_slice
+    else:
+        outline[outline>deleted_mask_id] -= 1
 
 def search_free_id(mask,outline):
     """

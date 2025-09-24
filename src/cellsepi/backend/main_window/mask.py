@@ -52,11 +52,9 @@ class Mask:
         """
         buffer= BytesIO()
         if mask.ndim == 3:
-            mask = np.transpose(mask, (1, 2, 0))
-            mask = np.max(mask, axis=2)
+            mask = np.max(mask, axis=0)
         if outline.ndim == 3:
-            outline = np.transpose(outline, (1, 2, 0))
-            outline = np.max(outline, axis=2)
+            outline = np.max(outline, axis=0)
 
         image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r,g,b = self.csp.config.get_mask_color()

@@ -54,6 +54,7 @@ class Review(Module, ABC):
         self._control_menu: ft.Container | None = None
         self._main_image_view: ft.Card | None = None
         self._settings: ft.Stack | None = None
+        self._ready = threading.Event()
         self.pipe_listener_running = True
         self.queue = None
         self.parent_conn, self.child_conn = None, None
@@ -228,7 +229,19 @@ class Review(Module, ABC):
         self._event_manager = value
 
     def run(self):
+        self.event_manager.notify(ProgressEvent(percent=0, process=f"Preparing: starting"))
+        self._ready.clear()
+        self.queue = multiprocessing.Queue()
+        parent_conn, child_conn = multiprocessing.Pipe()
+        self.parent_conn, self.child_conn = parent_conn, child_conn
+        self.process_drawing_window = self.start_drawing_window()
+        self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
+        self.thread.start()
         #reset
+        self.window_image_id = ""
+        self.window_bf_channel = ""
+        self.window_channel_id = ""
+        self.window_mask_path = ""
         self._icon_x = {}
         self._icon_check = {}
         self.image_id = None
@@ -243,17 +256,9 @@ class Review(Module, ABC):
         self._edit_allowed = True
 
         self.pipe_listener_running = True
-        self.queue = multiprocessing.Queue()
-        parent_conn, child_conn = multiprocessing.Pipe()
-        self.parent_conn, self.child_conn = parent_conn, child_conn
-        self.process_drawing_window = self.start_drawing_window()
-        self.window_image_id = ""
-        self.window_bf_channel = ""
-        self.window_channel_id = ""
-        self.window_mask_path = ""
-        self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
-        self.thread.start()
-
+        self._ready.wait()
+        self._ready.clear()
+        self.event_manager.notify(ProgressEvent(percent=100, process=f"Preparing: finished"))
         self.event_manager.notify(ProgressEvent(percent=0, process=f"Loading Images: Starting"))
         src  = convert_tiffs_to_png_parallel(self.inputs["image_paths"].data)
         n_series = len(src)
@@ -415,19 +420,15 @@ class Review(Module, ABC):
 
         if mask.ndim == 3:
             if self._slider_2_5d.opacity == 1.0:
-                mask = np.transpose(mask, (1, 2, 0))
-                mask = np.take(mask, int(self._slider_2_5d.value), axis=2)
+                mask = np.take(mask, int(self._slider_2_5d.value), axis=0)
             else:
-                mask = np.transpose(mask, (1, 2, 0))
-                mask = np.max(mask, axis=2)
+                mask = np.max(mask, axis=0)
 
         if outline.ndim == 3:
             if self._slider_2_5d.opacity == 1.0:
-                outline = np.transpose(outline, (1, 2, 0))
-                outline = np.take(outline, int(self._slider_2_5d.value), axis=2)
+                outline = np.take(outline, int(self._slider_2_5d.value), axis=0)
             else:
-                outline = np.transpose(outline, (1, 2, 0))
-                outline = np.max(outline, axis=2)
+                outline = np.max(outline, axis=0)
 
         image_mask = np.zeros(shape=(mask.shape[0], mask.shape[1], 4), dtype=np.uint8)
         r,g,b = self.mask_color
@@ -543,6 +544,8 @@ class Review(Module, ABC):
                     self.inputs["mask_paths"].data[self.window_image_id][
                         self.window_bf_channel] = self.window_mask_path
                     self.update_mask_check(split_data[1])
+                elif split_data[0] == "ready":
+                    self._ready.set()
                 else:
                     if self.window_image_id == self.image_id and self.window_bf_channel == self.user_segmentation_channel:
                         self.update_main_image(self.image_id,self.channel_id)
