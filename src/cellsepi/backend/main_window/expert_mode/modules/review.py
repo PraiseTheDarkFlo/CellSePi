@@ -29,7 +29,7 @@ class Review(Module, ABC):
         self._event_manager: EventManager | None = None
         self._inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]],
-            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict,True), #dict[str,dict[str,str]]
         }
         self._outputs = {
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
@@ -42,6 +42,7 @@ class Review(Module, ABC):
         self._image_gallery = ft.ListView()
         self.user_segmentation_channel: str = "2"
         self.user_2_5d = False
+        self.user_mask_suffix = "_seg"
         self._container_mask: ft.Container | None = None
         self._main_image: ft.Container | None = None
         self._interactive_viewer:FletExtendedInteractiveViewer | None = None
@@ -136,6 +137,21 @@ class Review(Module, ABC):
                 text_style=ft.TextStyle(color=ft.Colors.BLACK,weight=ft.FontWeight.BOLD),
                 cursor_color=ft.Colors.BLACK,
             )
+            self._text_field_mask_suffix = ft.TextField(
+                border_color=ft.Colors.WHITE60,
+                value=self.user_mask_suffix,
+                on_blur=lambda e: self.on_change_ms(e),
+                tooltip="Mask suffix",
+                height=30, width=70, content_padding=ft.padding.symmetric(0, 5),
+                fill_color=ft.Colors.WHITE38,
+                filled=True,
+                text_align=ft.TextAlign.CENTER,
+                border_width=2,
+                focused_border_color=ft.Colors.WHITE,
+                text_style=ft.TextStyle(color=ft.Colors.BLACK, weight=ft.FontWeight.BOLD),
+                cursor_color=ft.Colors.BLACK,
+                visible= False
+            )
             self._slider_2_5d = ft.Slider(
                 min=0, max=100, divisions=None, label="Slice: {value}", on_change=lambda e: self.slider_change(),
                 opacity=1.0 if self.user_2_5d else 0.0, height=20,
@@ -160,6 +176,7 @@ class Review(Module, ABC):
                                   on_click=lambda e: self._interactive_viewer.reset(400),
                                   tooltip="Reset view", hover_color=ft.Colors.WHITE12),
                     self._text_field_segmentation_channel,
+                    self._text_field_mask_suffix,
                     self._edit_button,
                     self._mask_button,
                     self._slider_2d,
@@ -201,6 +218,8 @@ class Review(Module, ABC):
         return self.dismiss
 
     def finished(self):
+        self._text_field_mask_suffix.visible = False
+        self._text_field_mask_suffix.update()
         self._edit_allowed = False
         self._edit_button.icon_color = ft.Colors.BLACK12
         self._edit_button.disabled = True
@@ -238,6 +257,8 @@ class Review(Module, ABC):
         self.thread = threading.Thread(target=self.child_conn_listener, daemon=True)
         self.thread.start()
         #reset
+        self._text_field_mask_suffix.visible = False if self.inputs["mask_paths"].data is None else True
+        self._text_field_mask_suffix.update()
         self.window_image_id = ""
         self.window_bf_channel = ""
         self.window_channel_id = ""
@@ -470,6 +491,18 @@ class Review(Module, ABC):
             self.update_main_image(self.image_id, self.channel_id)
         self.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
+    def on_change_ms(self,e):
+        if str(e.control.value) == "":
+            self.settings.page.open(
+                ft.SnackBar(
+                    ft.Text(f"Mask suffix must be not empty!",
+                            color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.RED))
+            self.settings.page.update()
+            return
+        self.user_mask_suffix = str(e.control.value)
+        self.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
+
     @classmethod
     def update_class(cls):
         for instance in cls._instances:
@@ -495,7 +528,7 @@ class Review(Module, ABC):
         Sets queue for drawing window with the current selected image and mask.
         """
         adjusted_image_path = os.path.join(
-            Path(self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel]).parent,
+            Path(self.inputs["image_paths"].data[self.image_id][self.user_segmentation_channel]).parent,
             "adjusted_image.png")
         image_data = base64.b64decode(self._main_image.content.src_base64)
         buffer = BytesIO(image_data)
@@ -521,9 +554,9 @@ class Review(Module, ABC):
             image_path = self.inputs["image_paths"].data[self.image_id][self.window_bf_channel]
             directory, filename = os.path.split(image_path)
             name, _ = os.path.splitext(filename)
-            mask_file_name = f"{name}_seg.npy" #TODO user_mask_suffix
+            mask_file_name = f"{name}{self.user_mask_suffix}.npy"
             self.window_mask_path = os.path.join(directory, mask_file_name)
-            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value if not self._slider_2_5d.disabled else None))
+            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value if not self._slider_2_5d.disabled else None,self._slider_2_5d.max + 1 if not self._slider_2_5d.disabled else None))
         else:
             self._settings.page.open(ft.SnackBar(
                 ft.Text(f"Selected bright-field channel {self.window_bf_channel} has no image!")))
