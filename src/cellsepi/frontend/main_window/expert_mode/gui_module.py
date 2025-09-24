@@ -76,19 +76,19 @@ class ModuleGUI(ft.GestureDetector):
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.copy_module(),
                                                                                                                                                                            tooltip="Currently paused to continue\npress the resume button", hover_color=ft.Colors.WHITE12)], top=1,
-                                      left=MODULE_WIDTH - 60, visible=False, width=40, height=40)
+                                      left=MODULE_WIDTH - 42, visible=False, width=40, height=40)
         self.executing_button = ft.Stack([ft.Container(bgcolor=ft.Colors.BLACK26, width=30, height=30, top=5, right=5, border_radius=ft.border_radius.all(45)), ft.IconButton(icon=ft.Icons.PAUSE_ROUNDED, icon_color=ft.Colors.WHITE, disabled=True,
                                                                                                                                                                               style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.copy_module(),
                                                                                                                                                                               tooltip="Currently executed", hover_color=ft.Colors.WHITE12)], top=1,
-                                         left=MODULE_WIDTH - 60, visible=False, width=40, height=40)
+                                         left=MODULE_WIDTH - 42, visible=False, width=40, height=40)
         self.waiting_button = ft.Stack([ft.Container(bgcolor=ft.Colors.BLACK26,width=30,height=30,top=5,right=5,border_radius=ft.border_radius.all(45)),ft.IconButton(icon=ft.Icons.HOURGLASS_EMPTY_ROUNDED, icon_color=ft.Colors.WHITE,disabled=True,
                                           style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.copy_module(),
                                           tooltip="Waiting for execution", hover_color=ft.Colors.WHITE12)],top=1,
-                                          left=MODULE_WIDTH - 60,visible=False,width=40,height=40)
+                                          left=MODULE_WIDTH - 42,visible=False,width=40,height=40)
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
                                                  style=ft.ButtonStyle(
@@ -142,7 +142,7 @@ class ModuleGUI(ft.GestureDetector):
                                           visible=False, width=48, height=48, top=1,
                                           left=MODULE_WIDTH - 75)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-90)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -205,13 +205,14 @@ class ModuleGUI(ft.GestureDetector):
         self.copy_button.disabled = True
         self.copy_button.icon_color = DISABLED_BUTTONS_COLOR
         if self.show_ports:
-            self.ports_in_out_clicked()
+            self.ports_in_out_clicked(disable=True)
+        else:
+            self.ports_in_out_button.disabled = True
+            self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
+            self.ports_in_out_button.update()
         self.connect_button.update()
         self.options_button.update()
         self.copy_button.update()
-        self.ports_in_out_button.disabled = True
-        self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
-        self.ports_in_out_button.update()
 
     def enable_pause(self):
         self.options_button.disabled = False
@@ -314,10 +315,10 @@ class ModuleGUI(ft.GestureDetector):
         self.connect_button.update()
         self.pipeline_gui.page.update()
 
-    def ports_in_out_clicked(self, update: bool = True):
-        self.pipeline_gui.page.run_task(self.async_ports_in_out_clicked, update=update)
+    def ports_in_out_clicked(self, update: bool = True,disable:bool = False):
+        self.pipeline_gui.page.run_task(self.async_ports_in_out_clicked, update=update,disable=disable)
 
-    async def async_ports_in_out_clicked(self, update:bool=True):
+    async def async_ports_in_out_clicked(self, update:bool=True,disable:bool=False):
         """
         Handles the event when the show ports button gets pressed.
         """
@@ -338,8 +339,14 @@ class ModuleGUI(ft.GestureDetector):
             self.ports_column.update()
             self.show_ports = True
         else:
-            self.ports_in_out_button.icon_color = ft.Colors.WHITE60
-            self.ports_in_out_button.update()
+            if not disable:
+                self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+                self.ports_in_out_button.update()
+            else:
+                self.ports_in_out_button.disabled = True
+                self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
+                self.ports_in_out_button.update()
+
             self.ports_column.scroll=ft.ScrollMode.HIDDEN
             self.ports_column.update()
             self.ports_container.height = 0
