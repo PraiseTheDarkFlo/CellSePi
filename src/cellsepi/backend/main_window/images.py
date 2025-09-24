@@ -568,6 +568,9 @@ class BatchImageReadout(Notifier):
             mask_data = np.load(mask_path,allow_pickle=True).item()
             mask = mask_data["masks"]
 
+            if mask.ndim == 3:
+                mask = np.transpose(mask, (1, 2, 0))
+
             cell_ids = np.unique(mask)
             if len(cell_ids) == 1:
                 if event_manager is None:
@@ -606,7 +609,6 @@ class BatchImageReadout(Notifier):
 
                     cur_row_entries[iX][channel_name] = cell_val
                     cur_row_entries[iX][f"background {channel_name}"] = background_val
-
             row_entries += cur_row_entries
 
             kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",

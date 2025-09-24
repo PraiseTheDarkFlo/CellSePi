@@ -218,6 +218,7 @@ class Review(Module, ABC):
         return self.dismiss
 
     def finished(self):
+        self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
         self._text_field_mask_suffix.visible = False
         self._text_field_mask_suffix.update()
         self._edit_allowed = False
