@@ -23,7 +23,7 @@ class Review(Module, ABC):
     mask_opacity = 128
     outline_color = (0, 255, 0)
     _instances = []
-    _gui_config = ModuleGuiConfig("Review",Categories.MANUAL,"This module allows you to manually review the given masks.")
+    _gui_config = ModuleGuiConfig("Review",Categories.MANUAL,"This module allows you to manually review and edit masks. Also you can create new masks when no mask are given.")
     def __init__(self, module_id: str) -> None:
         self._module_id = module_id
         self._event_manager: EventManager | None = None
@@ -556,7 +556,11 @@ class Review(Module, ABC):
             name, _ = os.path.splitext(filename)
             mask_file_name = f"{name}{self.user_mask_suffix}.npy"
             self.window_mask_path = os.path.join(directory, mask_file_name)
-            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value if not self._slider_2_5d.disabled else None,self._slider_2_5d.max + 1 if not self._slider_2_5d.disabled else None))
+
+            i = len(self.image_id)
+            j = len(name) - len(self.window_bf_channel)
+            channel_prefix = name[i:j]
+            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,channel_prefix,self._slider_2_5d.value if not self._slider_2_5d.disabled else None,self._slider_2_5d.max + 1 if not self._slider_2_5d.disabled else None))
         else:
             self._settings.page.open(ft.SnackBar(
                 ft.Text(f"Selected bright-field channel {self.window_bf_channel} has no image!")))

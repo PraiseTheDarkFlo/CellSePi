@@ -236,15 +236,14 @@ class Pipeline:
                     self.executing = module_name
                     self.event_manager.notify(ModuleStartedEvent(module_name))
                     pause = module.run() #if the run of a module returns True, the module wants to stop the pipeline.
-                    self.executing = ""
-                    self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if pause and not self._cancel_event.is_set():
                         self.event_manager.notify(PipelinePauseEvent(module_name))
                         self._continue_event.wait()
                         self.event_manager.notify(PipelinePauseEvent(module_name,True))
                         self._continue_event.clear()
                     module.finished()
-
+                    self.executing = ""
+                    self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if self._cancel_event.is_set():
                         self.running = False
                         self.event_manager.notify(PipelineCancelEvent(self.executing))

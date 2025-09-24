@@ -213,6 +213,16 @@ class ModuleGUI(ft.GestureDetector):
         self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
         self.ports_in_out_button.update()
 
+    def enable_pause(self):
+        self.options_button.disabled = False
+        self.options_button.icon_color = ft.Colors.WHITE60
+        self.options_button.update()
+
+    def disable_pause(self):
+        self.options_button.disabled = True
+        self.options_button.icon_color = DISABLED_BUTTONS_COLOR
+        self.options_button.update()
+
     def enable_tools(self):
         self.warning_satisfied.disabled = False
         self.warning_satisfied.update()

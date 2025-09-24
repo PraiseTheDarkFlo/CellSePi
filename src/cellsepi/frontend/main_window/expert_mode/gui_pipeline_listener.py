@@ -167,8 +167,11 @@ class PipelinePauseListener(EventListener):
 
     def _update(self, event: Event) -> None:
         if event.resume:
+            self.builder.pipeline_gui.modules[event.module_id].disable_pause()
             self.builder.pipeline_gui.modules[event.module_id].paused_button.visible = False
             self.builder.pipeline_gui.modules[event.module_id].paused_button.update()
+            self.builder.pipeline_gui.modules[event.module_id].executing_button.visible = True
+            self.builder.pipeline_gui.modules[event.module_id].executing_button.update()
             self.builder.info_text.value = self.last_info_text
             self.builder.info_text.spans = self.last_info_spans
             self.builder.info_text.update()
@@ -180,8 +183,11 @@ class PipelinePauseListener(EventListener):
             self.builder.resume_button.update()
             return
 
+        self.builder.pipeline_gui.modules[event.module_id].enable_pause()
         self.builder.pipeline_gui.modules[event.module_id].paused_button.visible = True
         self.builder.pipeline_gui.modules[event.module_id].paused_button.update()
+        self.builder.pipeline_gui.modules[event.module_id].executing_button.visible = False
+        self.builder.pipeline_gui.modules[event.module_id].executing_button.update()
         self.last_running_module = self.builder.running_module.value
         self.builder.running_module.value = f"Paused: {self.builder.running_module.value}"
         self.builder.running_module.update()
