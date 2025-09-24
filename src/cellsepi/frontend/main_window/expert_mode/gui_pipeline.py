@@ -58,6 +58,10 @@ class PipelineGUI(ft.Stack):
         self.loading = True
         for module_dict in self.pipeline_dict["modules"]:
             type_map = {mt.value.gui_config().name: mt for mt in ModuleType}
+            if module_dict["module_name"] not in type_map:
+                self.loading = False
+                self.pipeline.event_manager.notify(OnPipelineChangeEvent(f"Pipeline {self.pipeline_name} loaded."))
+                raise ValueError(f"Module {module_dict['module_name']} not supported!")
             self.add_module(module_type=type_map[module_dict["module_name"]], x=module_dict["position"]["x"], y=module_dict["position"]["y"], module_id=module_dict["module_id"],module_dict=module_dict)
 
         for pipe in self.pipeline_dict["pipes"]:
@@ -204,12 +208,10 @@ class PipelineGUI(ft.Stack):
         for module in self.modules.values():
             self.lines_gui.update_delete_buttons(module)
             module.enable_tools()
-            module.start_button.visible = True
-            module.start_button.update()
             module.delete_button.visible = True
             module.delete_button.update()
-            module.pause_button.visible = False
-            module.pause_button.update()
+            module.executing_button.visible = False
+            module.executing_button.update()
             module.waiting_button.visible = False
             module.waiting_button.update()
         self.check_for_valid_all_modules()

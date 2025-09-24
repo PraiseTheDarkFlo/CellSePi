@@ -105,24 +105,12 @@ class Builder:
             opacity=0.75,
         )
 
-        def resume():
-            self.pipeline_gui.pipeline.resume()
-            self.running_module.value = self.running_module.value.removeprefix("Paused: ")
-            self.running_module.update()
-            self.cancel_button.visible = True
-            self.cancel_button.update()
-            self.resume_button.visible = False
-            self.resume_button.update()
-            self.info_text.text = ""
-            self.info_text.spans = []
-            self.info_text.update()
-
         self.resume_button = ft.ElevatedButton(  # button to resume the pipeline
             text="Resume",
             tooltip="Resume the pipeline",
             icon=ft.Icons.PLAY_CIRCLE,
             visible=False,
-            on_click=lambda e: resume(),
+            on_click=lambda e: self.pipeline_gui.pipeline.resume(),
             opacity=0.75
         )
 
@@ -283,10 +271,8 @@ class Builder:
         for module in self.pipeline_gui.modules.values():
             self.pipeline_gui.lines_gui.update_delete_buttons(module,True)
             module.waiting_button.visible = True
-            module.start_button.visible = False
             module.delete_button.visible = False
             module.waiting_button.update()
-            module.start_button.update()
             module.delete_button.update()
             module.disable_tools()
             module.error_stack.visible = False

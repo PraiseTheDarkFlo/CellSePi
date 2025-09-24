@@ -83,6 +83,7 @@ class PipelineStorage:
 
         pipeline_dict = {
             "version": self.version,
+            "version": self.version,
             "modules": modules,
             "pipes": pipes,
             "view": view

@@ -71,24 +71,24 @@ class ModuleGUI(ft.GestureDetector):
                                                           shape=ft.RoundedRectangleBorder(radius=12),
                                                       ), on_click=lambda e: self.copy_module(),
                                             tooltip="Copy module", hover_color=ft.Colors.WHITE12,)
-        self.start_button = ft.IconButton(icon=ft.Icons.PLAY_ARROW, icon_color=DISABLED_BUTTONS_COLOR, disabled=True,
-                                          style=ft.ButtonStyle(
-                                             shape=ft.RoundedRectangleBorder(radius=12),
-                                         ), on_click=lambda e: self.copy_module(),
-                                          tooltip="Start pipeline from here", hover_color=ft.Colors.WHITE12, )
-        self.pause_button = ft.IconButton(icon=ft.Icons.PAUSE_ROUNDED, icon_color=ft.Colors.WHITE60,disabled=True,
+        self.paused_button = ft.Stack([ft.Container(bgcolor=ft.Colors.BLACK26, width=30, height=30, top=5, right=5, border_radius=ft.border_radius.all(45)), ft.IconButton(icon=ft.Icons.PLAY_ARROW, icon_color=ft.Colors.WHITE, disabled=True,
+                                                                                                                                                                           style=ft.ButtonStyle(
+                                              shape=ft.RoundedRectangleBorder(radius=12),
+                                          ), on_click=lambda e: self.copy_module(),
+                                                                                                                                                                           tooltip="Currently paused to continue\npress the resume button", hover_color=ft.Colors.WHITE12)], top=1,
+                                      left=MODULE_WIDTH - 60, visible=False, width=40, height=40)
+        self.executing_button = ft.Stack([ft.Container(bgcolor=ft.Colors.BLACK26, width=30, height=30, top=5, right=5, border_radius=ft.border_radius.all(45)), ft.IconButton(icon=ft.Icons.PAUSE_ROUNDED, icon_color=ft.Colors.WHITE, disabled=True,
+                                                                                                                                                                              style=ft.ButtonStyle(
+                                              shape=ft.RoundedRectangleBorder(radius=12),
+                                          ), on_click=lambda e: self.copy_module(),
+                                                                                                                                                                              tooltip="Currently executed", hover_color=ft.Colors.WHITE12)], top=1,
+                                         left=MODULE_WIDTH - 60, visible=False, width=40, height=40)
+        self.waiting_button = ft.Stack([ft.Container(bgcolor=ft.Colors.BLACK26,width=30,height=30,top=5,right=5,border_radius=ft.border_radius.all(45)),ft.IconButton(icon=ft.Icons.HOURGLASS_EMPTY_ROUNDED, icon_color=ft.Colors.WHITE,disabled=True,
                                           style=ft.ButtonStyle(
                                               shape=ft.RoundedRectangleBorder(radius=12),
                                           ), on_click=lambda e: self.copy_module(),
-                                          tooltip="Pause pipeline", hover_color=ft.Colors.WHITE12, visible=False)
-        self.waiting_button = ft.IconButton(icon=ft.Icons.HOURGLASS_EMPTY_ROUNDED, icon_color=ft.Colors.WHITE60,disabled=True,
-                                          style=ft.ButtonStyle(
-                                              shape=ft.RoundedRectangleBorder(radius=12),
-                                          ), on_click=lambda e: self.copy_module(),
-                                          tooltip="Waiting for execution", hover_color=ft.Colors.WHITE12, visible=False)
-
-
-        self.state_stack = ft.Stack([self.start_button,self.pause_button,self.waiting_button])
+                                          tooltip="Waiting for execution", hover_color=ft.Colors.WHITE12)],top=1,
+                                          left=MODULE_WIDTH - 60,visible=False,width=40,height=40)
         self.show_ports = False
         self.ports_in_out_button = ft.IconButton(icon=ft.Icons.SYNC_ALT_ROUNDED, icon_color=ft.Colors.WHITE60,
                                                  style=ft.ButtonStyle(
@@ -98,7 +98,7 @@ class ModuleGUI(ft.GestureDetector):
 
         self.tools = ft.Container(ft.Row(
                                             [
-                                                self.connect_button,self.options_button,self.ports_in_out_button,self.copy_button,self.state_stack,
+                                                self.connect_button,self.options_button,self.ports_in_out_button,self.copy_button,
                                             ],tight=True,spacing=7
                                         ),bgcolor=ft.Colors.BLACK12,expand=True,width=MODULE_WIDTH
                                         )
@@ -142,7 +142,7 @@ class ModuleGUI(ft.GestureDetector):
                                           visible=False, width=48, height=48, top=1,
                                           left=MODULE_WIDTH - 75)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-90)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -150,7 +150,7 @@ class ModuleGUI(ft.GestureDetector):
                                                 [
                                                 ft.Text(value=self.module.gui_config().name,
                                                     weight=ft.FontWeight.BOLD,
-                                                    width=MODULE_WIDTH-70,
+                                                    width=MODULE_WIDTH-80,
                                                     height=20,color=ft.Colors.BLACK,
                                                     overflow=ft.TextOverflow.ELLIPSIS),
                                                ],height=20
@@ -176,11 +176,14 @@ class ModuleGUI(ft.GestureDetector):
             self.ports_container,
             ft.Column([ft.Stack([
                 self.module_container,
-                ft.Container(content=self.delete_button,margin=ft.margin.only(top=-7, left=7),alignment=ft.alignment.top_right,width=MODULE_WIDTH,
-                             ),
+                ft.Container(content=self.delete_button, margin=ft.margin.only(top=-7, left=7),
+                             alignment=ft.alignment.top_right, width=MODULE_WIDTH, ),
+                self.executing_button,
+                self.waiting_button,
+                self.paused_button,
                 self.warning_satisfied,
                 self.error_stack,
-                self.click_gesture
+                self.click_gesture,
         ]
         ),
         self.connection_ports
@@ -191,6 +194,8 @@ class ModuleGUI(ft.GestureDetector):
         self.page_overlay = PageOverlay(self.pipeline_gui.page,self.module.settings,self.close_options)
 
     def disable_tools(self):
+        self.warning_satisfied.disabled = True
+        self.warning_satisfied.update()
         if self.port_selection:
             self.connect_clicked()
         self.connect_button.disabled=True
@@ -209,6 +214,8 @@ class ModuleGUI(ft.GestureDetector):
         self.ports_in_out_button.update()
 
     def enable_tools(self):
+        self.warning_satisfied.disabled = False
+        self.warning_satisfied.update()
         self.connect_button.disabled = False
         self.connect_button.icon_color = ft.Colors.WHITE60
         self.options_button.disabled = False
@@ -355,9 +362,9 @@ class ModuleGUI(ft.GestureDetector):
         self.click_container.update()
 
     def set_running(self):
-        self.pause_button.visible = True
+        self.executing_button.visible = True
         self.waiting_button.visible = False
-        self.pause_button.update()
+        self.executing_button.update()
         self.waiting_button.update()
 
     def get_ports_row(self):

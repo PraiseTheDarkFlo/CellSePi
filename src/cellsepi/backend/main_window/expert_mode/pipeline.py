@@ -21,7 +21,7 @@ class Pipeline:
         self.run_order: deque[str] = deque()
         self.executing: str = ""
         self.running: bool = False
-        self._pause_event = threading.Event()
+        self._continue_event = threading.Event()
         self._cancel_event = threading.Event()
         self.found: bool = False
         self.event_manager: EventManager = EventManager()
@@ -216,7 +216,7 @@ class Pipeline:
         Executes the steps of the Pipeline.
         Skips steps of the Pipeline if min. one of the mandatory inputs is None.
         """
-        self._pause_event.clear()
+        self._continue_event.clear()
         try:
             self.run_order = self.get_run_order()
         except RuntimeError as e:
@@ -240,8 +240,9 @@ class Pipeline:
                     self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if pause and not self._cancel_event.is_set():
                         self.event_manager.notify(PipelinePauseEvent(module_name))
-                        self._pause_event.wait()
-                        self._pause_event.clear()
+                        self._continue_event.wait()
+                        self.event_manager.notify(PipelinePauseEvent(module_name,True))
+                        self._continue_event.clear()
                     module.finished()
 
                     if self._cancel_event.is_set():
@@ -261,11 +262,11 @@ class Pipeline:
         self.running = False
 
     def resume(self):
-        self._pause_event.set()
+        self._continue_event.set()
 
     def cancel(self):
         self._cancel_event.set()
-        self._pause_event.set()
+        self._continue_event.set()
 
 class PipelineRunningException(Exception):
     """

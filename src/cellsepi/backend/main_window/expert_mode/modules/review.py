@@ -517,9 +517,13 @@ class Review(Module, ABC):
         self.window_bf_channel = self.user_segmentation_channel
         self.window_channel_id = self.channel_id
 
-        if self.window_bf_channel in self.inputs["mask_paths"].data[self.image_id]:#check if the bf has an image
-            self.window_mask_path = self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel]
-            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value))
+        if self.window_bf_channel in self.inputs["image_paths"].data[self.image_id]:#check if the bf has an image
+            image_path = self.inputs["image_paths"].data[self.image_id][self.window_bf_channel]
+            directory, filename = os.path.split(image_path)
+            name, _ = os.path.splitext(filename)
+            mask_file_name = f"{name}_seg.npy" #TODO user_mask_suffix
+            self.window_mask_path = os.path.join(directory, mask_file_name)
+            self.queue.put((self.mask_color, self.outline_color,self.mask_opacity, self.user_segmentation_channel, self.inputs["mask_paths"].data, self.window_image_id, adjusted_image_path, self.window_mask_path,self.window_channel_id,"test",self._slider_2_5d.value if not self._slider_2_5d.disabled else None))
         else:
             self._settings.page.open(ft.SnackBar(
                 ft.Text(f"Selected bright-field channel {self.window_bf_channel} has no image!")))

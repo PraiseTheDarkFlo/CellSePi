@@ -42,8 +42,9 @@ class DragAndDropEvent(Event):
         self.drag = drag #False if it is no longer dragging or not valid dragging
 
 class PipelinePauseEvent(Event):
-    def __init__(self,module_id: str):
+    def __init__(self,module_id: str,resume: bool= False):
         self.module_id = module_id
+        self.resume = resume
 
 class PipelineCancelEvent(Event):
     def __init__(self,module_id: str):

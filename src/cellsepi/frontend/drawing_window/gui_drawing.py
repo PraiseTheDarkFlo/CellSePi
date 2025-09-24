@@ -181,7 +181,7 @@ class MyQtWindow(QMainWindow):
                 #new mask and image so need for new_canvas
                 new_canvas = DrawingCanvas(mask_color, outline_color, opacity, bf_channel, mask_paths, image_id,
                                            adjusted_image_path,
-                                           self.check_shifting, conn, mask_path, self.canvas.draw_mode,
+                                           self.check_shifting, conn, mask_path,slice_id, self.canvas.draw_mode,
                                            self.canvas.delete_mode,mask_show=self.mask_toggle_button.isChecked())
 
         #replace the old canvas with the new one and update the window
@@ -273,6 +273,7 @@ class Updater(QObject):
         mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path, mask_path, channel_id, channel_prefix = data[:10]
 
         slice_id = data[10] if len(data) > 10 else None #optional 3D slice_id
+        print(f"slice id 1: {slice_id}")
         self.window.set_queue_image(mask_color, outline_color, opacity, bf_channel, mask_paths, image_id, adjusted_image_path,
                                     conn, mask_path, channel_id, channel_prefix,slice_id)
         self.window.setVisible(True)
@@ -546,10 +547,10 @@ class DrawingCanvas(QGraphicsView):
         outline = self.mask_data["outlines"]
 
         if mask.ndim == 3:
-            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            mask = np.take(mask, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         if outline.ndim == 3:
-            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=2)
+            outline = np.take(outline, int(self.slice_id if self.slice_id is not None else 0), axis=0)
 
         # Save current state of the cell for restoration (undo)
         new_mask = mask.copy()
@@ -692,10 +693,17 @@ class DrawingCanvas(QGraphicsView):
 
         if self.bf_channel not in self.mask_paths[self.image_id]:
             pixmap = QPixmap(self.adjusted_image_path)
-            empty_mask = {
-                "masks": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8),
-                "outlines": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8)
-            }
+            if self.slice_id is None:
+                empty_mask = {
+                    "masks": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8),
+                    "outlines": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8)
+                }
+            else:
+                #TODO add max slice
+                empty_mask = {
+                    "masks": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8),
+                    "outlines": np.zeros((pixmap.width(), pixmap.height()), dtype=np.uint8)
+                }
             np.save(self.mask_path, empty_mask)
             self.conn.send(f"new_mask.{self.image_id}")
             self.mask_paths[self.image_id][self.bf_channel] = self.mask_path
@@ -818,6 +826,7 @@ class DrawingCanvas(QGraphicsView):
             if outline_3d.ndim == 3:
                 outline_3d[int(self.slice_id),:,:] = outline
 
+        print(f"test:{self.slice_id}")
         #Save new state after drawing
         np.save(mask_path, {"masks": mask if self.slice_id is None else mask_3d, "outlines": outline if self.slice_id is None else outline_3d}, allow_pickle=True)
         new_state = (mask.copy(), outline.copy())
