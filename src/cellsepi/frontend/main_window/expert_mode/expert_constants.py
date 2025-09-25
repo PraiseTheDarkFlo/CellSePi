@@ -31,6 +31,7 @@ ZOOM_VALUE = 0.20
 BOTTOM_SPACING = 20
 MAIN_ACTIVE_COLOR = ft.Colors.WHITE60
 THROTTLE_UPDATE_LINES = 0.036 #~30FPS
+DEBUG = False
 
 class ModuleType(Enum):
     BATCH_IMAGE_READOUT = BatchImageReadoutModule

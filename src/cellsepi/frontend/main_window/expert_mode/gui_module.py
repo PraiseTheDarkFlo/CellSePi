@@ -1,10 +1,7 @@
 import asyncio
 import textwrap
-from dataclasses import asdict
-from pathlib import Path
 from typing import List, Any, Dict
 
-import flet as ft
 from flet_core.cupertino_colors import WHITE
 
 from cellsepi.backend.main_window.expert_mode.listener import DragAndDropEvent, OnPipelineChangeEvent
@@ -143,17 +140,18 @@ class ModuleGUI(ft.GestureDetector):
                                           left=MODULE_WIDTH - 75)
 
         self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.module_id) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
+        self.name_text = ft.Text(value=self.module.gui_config().name if not DEBUG else self.module_id,
+                                weight=ft.FontWeight.BOLD,
+                                width=MODULE_WIDTH-80,
+                                height=20,color=ft.Colors.BLACK,
+                                overflow=ft.TextOverflow.ELLIPSIS)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
                                         ft.Container(ft.Row(
                                                 [
-                                                ft.Text(value=self.module.gui_config().name,
-                                                    weight=ft.FontWeight.BOLD,
-                                                    width=MODULE_WIDTH-80,
-                                                    height=20,color=ft.Colors.BLACK,
-                                                    overflow=ft.TextOverflow.ELLIPSIS),
-                                               ],height=20
+                                                    self.name_text,
+                                                ],height=20
                                               ),padding=ft.padding.only(left=5, top=5)),
                                             self.tools,
                                        ],
@@ -569,6 +567,8 @@ class ModuleGUI(ft.GestureDetector):
             show_room_id = self.module.get_id_number()
             self.pipeline_gui.pipeline.get_new_module_id(self.module_id)
             self.pipeline_gui.modules[self.module_id] = self
+            if DEBUG:
+                self.name_text.value = self.module_id
             self.pipeline_gui.refill_show_room(self,self.visible,index,show_room_id)
             self.pipeline_gui.page_stack.controls.remove(self)
             self.left = check_left
