@@ -1,5 +1,6 @@
 from test.test_pipeline.dummy_modules import *
-from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe
+from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe, copy_data, IMMUTABLES
+import flet as ft
 import pytest
 
 def test_set_port_wrong():
@@ -20,7 +21,7 @@ def test_pipe_same_modules():
 def test_pipe_same_names():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
     mod2 = DummyModule2(DummyModule2.gui_config().name)
-    mod2._name = mod1.module_id
+    mod2.module_id = mod1.module_id
     with pytest.raises(ValueError):
         Pipe(mod1,mod2,["Port1"])
 
@@ -33,7 +34,7 @@ def test_pipe_wrong_type_mod1():
 
 def test_pipe_source_without_port():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
-    mod1._outputs = {}
+    mod1.outputs = {}
     mod3 = DummyModule3(DummyModule3.gui_config().name)
     pipe = Pipe(mod1, mod3, ["port1"])
     with pytest.raises(KeyError):
@@ -43,7 +44,7 @@ def test_pipe_target_without_port():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
     mod1.outputs["port1"].data = 42
     mod3 = DummyModule3(DummyModule3.gui_config().name)
-    mod3._inputs = {}
+    mod3.inputs = {}
     pipe = Pipe(mod1, mod3, ["port1"])
     with pytest.raises(KeyError):
         pipe.run()
@@ -53,15 +54,14 @@ def test_empty_ports_pipe():
     mod1.outputs["port1"].data = 42
     mod2 = DummyModule2(DummyModule2.gui_config().name)
     with pytest.raises(ValueError):
-        pipe = Pipe(mod1, mod2,[])
+        Pipe(mod1, mod2,[])
 
 def test_none_ports_pipe():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
     mod1.outputs["port1"].data = 42
     mod2 = DummyModule2(DummyModule2.gui_config().name)
     with pytest.raises(ValueError):
-        pipe = Pipe(mod1, mod2, None)
-
+        Pipe(mod1, mod2, None)
 
 def test_correct_pipe():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
@@ -108,3 +108,67 @@ def test_find_no_mandatory_inputs():
     mod1 = DummyModule1(DummyModule1.gui_config().name)
     mandatory_inputs = mod1.get_mandatory_inputs()
     assert mandatory_inputs == [], "Something went wrong when getting the mandatory inputs"
+
+def test_user_attributes():
+    mod1 = DummyModule1(DummyModule1.gui_config().name)
+    user_attr =mod1.get_user_attributes
+    assert user_attr == ["user_test1","user_test2","user_test3","user_test4"] , "Something went wrong when getting the user attributes"
+    assert str(mod1) == f"module_id: '{mod1.gui_config().name}', category: '{mod1.gui_config().category}', module_name: {mod1.gui_config().name}, inputs: {mod1.inputs}, outputs: {mod1.outputs}, user_attributes: {mod1.get_user_attributes}"
+
+def test_setting():
+    mod1 = DummyModule1(DummyModule1.gui_config().name)
+    assert mod1.settings is None, "Settings should be None"
+    mod1._settings = ft.Stack([ft.Text("test")])
+    assert mod1.settings is not None, "Something went wrong when setting settings"
+    mod1.on_settings_dismiss()
+    assert mod1.user_test4 == 5, "Something went wrong when using the on_settings_dismiss function"
+
+
+def test_pipe_formating():
+    mod1 = DummyModule1(DummyModule1.gui_config().name)
+    mod2 = DummyModule2(DummyModule2.gui_config().name)
+    pipe1 = Pipe(mod1, mod2, ["port1"])
+    assert str(pipe1) == f"source: '{mod1.module_id}', target: '{mod2.module_id}', ports: {["port1"]}", "Something went wrong converting pipe to string"
+    assert pipe1.to_dict() == {
+            "source": mod1.module_id,
+            "target": mod2.module_id,
+            "ports": ["port1"],
+        }, "Something went wrong converting pipe to dict"
+
+def _is_copy(original, candidate):
+    if isinstance(original, IMMUTABLES):
+        return True
+    if isinstance(original, (tuple,frozenset)):
+        if not any(_is_mutable_recursive(v) for v in original):
+           return True
+    if original is candidate:
+        return False
+    if original == candidate:
+        return True
+    return False
+
+def _is_mutable_recursive(obj):
+    if isinstance(obj, IMMUTABLES):
+        return False
+    if isinstance(obj, (tuple, frozenset)):
+        return any(_is_mutable_recursive(v) for v in obj)
+    if isinstance(obj, (list, dict, set)):
+        return True
+    return True
+
+def test_copy_data():
+    test_data = [
+        42,  #int -> IMMUTABLES case
+        3.14,  #float -> IMMUTABLES case
+        "hello",  #str -> IMMUTABLES case
+        True,  #bool -> IMMUTABLES case
+        None,  #NoneType -> IMMUTABLES case
+        (1, 2, 3),  # tuple -> deepcopy() case -> IMMUTABLES case
+        ((1,2),3,4), #tuple nested -> deepcopy() case -> copy
+        (((1,[1,2]), 2), 3, 4),  # tuple nested -> deepcopy() case -> copy
+        [1, 2, 3],  #list -> deepcopy() case
+        {"a": 1},  #dict -> deepcopy() case
+        {1, 2, 3},  #set -> deepcopy() case
+    ]
+    for test in test_data:
+        assert _is_copy(test, copy_data(test)) == True, f"Something went wrong when copying data of typen: {type(test).__name__}"

@@ -61,7 +61,7 @@ class EventListener(ABC):
     Subclasses must define the type of event they handle and implement the update logic.
     """
     @abstractmethod
-    def get_event_type(self) -> Type[Event]:
+    def get_event_type(self) -> Type[Event]: #pragma: no cover
         pass
 
     def update(self, event: Event) -> None:
@@ -70,5 +70,5 @@ class EventListener(ABC):
         self._update(event)
 
     @abstractmethod
-    def _update(self, event: Event) -> None:
+    def _update(self, event: Event) -> None: #pragma: no cover
         pass

@@ -3,19 +3,14 @@ import copy
 from cellsepi.backend.main_window.expert_mode.module import Module
 from typing import List
 
+IMMUTABLES = (int, float, str, bool, type(None))
 
 def copy_data(value):
     """
     To take care that no references are transferred between the modules.
     """
-    if isinstance(value, (int, float, str, bool, type(None))):
+    if isinstance(value, IMMUTABLES):
         return value
-
-    if hasattr(value, "copy"):
-        try:
-            return value.copy()
-        except TypeError:
-            pass
 
     return copy.deepcopy(value)
 
@@ -53,7 +48,7 @@ class Pipe:
 
             if out_port.data_type != in_port.data_type:
                 raise TypeError(
-                    f"Type mismatch on port '{port}', source_module provided {out_port.data_type}, output_module provided {in_port.data_type}!")
+                    f"Type mismatch on port '{port}', source_module provided {out_port.data_type.__name__}, output_module provided {in_port.data_type.__name__}!")
 
             in_port.data = copy_data(out_port.data)
 
@@ -61,6 +56,9 @@ class Pipe:
         return f"source: '{self.source_module.module_id}', target: '{self.target_module.module_id}', ports: {self.ports}"
 
     def to_dict(self):
+        """
+        Translates the pipe into a dictionary.
+        """
         return {
             "source": self.source_module.module_id,
             "target": self.target_module.module_id,

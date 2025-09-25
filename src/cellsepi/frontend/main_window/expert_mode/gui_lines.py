@@ -93,7 +93,7 @@ class LinesGUI(canvas.Canvas):
         """
         Adds a line between two modules or updates them if it already exists.
         """
-        key = (source_module_gui.name, target_module_gui.name)
+        key = (source_module_gui.module_id, target_module_gui.module_id)
 
         if key in self.connections:
             del self.connections[key]
@@ -145,7 +145,7 @@ class LinesGUI(canvas.Canvas):
             pass
         disabled = False
         opacity = 1
-        if (source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running:
+        if (source_module_gui.module_id in self.pipeline_gui.pipeline.run_order or target_module_gui.module_id in self.pipeline_gui.pipeline.run_order or source_module_gui.module_id == self.pipeline_gui.pipeline.executing or target_module_gui.module_id == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running:
             disabled = True
             opacity = 0.4
         delete_button = ft.GestureDetector(top=port_y-20,left=port_x-20,on_hover=lambda e:dummy(),content=ft.IconButton(
@@ -165,10 +165,10 @@ class LinesGUI(canvas.Canvas):
         """
         disabled = False
         opacity = 1
-        if ((source_module_gui.name in self.pipeline_gui.pipeline.run_order or target_module_gui.name in self.pipeline_gui.pipeline.run_order or source_module_gui.name == self.pipeline_gui.pipeline.executing or target_module_gui.name == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running) or set_all:
+        if ((source_module_gui.module_id in self.pipeline_gui.pipeline.run_order or target_module_gui.module_id in self.pipeline_gui.pipeline.run_order or source_module_gui.module_id == self.pipeline_gui.pipeline.executing or target_module_gui.module_id == self.pipeline_gui.pipeline.executing) and self.pipeline_gui.pipeline.running) or set_all:
             disabled = True
             opacity = 0.4
-        key = (source_module_gui.name,target_module_gui.name)
+        key = (source_module_gui.module_id,target_module_gui.module_id)
         if key in self.connections:
             delete_button = self.connections[key]["delete_button"]
             delete_button.content.opacity = opacity
@@ -188,7 +188,7 @@ class LinesGUI(canvas.Canvas):
         """
         Removes a line between two modules.
         """
-        key = (source_module_gui.name, target_module_gui.name)
+        key = (source_module_gui.module_id, target_module_gui.module_id)
         conn = self.connections.pop(key, None)
         if conn is not None:
             with self._lock:
@@ -203,9 +203,9 @@ class LinesGUI(canvas.Canvas):
         """
         Updates all lines that are connected to the given module.
         """
-        for pipe in self.pipeline_gui.pipeline.pipes_in[module_gui.module.module_id]:
+        for pipe in self.pipeline_gui.pipeline.pipes_in[module_gui.module_id]:
             self.update_line(self.pipeline_gui.modules[pipe.source_module.module_id],module_gui,pipe.ports)
-        for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module.module_id]:
+        for pipe in self.pipeline_gui.pipeline.pipes_out[module_gui.module_id]:
             self.update_line(module_gui,self.pipeline_gui.modules[pipe.target_module.module_id],pipe.ports)
 
     def update_lines(self,module_gui: ModuleGUI):
@@ -215,9 +215,9 @@ class LinesGUI(canvas.Canvas):
         (for throttling purposes to improve performance during drag/move).
         """
         now = time.time()
-        last = self._last_update_per_module.get(module_gui.name, 0)
+        last = self._last_update_per_module.get(module_gui.module_id, 0)
         if now - last > THROTTLE_UPDATE_LINES:
-            self._last_update_per_module[module_gui.name] = now
+            self._last_update_per_module[module_gui.module_id] = now
             self._update_lines(module_gui)
             self.update_gui()
 

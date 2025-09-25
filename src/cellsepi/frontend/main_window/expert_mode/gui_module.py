@@ -48,7 +48,7 @@ class ModuleGUI(ft.GestureDetector):
                 self.pipeline_gui.show_room_modules.insert(index,self)
         else:
             self.pipeline_gui.modules[self.module.module_id] = self
-            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent(f"Added {self.name} to pipeline_gui.modules."))
+            self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent(f"Added {self.module_id} to pipeline_gui.modules."))
         self.color = self.module.gui_config().category.value
         self.valid = False
         self.wrapped_description = "\n".join(textwrap.wrap(self.module.gui_config().description, width=40))
@@ -114,11 +114,11 @@ class ModuleGUI(ft.GestureDetector):
         self.in_ports_Icons_occupied = {}
         for port in self.module.inputs.values():
             if not port.opt:
-                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=10,right=15,border_radius=ft.border_radius.all(45)),ft.Container(ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!"),bottom=-3,right=-5)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),width=40,height=40)
-                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and is satisfied.")],alignment=ft.alignment.center,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),width=40,height=40)
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=10,right=15,border_radius=ft.border_radius.all(45)),ft.Container(ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is mandatory and has no incoming pipe!"),bottom=-3,right=-5)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.module_id,[port.name]),width=40,height=40)
+                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is mandatory and is satisfied.")],alignment=ft.alignment.center,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.module_id,[port.name]),width=40,height=40)
             else:
-                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=10,right=15,border_radius=ft.border_radius.all(45)),ft.Container(ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is optional and has no incoming pipe!"),bottom=-3,right=-5)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),opacity=0.2,width=40,height=40)
-                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and is satisfied.")],alignment=ft.alignment.center,opacity=0.2,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.name,[port.name]),width=40,height=40)
+                self.in_ports_Icons[port.name] = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=10,right=15,border_radius=ft.border_radius.all(45)),ft.Container(ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Port '{port.name}' is optional and has no incoming pipe!"),bottom=-3,right=-5)],alignment=ft.alignment.center,visible=not self.pipeline_gui.pipeline.check_ports_occupied(self.module_id,[port.name]),opacity=0.2,width=40,height=40)
+                self.in_ports_Icons_occupied[port.name] = ft.Stack([ft.Container(bgcolor=ft.Colors.GREEN,width=30,height=30,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.CHECK,disabled=True,hover_color=ft.Colors.TRANSPARENT,icon_color=WHITE,tooltip=f"Port '{port.name}' is optional and is satisfied.")],alignment=ft.alignment.center,opacity=0.2,visible= self.pipeline_gui.pipeline.check_ports_occupied(self.module_id,[port.name]),width=40,height=40)
 
         in_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE),self.in_ports_Icons[port.name],self.in_ports_Icons_occupied[port.name]]) for port in self.module.inputs.values()],spacing=0)
         out_ports = ft.Column([ft.Row([ft.Text(port.name,width=MODULE_WIDTH/2,weight=ft.FontWeight.BOLD,color=ft.Colors.WHITE)]) for port in self.module.outputs.values()])
@@ -142,7 +142,7 @@ class ModuleGUI(ft.GestureDetector):
                                           visible=False, width=48, height=48, top=1,
                                           left=MODULE_WIDTH - 75)
 
-        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
+        self.warning_satisfied = ft.Stack([ft.Container(bgcolor=WHITE,width=10,height=20,bottom=16,right=23,border_radius=ft.border_radius.all(45)),ft.IconButton(ft.Icons.WARNING_ROUNDED,icon_size=35,disabled=False,hover_color=ft.Colors.TRANSPARENT,icon_color=ft.Colors.RED,tooltip=f"Not all mandatory inputs are satisfied!",on_click=lambda e:self.ports_in_out_clicked(),highlight_color=ft.Colors.TRANSPARENT,padding=ft.padding.all(2))],visible=not self.pipeline_gui.pipeline.check_module_satisfied(self.module_id) and not show_mode,width=48,height=48,top=1,left=MODULE_WIDTH-75)
         self.module_container = ft.Container(
                     content=ft.Column(
                                 [
@@ -160,7 +160,7 @@ class ModuleGUI(ft.GestureDetector):
                                     tight=True)
                     ,bgcolor=self.color,width=MODULE_WIDTH
                     ,height=MODULE_HEIGHT,
-                    border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) and not show_mode else ft.Colors.BLACK12),
+                    border=ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.module_id) and not show_mode else ft.Colors.BLACK12),
                     border_radius=ft.border_radius.all(10),
                 )
         self.ports_column = ft.Column(controls=control_list_ports, scroll=ft.ScrollMode.HIDDEN)
@@ -261,7 +261,7 @@ class ModuleGUI(ft.GestureDetector):
         Updates all ports_Icons of the show ports tab.
         """
         for port in self.module.inputs.keys():
-            if self.pipeline_gui.pipeline.check_ports_occupied(self.name, [port]):
+            if self.pipeline_gui.pipeline.check_ports_occupied(self.module_id, [port]):
                 self.in_ports_Icons[port].visible = False
                 self.in_ports_Icons_occupied[port].visible = True
             else:
@@ -276,17 +276,17 @@ class ModuleGUI(ft.GestureDetector):
     def check_warning(self):
         self.module_container.border = ft.border.all(4,
                                                      ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(
-                                                         self.name) or self.error_stack.visible else ft.Colors.BLACK12)
+                                                         self.module_id) or self.error_stack.visible else ft.Colors.BLACK12)
         self.module_container.update()
         if not self.error_stack.visible:
-            self.warning_satisfied.visible = not self.pipeline_gui.pipeline.check_module_satisfied(self.name)
+            self.warning_satisfied.visible = not self.pipeline_gui.pipeline.check_module_satisfied(self.module_id)
             self.warning_satisfied.update()
 
     def connect_clicked(self,update:bool=True):
         """
         Handles the event when the connection button gets pressed.
         """
-        self.pipeline_gui.toggle_all_module_detection(self.name)
+        self.pipeline_gui.toggle_all_module_detection(self.module_id)
         if not self.port_selection:
             if self.show_ports:
                 self.ports_in_out_clicked(False)
@@ -374,7 +374,7 @@ class ModuleGUI(ft.GestureDetector):
         """
         self.valid = False
         self.click_container.bgcolor = INVALID_COLOR
-        self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.name) or self.error_stack.visible else ft.Colors.BLACK12)
+        self.module_container.border = ft.border.all(4, ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(self.module_id) or self.error_stack.visible else ft.Colors.BLACK12)
         self.module_container.update()
         self.click_container.update()
 
@@ -435,7 +435,7 @@ class ModuleGUI(ft.GestureDetector):
             self.click_gesture.disabled = True
             self.click_gesture.visible = False
             self.click_gesture.update()
-            if (self.name not in self.pipeline_gui.pipeline.run_order and not self.pipeline_gui.pipeline.executing == self.name) or not self.pipeline_gui.pipeline.running:
+            if (self.module_id not in self.pipeline_gui.pipeline.run_order and not self.pipeline_gui.pipeline.executing == self.module_id) or not self.pipeline_gui.pipeline.running:
                 self.delete_button.visible = True
                 self.delete_button.update()
             self.connection_ports.visible = False
@@ -447,7 +447,7 @@ class ModuleGUI(ft.GestureDetector):
         Handles the last step of the adding event when the target gets selected.
         """
         if self.pipeline_gui.source_module is not None and self.pipeline_gui.transmitting_ports is not None and not self.detection and self.valid:
-            current_pipe = self.pipeline_gui.pipeline.get_pipe(self.pipeline_gui.source_module,self.name)
+            current_pipe = self.pipeline_gui.pipeline.get_pipe(self.pipeline_gui.source_module,self.module_id)
             if current_pipe is None:
                 self.pipeline_gui.add_connection(self.pipeline_gui.modules[self.pipeline_gui.source_module],self,self.pipeline_gui.transmitting_ports)
             else:
@@ -458,9 +458,9 @@ class ModuleGUI(ft.GestureDetector):
         """
         Removes a module and all its connections.
         """
-        for pipe in list(self.pipeline_gui.pipeline.pipes_in[self.name]):
+        for pipe in list(self.pipeline_gui.pipeline.pipes_in[self.module_id]):
             self.pipeline_gui.remove_connection(self.pipeline_gui.modules[pipe.source_module.module_id],self)
-        for pipe in list(self.pipeline_gui.pipeline.pipes_out[self.name]):
+        for pipe in list(self.pipeline_gui.pipeline.pipes_out[self.module_id]):
             self.pipeline_gui.remove_connection(self,self.pipeline_gui.modules[pipe.target_module.module_id])
 
         if self.show_mode:
@@ -469,10 +469,10 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.page_stack.controls.remove(self)
             self.pipeline_gui.update()
         else:
-            self.pipeline_gui.remove_module(self.name)
+            self.pipeline_gui.remove_module(self.module_id)
 
     @property
-    def name(self):
+    def module_id(self):
         """
         Returns the module id of the module.
         """
@@ -567,9 +567,8 @@ class ModuleGUI(ft.GestureDetector):
             index = self.pipeline_gui.show_room_modules.index(self)
             self.pipeline_gui.show_room_modules.remove(self)
             show_room_id = self.module.get_id_number()
-            self.module.free_id(show_room_id)
-            self.pipeline_gui.pipeline.change_module_name(self.module.module_id,self.module.get_id())
-            self.pipeline_gui.modules[self.name] = self
+            self.pipeline_gui.pipeline.get_new_module_id(self.module_id)
+            self.pipeline_gui.modules[self.module_id] = self
             self.pipeline_gui.refill_show_room(self,self.visible,index,show_room_id)
             self.pipeline_gui.page_stack.controls.remove(self)
             self.left = check_left
@@ -743,9 +742,7 @@ class ModuleGUI(ft.GestureDetector):
             setattr(self.module, attr_name, True)
         else:
             setattr(self.module, attr_name, False)
-
         self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
-        print(getattr(self.module, attr_name))
 
     def open_options(self,e):
         self.page_overlay.open()
@@ -775,7 +772,7 @@ class ModuleGUI(ft.GestureDetector):
                 value = value.path
             user_attributes.append({"name": attr_name,"value": value,"attr_type":value_type})
         return {
-            "module_id": self.name,
+            "module_id": self.module_id,
             "module_name": self.module.gui_config().name,
             "position": {"x":self.left, "y":self.top},
             "user_attributes": user_attributes,

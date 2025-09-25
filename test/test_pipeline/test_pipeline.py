@@ -1,6 +1,6 @@
 import pytest
 
-from cellsepi.backend.main_window.expert_mode.module import IdManager
+from cellsepi.backend.main_window.expert_mode.module import IdNumberManager, FilePath, DirectoryPath
 from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from src.cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from test.test_pipeline.dummy_modules import *
@@ -10,7 +10,7 @@ def clean_up_fixture():
     yield
     for cls in Module.__subclasses__():
         if cls.__name__.startswith("DummyModule"):
-            cls.destroy_id_manager()
+            cls.destroy_id_number_manager()
 
 @pytest.fixture
 def two_module_pipeline():
@@ -19,6 +19,7 @@ def two_module_pipeline():
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2, ["port1"])
     pipeline.add_connection(pipe)
+    assert str(mod1.outputs["port1"]) == "port_name: 'port1', port_data_type: 'int', opt: False, data: None"
     assert pipeline.modules == [mod1, mod2], "Something went wrong when adding the modules to the pipeline"
     assert pipeline.pipes_in == {"test10": [],
                                  "test20": [pipe]}, "Something went wrong when adding the pipes to the pipeline"
@@ -30,6 +31,52 @@ def test_add_module():
     pipeline = Pipeline()
     mod1 = pipeline.add_module(DummyModule1)
     assert pipeline.modules == [mod1], "Something went wrong when adding a module to the pipeline"
+
+def test_add_module_with_id():
+    pipeline = Pipeline()
+    mod1 = pipeline.add_module_with_id(DummyModule1,DummyModule1.gui_config().name + "1")
+    assert pipeline.modules == [mod1], "Something went wrong with adding a module with a specific id"
+    assert mod1.get_id_number() == 1, "Something went wrong with adding a module with a specific id"
+    mod2 = pipeline.add_module(DummyModule1)
+    mod3 = pipeline.add_module(DummyModule1)
+    assert mod2.get_id_number() == 0, "Something went wrong with adding a module with a specific id"
+    assert mod3.get_id_number() == 2, "Something went wrong with adding a module with a specific id"
+    pipeline.remove_module(mod1)
+    mod4 = pipeline.add_module(DummyModule1)
+    assert mod4.get_id_number() == 1, "Something went wrong with adding a module with a specific id"
+    mod5 = pipeline.add_module_with_id(DummyModule1,DummyModule1.gui_config().name + "5")
+    assert mod5.get_id_number() == 5, "Something went wrong with adding a module with a specific id"
+    pipeline.get_new_module_id(mod5.module_id)
+    assert mod5.get_id_number() == 3, "Something went wrong with adding a module with a specific id"
+
+def test_add_module_with_wrong_id():
+    pipeline = Pipeline()
+    with pytest.raises(ValueError):
+        pipeline.add_module_with_id(DummyModule1,"lol")
+    with pytest.raises(ValueError):
+        pipeline.get_new_module_id("lol")
+
+def test_expand_connections():
+    pipeline = Pipeline()
+    mod1 = pipeline.add_module(DummyModule1)
+    mod2 = pipeline.add_module(DummyModule2)
+    pipe = Pipe(mod1, mod2, ["port1"])
+    pipeline.expand_connection(pipe,["port2"])
+    assert pipe.ports == ["port1", "port2"], "Something went wrong when expanding connections"
+
+def test_add_module_with_all_ready_occupied_id():
+    pipeline = Pipeline()
+    pipeline.add_module(DummyModule1)
+    with pytest.raises(ValueError):
+        pipeline.add_module_with_id(DummyModule1,DummyModule1.gui_config().name + "0")
+
+def test_add_module_next_id_move():
+    pipeline = Pipeline()
+    mod1 = pipeline.add_module_with_id(DummyModule1, DummyModule1.gui_config().name + "0")
+    assert pipeline.modules == [mod1], "Something went wrong with adding a module with a specific id"
+    assert mod1.get_id_number() == 0, "Something went wrong with adding a module with a specific id"
+    mod2 = pipeline.add_module(DummyModule1)
+    assert mod2.get_id_number() == 1, "Something went wrong with adding a module with a specific id"
 
 def test_add_connection_source_not_added():
     pipeline = Pipeline()
@@ -142,3 +189,10 @@ def test_free_number(two_module_pipeline):
     two_module_pipeline.remove_module(mod1)
     mod3 = two_module_pipeline.add_module(DummyModule1)
     assert mod3.module_id == "test10", "Something went wrong when initialing a new instance of DummyModule1"
+
+def test_files_directory():
+    file_path = FilePath("test1",["lif","test"])
+    assert file_path.path == "test1", "Something went wrong initialising the file path"
+    assert file_path.suffix == ["lif","test"], "Something went wrong initialising the file path"
+    directory_path = DirectoryPath("test1")
+    assert directory_path.path == "test1", "Something went wrong initialising the directory path"

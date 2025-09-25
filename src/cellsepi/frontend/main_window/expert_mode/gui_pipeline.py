@@ -91,10 +91,10 @@ class PipelineGUI(ft.Stack):
                 module.delete_button.update()
 
     def check_deletable(self,module:ModuleGUI):
-        if  module.name in self.pipeline.run_order or module.name == self.pipeline.executing:
+        if  module.module_id in self.pipeline.run_order or module.module_id == self.pipeline.executing:
             return False
 
-        return all(not(pipe.target_module.module_id in self.pipeline.run_order or pipe.target_module.module_id == self.pipeline.executing) for pipe in self.pipeline.pipes_out[module.name])
+        return all(not(pipe.target_module.module_id in self.pipeline.run_order or pipe.target_module.module_id == self.pipeline.executing) for pipe in self.pipeline.pipes_out[module.module_id])
 
     def add_connection(self,source_module_gui,target_module_gui,ports: List[str]):
         ports_copy = list(ports)
@@ -111,7 +111,7 @@ class PipelineGUI(ft.Stack):
         self.update_all_port_icons()
 
     def remove_connection(self,source_module_gui,target_module_gui):
-        self.pipeline.remove_connection(source_module_gui.name,target_module_gui.name)
+        self.pipeline.remove_connection(source_module_gui.module_id,target_module_gui.module_id)
         self.lines_gui.remove_line(source_module_gui, target_module_gui)
         self.update_all_port_icons()
         self.check_for_valid_all_modules()
@@ -186,7 +186,7 @@ class PipelineGUI(ft.Stack):
         Move a Module from it current position in the stack to the highest level.
         """
         for module in self.modules.values():
-            if module.name != module_gui.name:
+            if module.module_id != module_gui.module_id:
                 self.set_in_background(module)
 
     def remove_module(self,module_id: str):
@@ -200,7 +200,7 @@ class PipelineGUI(ft.Stack):
         self.source_module = module_id
         self.transmitting_ports = []
         for module in self.modules.values():
-            if module.name != module_id:
+            if module.module_id != module_id:
                 module.toggle_detection()
                 self.update()
 
@@ -218,22 +218,22 @@ class PipelineGUI(ft.Stack):
 
     def check_for_valid_all_modules(self):
         for target_module_gui in self.modules.values():
-            self.check_for_valid(target_module_gui.name)
+            self.check_for_valid(target_module_gui.module_id)
 
     def check_for_valid(self,module_id: str):
         target_module_gui = self.modules[module_id]
-        if (target_module_gui.name not in self.pipeline.run_order and target_module_gui.name != self.pipeline.executing) or not self.pipeline.running:
-            if target_module_gui.name != self.source_module:
+        if (target_module_gui.module_id not in self.pipeline.run_order and target_module_gui.module_id != self.pipeline.executing) or not self.pipeline.running:
+            if target_module_gui.module_id != self.source_module:
                 valid = True
                 existing_pipe = self.pipeline.check_connections(
-                    self.source_module, target_module_gui.name) if self.source_module != "" else None
+                    self.source_module, target_module_gui.module_id) if self.source_module != "" else None
                 if existing_pipe is None:
                     valid = True
-                elif any(port in existing_pipe.ports for port in self.transmitting_ports) or existing_pipe.source_module.module_id != self.source_module or existing_pipe.target_module.module_id != target_module_gui.name:
+                elif any(port in existing_pipe.ports for port in self.transmitting_ports) or existing_pipe.source_module.module_id != self.source_module or existing_pipe.target_module.module_id != target_module_gui.module_id:
                     valid = False
                 if all(k in target_module_gui.module.inputs for k in
                        self.transmitting_ports) and self.transmitting_ports != [] and valid and not (
-                self.pipeline.check_ports_occupied(target_module_gui.name, self.transmitting_ports)):
+                self.pipeline.check_ports_occupied(target_module_gui.module_id, self.transmitting_ports)):
                     target_module_gui.set_valid()
                 else:
                     target_module_gui.set_invalid()

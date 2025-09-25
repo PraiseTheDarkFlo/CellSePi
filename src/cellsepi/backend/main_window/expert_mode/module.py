@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
+from typing import Callable
 
 import flet as ft
 from typing import List
@@ -52,7 +53,7 @@ class Port:
             raise TypeError(f"Expected data of type {self.data_type}, got {type(value)}!")
 
     def __str__(self):
-        return f"port_name: '{self.name}', port_data_type: '{self.data_type}', opt: {self.opt}, data: {self.data}"
+        return f"port_name: '{self.name}', port_data_type: '{self.data_type.__name__}', opt: {self.opt}, data: {self.data}"
 
 
 class Categories(Enum):
@@ -63,43 +64,55 @@ class Categories(Enum):
     INPUTS = ft.Colors.ORANGE
     OUTPUTS = ft.Colors.LIGHT_BLUE
     FILTERS = ft.Colors.PURPLE_ACCENT
-    MANUAL = ft.Colors.TEAL
+    MANUAL = ft.Colors.PINK
     SEGMENTATION = ft.Colors.AMBER_ACCENT
 
 class ModuleGuiConfig:
+    """
+    Stores configuration information for a module's GUI representation.
+    """
     def __init__(self, name: str, category: Categories, description:str = None):
         self.name = name
         self.category = category
         self.description = description
 
-class IdManager:
+class IdNumberManager:
     """
     Manages the module ID's so every module
     """
     def __init__(self):
-        self._occupied_ids = set()
-        self._next_id = 0
+        self._occupied_id_numbers = set()
+        self._next_id_number = 0
 
-    def get_id(self) -> int:
-        while self._next_id in self._occupied_ids:
-            self._next_id += 1
-        id_number = self._next_id
-        self._occupied_ids.add(id_number)
-        self._next_id += 1
+    def get_id_number(self) -> int:
+        """
+        Gets the next free id number.
+        """
+        while self._next_id_number in self._occupied_id_numbers:
+            self._next_id_number += 1
+        id_number = self._next_id_number
+        self._occupied_id_numbers.add(id_number)
+        self._next_id_number += 1
         return id_number
 
-    def occupy_id(self, id_number: int):
-        if id_number in self._occupied_ids:
+    def occupy_id_number(self, id_number: int):
+        """
+        Occupies the given id number so no other module can get it.
+        """
+        if id_number in self._occupied_id_numbers:
             raise ValueError(f"Number {id_number} already occupied!")
-        self._occupied_ids.add(id_number)
-        if id_number ==  self._next_id:
-            self._next_id = id_number + 1
+        self._occupied_id_numbers.add(id_number)
+        if id_number ==  self._next_id_number:
+            self._next_id_number = id_number + 1
 
-    def free_id(self, id_number: int) -> None:
-        if id_number in self._occupied_ids:
-            self._occupied_ids.discard(id_number)
-            if self._next_id > id_number >= 0:
-                self._next_id = id_number
+    def free_id_number(self, id_number: int) -> None:
+        """
+        Frees the id number given.
+        """
+        if id_number in self._occupied_id_numbers:
+            self._occupied_id_numbers.discard(id_number)
+            if self._next_id_number > id_number >= 0:
+                self._next_id_number = id_number
 
 
 class Module(ABC):
@@ -111,70 +124,80 @@ class Module(ABC):
     You can specify user attributes with 'user_' as prefix.
     With these automatic overlay gets created if settings is None.
     """
+    @abstractmethod
+    def __init__(self,module_id: str):
+        self.module_id = module_id
+        self.event_manager: EventManager | None = None
+        self.inputs = {}
+        self.outputs = {}
+        self._settings: ft.Stack | None = None
+        self._on_settings_dismiss: Callable[[], None] | None = lambda : None
 
     @classmethod
     def get_id(cls) -> str:
-        if not hasattr(cls, "_id_manager"):
-            cls._id_manager = IdManager()
-        return cls.gui_config().name + str(cls._id_manager.get_id())
+        """
+        Returns the module ID.
+        """
+        if not hasattr(cls, "_id_number_manager"):
+            cls._id_number_manager = IdNumberManager()
+        return cls.gui_config().name + str(cls._id_number_manager.get_id_number())
 
     @classmethod
-    def occupy_id(cls,id_number: int):
-        if not hasattr(cls, "_id_manager"):
-            cls._id_manager = IdManager()
-        cls._id_manager.occupy_id(id_number)
+    def occupy_id_number(cls,id_number: int):
+        """
+        Occupies the given ID number in the id number manager.
+        """
+        if not hasattr(cls, "_id_number_manager"):
+            cls._id_number_manager = IdNumberManager()
+        cls._id_number_manager.occupy_id_number(id_number)
 
     @classmethod
-    def free_id(cls, id_number: int):
-        if hasattr(cls, "_id_manager"):
-            cls._id_manager.free_id(id_number)
+    def free_id_number(cls, id_number: int):
+        """
+        Gives the given id number free for other modules.
+        """
+        if hasattr(cls, "_id_number_manager"):
+            cls._id_number_manager.free_id_number(id_number)
 
     @classmethod
-    def destroy_id_manager(cls):
-        if hasattr(cls, "_id_manager"):
-            del cls._id_manager
+    def destroy_id_number_manager(cls):
+        """
+        Destroys the id number manager.
+        """
+        if hasattr(cls, "_id_number_manager"):
+            del cls._id_number_manager
 
     @classmethod
-    @abstractmethod
     def gui_config(cls) -> ModuleGuiConfig:
-       pass
-
-    @abstractmethod
-    def __init__(self,module_id: str):
-        pass
+        """
+        Returns the module gui config which has the name of the module its category and a description.
+        """
+        return cls._gui_config
 
     def occupy(self):
+        """
+        Occupies the currently module_id the module has in the id number manager.
+        """
         id_number = self.module_id.removeprefix(self.gui_config().name)
         if id_number != "":
             number = int(id_number)
-            self.occupy_id(number)
+            self.occupy_id_number(number)
 
     def get_id_number(self)-> int:
+        """
+        Gets the module ID's number.
+        """
         id_number = self.module_id.removeprefix(self.gui_config().name)
         return int(id_number)
 
     def destroy(self):
+        """
+        Module gets distroyed so free the id_number for other modules.
+        """
         id_number = self.module_id.removeprefix(self.gui_config().name)
         if id_number != "":
             number = int(id_number)
-            self.free_id(number)
-
-    #module_id for the gui
-    @property
-    @abstractmethod
-    def module_id(self) -> str:
-        pass
-
-    @module_id.setter
-    @abstractmethod
-    def module_id(self,value: str):
-        pass
-
-    #the needed inputs of the module
-    @property
-    @abstractmethod
-    def inputs(self) -> dict[str, Port]:
-        pass
+            self.free_id_number(number)
 
     def get_mandatory_inputs(self) -> List[str]:
         """
@@ -186,33 +209,26 @@ class Module(ABC):
                 mandatory_inputs.append(port.name)
         return mandatory_inputs
 
-    #the needed outputs of the module
     @property
-    @abstractmethod
-    def outputs(self) -> dict[str, Port]:
-        pass
-
-    @property
-    @abstractmethod
-    def settings(self) -> ft.Stack:
+    def settings(self) -> ft.Stack|None:
         """
         The settings overlay of the module in the gui.
-        If you plan to make your custom settings initials it here so the user_attributes can be updated!
+        If it is None it gets generated automatically if the modules has user_attributes.
         """
-        pass
+        return self._settings
 
-    @abstractmethod
     def finished(self):
         """
         Gets executed when the module is complety finished include possible pausing.
         """
+        return
 
     @property
-    @abstractmethod
-    def on_settings_dismiss(self):
+    def on_settings_dismiss(self) -> Callable[[], None]:
         """
         The function called when the settings get dismiss.
         """
+        return self._on_settings_dismiss
 
     @property
     def get_user_attributes(self) -> list[str]:
@@ -221,19 +237,8 @@ class Module(ABC):
         """
         return [k for k in self.__dict__ if k.startswith("user_")]
 
-    @property
     @abstractmethod
-    def event_manager(self) -> EventManager:
-        pass
-
-    @event_manager.setter
-    @abstractmethod
-    def event_manager(self, value: EventManager):
-        pass
-
-
-    @abstractmethod
-    def run(self) -> bool:
+    def run(self) -> bool: #pragma: no cover
         """
         Returns True if the pipeline should stop.
         """

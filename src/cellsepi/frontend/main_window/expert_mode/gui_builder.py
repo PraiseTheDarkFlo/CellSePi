@@ -231,13 +231,13 @@ class Builder:
         self.page.update()
 
     def run(self,ignore_check=False):
-        show_room_names = [m.name for m in self.pipeline_gui.show_room_modules]
-        if not ignore_check and not self.pipeline_gui.pipeline.check_pipeline_runnable(show_room_names):
+        show_room_module_ids = [m.module_id for m in self.pipeline_gui.show_room_modules]
+        if not ignore_check and not self.pipeline_gui.pipeline.check_pipeline_runnable(show_room_module_ids):
             def dismiss_dialog(e):
                 cupertino_alert_dialog.open = False
                 e.control.page.update()
                 for mod in self.pipeline_gui.modules.values():
-                    if not self.pipeline_gui.pipeline.check_module_satisfied(mod.name):
+                    if not self.pipeline_gui.pipeline.check_module_satisfied(mod.module_id):
                         if not mod.show_ports:
                             mod.ports_in_out_clicked()
             def dismiss_dialog_ignore(e):
@@ -280,7 +280,7 @@ class Builder:
             module.check_warning()
         self.gui.training_environment.disable_switch_environment()
 
-        self.pipeline_gui.pipeline.run(show_room_names)
+        self.pipeline_gui.pipeline.run(show_room_module_ids)
 
         self.pipeline_gui.modules_executed = 0
         self.update_modules_executed()

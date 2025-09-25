@@ -15,54 +15,13 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 class Project3dTo2d(Module, ABC):
     _gui_config = ModuleGuiConfig("Project3Dto2D",Categories.FILTERS,"This modules handles the conversion from 3D data to 2D data based on an max z projection.")
     def __init__(self, module_id: str) -> None:
-        self._module_id = module_id
-        self._event_manager: EventManager = None
-        self._inputs = {
+        super().__init__(module_id)
+        self.inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
         }
-        self._outputs = {
+        self.outputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
         }
-        self._settings: ft.Stack = None
-
-    @classmethod
-    def gui_config(cls) -> ModuleGuiConfig:
-       return cls._gui_config
-
-    @property
-    def module_id(self) -> str:
-        return self._module_id
-
-    @module_id.setter
-    def module_id(self,value: str):
-        self._module_id = value
-
-    @property
-    def inputs(self) -> dict[str, Port]:
-        return self._inputs
-
-    @property
-    def outputs(self) -> dict[str, Port]:
-        return self._outputs
-
-    @property
-    def settings(self) -> ft.Stack:
-        return self._settings
-
-    @property
-    def on_settings_dismiss(self):
-        return None
-
-    def finished(self):
-        pass
-
-    @property
-    def event_manager(self) -> EventManager:
-        return self._event_manager
-
-    @event_manager.setter
-    def event_manager(self, value: EventManager):
-        self._event_manager = value
 
     def run(self):
         images = self.inputs["image_paths"].data

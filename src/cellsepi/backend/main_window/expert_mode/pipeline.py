@@ -37,6 +37,8 @@ class Pipeline:
         """
         Creates a module of the given class with the given module_id and adds it to the pipeline.
         """
+        if not module_id.startswith(module_class.gui_config().name):
+            raise ValueError(f"Invalid module id '{module_id}' for the module_class '{module_class.gui_config().name}'")
         module = module_class(module_id=module_id)
         module.occupy()
         return self._add_module(module,module_class)
@@ -50,7 +52,14 @@ class Pipeline:
         self.event_manager.notify(OnPipelineChangeEvent(f"Added module {module_class.gui_config().name}"))
         return module
 
-    def change_module_name(self, module_id_old: str, module_id_new: str):
+    def get_new_module_id(self, module_id_old: str):
+        """
+        Gets a new module id for the module with the given module_id_old.
+        """
+        if not module_id_old in self.module_map:
+            raise ValueError(f"Module id '{module_id_old}' doesen't exists")
+        self.module_map[module_id_old].free_id_number(self.module_map[module_id_old].get_id_number())
+        module_id_new = self.module_map[module_id_old].get_id()
         self.module_map[module_id_old].module_id = module_id_new
         self.module_map[module_id_new] = self.module_map[module_id_old]
         del self.module_map[module_id_old]
@@ -128,6 +137,9 @@ class Pipeline:
         self.event_manager.notify(OnPipelineChangeEvent(f"Added connection between {pipe.target_module.module_id} and {pipe.source_module.module_id}"))
 
     def expand_connection(self,pipe:Pipe, ports: List[str]) -> None:
+        """
+        Expands the ports tranfered with the pipe between the source and target modules with the given ports.
+        """
         pipe.ports.extend(ports)
         self.event_manager.notify(OnPipelineChangeEvent(
             f"Expanded the connection between {pipe.target_module.module_id} and {pipe.source_module.module_id}"))
@@ -225,7 +237,7 @@ class Pipeline:
         while self.run_order:
             self.running = True
             module_name = self.run_order.popleft()
-            if show_room is None or module_name in show_room:
+            if show_room is not None and module_name in show_room:
                 continue
             module = self.module_map[module_name]
             module_pipes = self.pipes_in[module.module_id]

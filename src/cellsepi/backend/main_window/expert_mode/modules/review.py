@@ -25,15 +25,15 @@ class Review(Module, ABC):
     _instances = []
     _gui_config = ModuleGuiConfig("Review",Categories.MANUAL,"This module allows you to manually review and edit masks. Also you can create new masks when no mask are given.")
     def __init__(self, module_id: str) -> None:
-        self._module_id = module_id
-        self._event_manager: EventManager | None = None
-        self._inputs = {
+        super().__init__(module_id)
+        self.inputs = {
             "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]],
             "mask_paths": Port("mask_paths", dict,True), #dict[str,dict[str,str]]
         }
-        self._outputs = {
+        self.outputs = {
             "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
         }
+        self._on_settings_dismiss = self.dismiss
         self._icon_x = {}
         self._icon_check = {}
         self.image_id: str | None = None
@@ -54,7 +54,6 @@ class Review(Module, ABC):
         self._slider_2_5d:ft.Slider | None = None
         self._control_menu: ft.Container | None = None
         self._main_image_view: ft.Card | None = None
-        self._settings: ft.Stack | None = None
         self._ready = threading.Event()
         self.pipe_listener_running = True
         self.queue = None
@@ -66,26 +65,6 @@ class Review(Module, ABC):
         self.window_mask_path = ""
         self.thread = None
         Review._instances.append(self)
-
-    @classmethod
-    def gui_config(cls) -> ModuleGuiConfig:
-       return cls._gui_config
-
-    @property
-    def module_id(self) -> str:
-        return self._module_id
-
-    @module_id.setter
-    def module_id(self,value: str):
-        self._module_id = value
-
-    @property
-    def inputs(self) -> dict[str, Port]:
-        return self._inputs
-
-    @property
-    def outputs(self) -> dict[str, Port]:
-        return self._outputs
 
     @property
     def settings(self) -> ft.Stack:
@@ -213,10 +192,6 @@ class Review(Module, ABC):
                 alignment=ft.MainAxisAlignment.CENTER, )], alignment=ft.MainAxisAlignment.CENTER),])
         return self._settings
 
-    @property
-    def on_settings_dismiss(self):
-        return self.dismiss
-
     def finished(self):
         self.outputs["mask_paths"].data = self.inputs["mask_paths"].data
         self._text_field_mask_suffix.visible = False
@@ -239,14 +214,6 @@ class Review(Module, ABC):
         self.parent_conn, self.child_conn = None, None
         self.process_drawing_window = None
         self.thread = None
-
-    @property
-    def event_manager(self) -> EventManager:
-        return self._event_manager
-
-    @event_manager.setter
-    def event_manager(self, value: EventManager):
-        self._event_manager = value
 
     def run(self):
         self.event_manager.notify(ProgressEvent(percent=0, process=f"Preparing: starting"))
