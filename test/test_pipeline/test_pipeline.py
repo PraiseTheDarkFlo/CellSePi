@@ -4,6 +4,8 @@ from cellsepi.backend.main_window.expert_mode.module import IdNumberManager, Fil
 from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from src.cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from test.test_pipeline.dummy_modules import *
+from test.test_pipeline.test_event_manager import DummyPipelineErrorListener
+
 
 @pytest.fixture(autouse=True)
 def clean_up_fixture():
@@ -19,6 +21,8 @@ def two_module_pipeline():
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2, ["port1"])
     pipeline.add_connection(pipe)
+    assert pipeline.check_ports_occupied(mod1.module_id, ["port1"]) == False, "Something went wrong when adding the connection "
+    assert pipeline.check_ports_occupied(mod2.module_id, ["port1"]) == True, "Something went wrong when adding the connection"
     assert str(mod1.outputs["port1"]) == "port_name: 'port1', port_data_type: 'int', opt: False, data: None"
     assert pipeline.modules == [mod1, mod2], "Something went wrong when adding the modules to the pipeline"
     assert pipeline.pipes_in == {"test10": [],
@@ -129,12 +133,16 @@ def test_runnable_false(two_module_pipeline):
     two_module_pipeline.remove_connection("test10", "test20")
     assert two_module_pipeline.check_pipeline_runnable() == False, "Something went wrong when checking the pipeline runnable"
 
+
 def test_runnable_true(two_module_pipeline):
     assert two_module_pipeline.check_pipeline_runnable() == True, "Something went wrong when checking the pipeline runnable"
+    two_module_pipeline.remove_connection("test10", "test20")
+    assert two_module_pipeline.check_pipeline_runnable(ignore=["test20"]) == True, "Something went wrong when checking the pipeline runnable"
 
 
 def test_run_valid(two_module_pipeline):
-    two_module_pipeline.run()
+    mod3 = two_module_pipeline.add_module(DummyModule1)
+    two_module_pipeline.run(ignore_modules=[mod3.module_id])
     assert two_module_pipeline.module_map["test10"].outputs["port1"].data == 67, "Something went wrong when running the pipeline"
     assert two_module_pipeline.module_map["test20"].inputs["port1"].data == 67, "Something went wrong when running the pipeline"
     assert two_module_pipeline.module_map["test20"].outputs[
@@ -179,8 +187,10 @@ def test_cycled_graph(two_module_pipeline):
     mod4 = two_module_pipeline.add_module(DummyModule4)
     two_module_pipeline.add_connection(Pipe(mod2, mod4, ["port2"]))
     two_module_pipeline.add_connection(Pipe(mod4, mod2, ["port1"]))
-    with pytest.raises(RuntimeError):
-        two_module_pipeline.get_run_order()
+    pipeline_error= DummyPipelineErrorListener()
+    two_module_pipeline.event_manager.subscribe(pipeline_error)
+    two_module_pipeline.run()
+    assert pipeline_error.last_event.error_name == "Cycle in Pipeline", "Something went wrong when detecting the cycle in the pipeline"
 
 def test_free_number(two_module_pipeline):
     mod1 = two_module_pipeline.module_map["test10"]

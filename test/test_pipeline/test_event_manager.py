@@ -42,6 +42,17 @@ class DummyErrorListener(EventListener):
     def _update(self,event: Event) -> None:
         self.last_event = event
 
+class DummyPipelineErrorListener(EventListener):
+    def __init__(self):
+        self.last_event: PipelineErrorEvent | None = None
+        self.event_type = PipelineErrorEvent
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def _update(self,event: Event) -> None:
+        self.last_event = event
+
 class DummyDragDropListener(EventListener):
     def __init__(self):
         self.last_event: DragAndDropEvent | None = None

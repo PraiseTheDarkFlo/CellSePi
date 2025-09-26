@@ -151,12 +151,12 @@ class Pipeline:
         for existing_pipe in self.pipes_in[target_module_id]:
             if existing_pipe.source_module.module_id == source_module_id:
                 return existing_pipe
-        for existing_pipe in self.pipes_out[source_module_id]:
-            if existing_pipe.target_module.module_id == target_module_id:
-                return existing_pipe
         return None
 
     def check_ports_occupied(self,module_id: str,ports:List[str]) -> bool:
+        """
+        Checks if the given module ports are occupied by existing pipes.
+        """
         for port in ports:
             for pipe in self.pipes_in[module_id]:
                 if port in pipe.ports:
@@ -223,7 +223,7 @@ class Pipeline:
         else:
             return True
 
-    def run(self,show_room: List[str] = None) -> None:
+    def run(self,ignore_modules: List[str] = None) -> None:
         """
         Executes the steps of the Pipeline.
         Skips steps of the Pipeline if min. one of the mandatory inputs is None.
@@ -237,7 +237,7 @@ class Pipeline:
         while self.run_order:
             self.running = True
             module_name = self.run_order.popleft()
-            if show_room is not None and module_name in show_room:
+            if ignore_modules is not None and module_name in ignore_modules:
                 continue
             module = self.module_map[module_name]
             module_pipes = self.pipes_in[module.module_id]
