@@ -192,6 +192,9 @@ class ModuleGUI(ft.GestureDetector):
         self.page_overlay = PageOverlay(self.pipeline_gui.page,self.module.settings,self.close_options)
 
     def disable_tools(self):
+        """
+        Disable the tools of the modules.
+        """
         self.warning_satisfied.disabled = True
         self.warning_satisfied.update()
         if self.port_selection:
@@ -213,16 +216,25 @@ class ModuleGUI(ft.GestureDetector):
         self.copy_button.update()
 
     def enable_pause(self):
+        """
+        Enable the options button while be in a pausing state.
+        """
         self.options_button.disabled = False
         self.options_button.icon_color = ft.Colors.WHITE60
         self.options_button.update()
 
     def disable_pause(self):
+        """
+        Disable the options button after a pausing state.
+        """
         self.options_button.disabled = True
         self.options_button.icon_color = DISABLED_BUTTONS_COLOR
         self.options_button.update()
 
     def enable_tools(self):
+        """
+        Enable the tools of the module.
+        """
         self.warning_satisfied.disabled = False
         self.warning_satisfied.update()
         self.connect_button.disabled = False
@@ -272,6 +284,9 @@ class ModuleGUI(ft.GestureDetector):
             self.check_warning()
 
     def check_warning(self):
+        """
+        Checks if the module should have a warning.
+        """
         self.module_container.border = ft.border.all(4,
                                                      ft.Colors.RED if not self.pipeline_gui.pipeline.check_module_satisfied(
                                                          self.module_id) or self.error_stack.visible else ft.Colors.BLACK12)
@@ -377,6 +392,9 @@ class ModuleGUI(ft.GestureDetector):
         self.click_container.update()
 
     def set_running(self):
+        """
+        Called when the module is currently running.
+        """
         self.executing_button.visible = True
         self.waiting_button.visible = False
         self.executing_button.update()
@@ -621,6 +639,7 @@ class ModuleGUI(ft.GestureDetector):
             int
             float
             string
+            boolean
             FilePath
             DirectoryPath
         """
@@ -727,17 +746,29 @@ class ModuleGUI(ft.GestureDetector):
         """
         Handles changes to the attribute for different types.
         """
+        attribute_name_without_prefix = attr_name.removeprefix("user_")
+        if str(e.control.value) == "":
+            self.pipeline_gui.page.open(
+                ft.SnackBar(
+                    ft.Text(f"{attribute_name_without_prefix} must be not empty!",
+                            color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.RED))
+            e.control.value = getattr(self.module, attr_name)
+            self.pipeline_gui.page.update()
+            return
         try:
             setattr(self.module, attr_name, typ(e.control.value))
             self.pipeline_gui.page.update()
             self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
         except ValueError:
-            attribute_name_without_prefix = attr_name.removeprefix("user_")
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
             reference.current.value = getattr(self.module, attr_name)
             self.pipeline_gui.page.update()
 
     def update_bool(self,e,attr_name):
+        """
+        Handels changes to the attribute for booleans.
+        """
         if int(e.data) == 1:
             setattr(self.module, attr_name, True)
         else:
@@ -745,17 +776,26 @@ class ModuleGUI(ft.GestureDetector):
         self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     def open_options(self,e):
+        """
+        Open options overlay of the module.
+        """
         self.page_overlay.open()
         self.options_button.icon_color = ft.Colors.BLACK38
         self.options_button.update()
 
     def close_options(self,e):
+        """
+        Called when the overlay gets dismissed.
+        """
         self.page_overlay.close()
         self.module.on_settings_dismiss() if self.module.on_settings_dismiss is not None else None
         self.options_button.icon_color = ft.Colors.WHITE60
         self.options_button.update()
 
     def copy_module(self):
+        """
+        Called when the copy button is clicked.
+        """
         self.copy_button.icon_color = ft.Colors.BLACK38
         self.copy_button.update()
         copy_dict = self.to_dict()
@@ -764,6 +804,9 @@ class ModuleGUI(ft.GestureDetector):
         self.copy_button.update()
 
     def to_dict(self):
+        """
+        Translates the module into a dictionary.
+        """
         user_attributes: List[Dict[str, Any]] = []
         for attr_name in self.module.get_user_attributes:
             value = getattr(self.module,attr_name)
@@ -779,6 +822,9 @@ class ModuleGUI(ft.GestureDetector):
         }
 
     def update_user_attr(self,module_dict:dict):
+        """
+        Update user_attributes with a module dict.
+        """
         for attr in module_dict.get("user_attributes", []):
             user_attributes = self.module.get_user_attributes
             if attr["name"] in user_attributes:

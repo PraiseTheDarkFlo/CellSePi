@@ -33,7 +33,7 @@ class Builder:
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.GREY_400
                         ),
-                        ft.Icon(ft.Icons.CROP_FREE,size=50,color=ft.Colors.GREY_400), #Icons.COPY_ALL_ROUNDED,CONTROL_CAMERA,Icons.CROP_FREE, Icons.VIEW_IN_AR,Icons.HIGHLIGHT_ALT_ROUNDED
+                        ft.Icon(ft.Icons.CROP_FREE,size=50,color=ft.Colors.GREY_400),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                     ),
@@ -86,7 +86,6 @@ class Builder:
                                                shape=ft.RoundedRectangleBorder(radius=12), ),
                                          tooltip="Show which ports get transferred\n[Ctrl + P]", hover_color=ft.Colors.WHITE12)
 
-        self.slider_horizontal = ft.Slider(min=0, max=1, height=40, on_change=lambda e: self.scroll_horizontal(e), active_color=ft.Colors.BLUE_400, inactive_color=MAIN_ACTIVE_COLOR, overlay_color=ft.Colors.WHITE12)
         self.left_tools = ft.Container(ft.Container(ft.Column(
                 [
                     self.load_button, self.save_as_button,self.save_button,self.run_menu_button,self.delete_button,self.port_button
@@ -126,7 +125,7 @@ class Builder:
         )
         self.progress_bar_module = ft.ProgressBar(value=0, width=220,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
         self.progress_pipeline = ft.ProgressRing(value=0,width=50,height=50,stroke_width=8,bgcolor=ft.Colors.WHITE24,color=ft.Colors.BLUE_400)
-        self.progress_text = ft.Text(f"{self.pipeline_gui.modules_executed}/{len(self.pipeline_gui.pipeline.modules)}", weight=ft.FontWeight.BOLD, tooltip="How many modules has been executed", color=MAIN_ACTIVE_COLOR)
+        self.progress_text = ft.Text(f"{self.pipeline_gui.pipeline.modules_executed}/{len(self.pipeline_gui.pipeline.modules)}", weight=ft.FontWeight.BOLD, tooltip="How many modules has been executed", color=MAIN_ACTIVE_COLOR)
         self.progress_stack = ft.Stack([self.progress_pipeline,ft.Container(self.progress_text,alignment=ft.alignment.center)],width=50,height=50,)
         self.progress_bar_module_text = ft.Text("0%", color=MAIN_ACTIVE_COLOR)
         self.progress_and_start = ft.Column([ft.Container(self.progress_stack,alignment=ft.alignment.center),
@@ -188,7 +187,6 @@ class Builder:
             animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             )
-        self.scroll_horizontal_row = None
         self.work_area = None
         self.setup()
         self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_forward(),
@@ -215,6 +213,9 @@ class Builder:
         self.add_all_listeners()
 
     def cancel(self):
+        """
+        To cancel the pipeline after the currently executed module is finished.
+        """
         self.pipeline_gui.pipeline.cancel()
         self.running_module.value = f"Pipeline"
         self.running_module.update()
@@ -231,6 +232,12 @@ class Builder:
         self.page.update()
 
     def run(self,ignore_check=False):
+        """
+        To run the pipeline.
+
+        Arguments:
+            ignore_check (bool): if a warning should appear when you have not satisfied modules in the pipeline.
+        """
         show_room_module_ids = [m.module_id for m in self.pipeline_gui.show_room_modules]
         if not ignore_check and not self.pipeline_gui.pipeline.check_pipeline_runnable(show_room_module_ids):
             def dismiss_dialog(e):
@@ -279,11 +286,12 @@ class Builder:
             module.error_stack.update()
             module.check_warning()
         self.gui.training_environment.disable_switch_environment()
+        self.update_modules_executed(reset=True)
 
         self.pipeline_gui.pipeline.run(show_room_module_ids)
 
-        self.pipeline_gui.modules_executed = 0
-        self.update_modules_executed()
+        if len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2 != self.pipeline_gui.module_count:
+            self.update_modules_executed(reset=True)
         self.start_button.visible = True
         self.start_button.update()
         self.cancel_button.visible = False
@@ -296,6 +304,9 @@ class Builder:
             self.pipeline_running_event.set()
 
     def add_all_listeners(self):
+        """
+        Adds all listeners to this pipeline.
+        """
         pipeline_change_listener = PipelineChangeListener(self)
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_change_listener)
         module_executed_listener =ModuleExecutedListener(self)
@@ -316,58 +327,76 @@ class Builder:
         self.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_error_listener)
 
     def on_keyboard(self,e: ft.KeyboardEvent):
-            if not self.gui.ref_builder_environment.current.visible:
-                return
-            if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
-                if not self.save_as_button.disabled:
-                    self.click_save_as_file()
-            if e.ctrl and e.key == "S" and not e.alt and not e.shift and not e.meta:
-                if not self.save_button.disabled:
-                    self.click_save_file()
-            if e.ctrl and e.key == "L" and not e.alt and not e.shift and not e.meta:
-                if not self.load_button.disabled:
-                    self.click_load_file()
-            if e.ctrl and e.key == "R" and not e.alt and not e.shift and not e.meta:
-                self.run_menu_click()
-            if e.ctrl and e.key == "D" and not e.alt and not e.shift and not e.meta:
-                self.delete_button_click()
-            if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
-                self.port_button_click()
-            if e.ctrl and e.key == "Q" and not e.alt and not e.shift and not e.meta:
-                if not self.page_backward.disabled:
-                    self.press_page_backward()
-            if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
-                if not self.page_forward.disabled:
-                    self.press_page_forward()
-            if e.ctrl and e.key == "M" and not e.alt and not e.shift and not e.meta:
-                self.zoom_menu_click()
-            if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.zoom(1.0+ZOOM_VALUE)
-            if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.zoom(1.0-ZOOM_VALUE)
-            if e.ctrl and e.key == "-" and not e.alt and not e.shift and not e.meta:
-                self.interactive_view.reset(400)
+        """
+        All Keyboard shortcuts of the ExpertMode.
+        Only working when ExpertMode visible
+        """
+        if not self.gui.ref_builder_environment.current.visible:
+            return
+        if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
+            if not self.save_as_button.disabled:
+                self.click_save_as_file()
+        if e.ctrl and e.key == "S" and not e.alt and not e.shift and not e.meta:
+            if not self.save_button.disabled:
+                self.click_save_file()
+        if e.ctrl and e.key == "L" and not e.alt and not e.shift and not e.meta:
+            if not self.load_button.disabled:
+                self.click_load_file()
+        if e.ctrl and e.key == "R" and not e.alt and not e.shift and not e.meta:
+            self.run_menu_click()
+        if e.ctrl and e.key == "D" and not e.alt and not e.shift and not e.meta:
+            self.delete_button_click()
+        if e.ctrl and e.key == "P" and not e.alt and not e.shift and not e.meta:
+            self.port_button_click()
+        if e.ctrl and e.key == "Q" and not e.alt and not e.shift and not e.meta:
+            if not self.page_backward.disabled:
+                self.press_page_backward()
+        if e.ctrl and e.key == "E" and not e.alt and not e.shift and not e.meta:
+            if not self.page_forward.disabled:
+                self.press_page_forward()
+        if e.ctrl and e.key == "M" and not e.alt and not e.shift and not e.meta:
+            self.zoom_menu_click()
+        if e.ctrl and e.key == "." and not e.alt and not e.shift and not e.meta:
+            self.interactive_view.zoom(1.0+ZOOM_VALUE)
+        if e.ctrl and e.key == "," and not e.alt and not e.shift and not e.meta:
+            self.interactive_view.zoom(1.0-ZOOM_VALUE)
+        if e.ctrl and e.key == "-" and not e.alt and not e.shift and not e.meta:
+            self.interactive_view.reset(400)
 
-    def update_modules_executed(self):
-        current =self.pipeline_gui.modules_executed
+    def update_modules_executed(self,reset:bool=False):
+        """
+        Updates the gui of the run menu how many modules were executed.
+
+        Arguments:
+            reset (bool): To reset the pipeline modules executed to 0, because the pipeline changed.
+        """
+        if reset:
+            self.pipeline_gui.pipeline.modules_executed = 0
+        current =self.pipeline_gui.pipeline.modules_executed
         if not self.pipeline_gui.pipeline.running:
             total = len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2
             self.progress_pipeline.value = (current / total) if total > 0 else 0
-            self.pipeline_gui.module_running_count = total
+            self.pipeline_gui.module_count = total
             self.progress_text.value = f"{current}/{total}"
         else:
-            self.progress_pipeline.value = (current / self.pipeline_gui.module_running_count) if self.pipeline_gui.module_running_count > 0 else 0
-            self.progress_text.value = f"{current}/{self.pipeline_gui.module_running_count}"
+            self.progress_pipeline.value = (current / self.pipeline_gui.module_count) if self.pipeline_gui.module_count > 0 else 0
+            self.progress_text.value = f"{current}/{self.pipeline_gui.module_count}"
         self.progress_text.update()
         self.page.update()
 
     def click_load_file(self):
+        """
+        Called when clicked a file should be loaded.
+        """
         self.file_picker.pick_files(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"],
                                     allow_multiple=False)
         self.load_button.icon_color = ft.Colors.BLUE_400
         self.load_button.update()
 
     def click_save_as_file(self):
+        """
+        Called when clicked to save a file is at a specific location.
+        """
         self.file_saver.save_file(file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csp"],
                              dialog_title="Save Pipeline", file_name=self.pipeline_gui.pipeline_name,
                              initial_directory=self.pipeline_gui.pipeline_directory)
@@ -375,6 +404,9 @@ class Builder:
         self.save_as_button.update()
 
     def click_save_file(self):
+        """
+        Called when clicked a file should be saved.
+        """
         self.save_button.icon_color = ft.Colors.BLUE_400
         self.save_button.update()
         path = self.pipeline_storage.save_pipeline()
@@ -410,6 +442,8 @@ class Builder:
                         return
                     try:
                         self.pipeline_storage.load_pipeline(e.files[0].path)
+                        self.pipeline_gui.reset()
+                        self.pipeline_gui.load_pipeline()
                     except Exception as exception2:
                         self.pipeline_gui.page.open(
                             ft.SnackBar(
@@ -443,6 +477,8 @@ class Builder:
                     return
                 try:
                     self.pipeline_storage.load_pipeline(e.files[0].path)
+                    self.pipeline_gui.reset()
+                    self.pipeline_gui.load_pipeline()
                 except Exception as exception1:
                     self.pipeline_gui.page.open(
                         ft.SnackBar(
@@ -482,7 +518,10 @@ class Builder:
 
 
     def press_page_forward(self):
-        self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number+1)
+        """
+        Called when clicked to load the next page.
+        """
+        self.pipeline_gui.change_show_room_page(self.pipeline_gui.show_room_page_number + 1)
         if self.pipeline_gui.show_room_page_number > 0:
             self.page_backward.icon_color = MAIN_ACTIVE_COLOR
             self.page_backward.disabled = False
@@ -493,7 +532,10 @@ class Builder:
             self.page_forward.update()
 
     def press_page_backward(self):
-        self.pipeline_gui.change_page(self.pipeline_gui.show_room_page_number-1)
+        """
+        Called when clicked to load the previous page.
+        """
+        self.pipeline_gui.change_show_room_page(self.pipeline_gui.show_room_page_number - 1)
         if self.pipeline_gui.show_room_page_number == 0:
             self.page_backward.icon_color = ft.Colors.WHITE24
             self.page_backward.disabled = True
@@ -503,11 +545,10 @@ class Builder:
             self.page_forward.disabled = False
             self.page_forward.update()
 
-    def scroll_horizontal(self,e):
-        self.scroll_horizontal_row.scroll_to((self.work_area.width-self.page.window.width)*e.control.value, duration=1000)
-        self.scroll_horizontal_row.update()
-
     def run_menu_click(self):
+        """
+        Called when the run menu button got clicked.
+        """
         if self.run_menu.opacity==1:
             self.run_menu_button.icon_color = MAIN_ACTIVE_COLOR
             self.run_menu_button.tooltip = f"Show run menu\n[Ctrl + R]"
@@ -524,6 +565,9 @@ class Builder:
             self.run_menu.update()
 
     def zoom_menu_click(self):
+        """
+        Called when the zoom menu button got clicked.
+        """
         if self.zoom_menu.opacity==1:
             self.zoom_menu_button.icon_color = MAIN_ACTIVE_COLOR
             self.zoom_menu_button.tooltip = f"Show zoom menu\n[Ctrl + M]"
@@ -540,6 +584,9 @@ class Builder:
             self.zoom_menu.update()
 
     def delete_button_click(self):
+        """
+        Called when the delete button is clicked and toggels between all delete buttons be visible or be hidden.
+        """
         if self.pipeline_gui.show_delete_button:
             self.delete_button.icon_color = MAIN_ACTIVE_COLOR
             self.delete_button.tooltip = f"Show delete buttons\n[Ctrl + D]"
@@ -556,6 +603,9 @@ class Builder:
         self.delete_button.update()
 
     def port_button_click(self):
+        """
+        Called when the port button is clicked and toggels between all port text's be visible or be hidden.
+        """
         if self.pipeline_gui.show_ports:
             self.port_button.icon_color = MAIN_ACTIVE_COLOR
             self.port_button.tooltip = f"Show which ports get transferred\n[Ctrl + P]"
@@ -573,6 +623,9 @@ class Builder:
 
 
     def setup(self):
+        """
+        Setup all the GUI elements.
+        """
         self.work_area = ft.Stack([self.help_text,ft.Container(
             content=self.pipeline_gui,
             width=10000,
@@ -585,6 +638,10 @@ class Builder:
                                                               width=self.page.window.width, scale_enabled=False,)
 
         def on_resize(e: ft.WindowResizeEvent):
+            """
+            Called when the resize-event is triggered.
+            Updates all relevant GUI elements.
+            """
             self.interactive_view.height = e.height-20
             self.interactive_view.width = e.width
             self.interactive_view.update()

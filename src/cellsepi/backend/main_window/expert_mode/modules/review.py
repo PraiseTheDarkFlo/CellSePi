@@ -454,6 +454,15 @@ class Review(Module, ABC):
             self.update_main_image(self.image_id, self.channel_id)
 
     def on_change_sc(self,e):
+        if str(e.control.value) == "":
+            self.settings.page.open(
+                ft.SnackBar(
+                    ft.Text(f"Segmentation channel must be not empty!",
+                            color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.RED))
+            e.control.value = self.user_segmentation_channel
+            self.settings.page.update()
+            return
         self.user_segmentation_channel = str(e.control.value)
         self.update_all_masks_check()
         if self.image_id is not None:
@@ -467,6 +476,7 @@ class Review(Module, ABC):
                     ft.Text(f"Mask suffix must be not empty!",
                             color=ft.Colors.WHITE),
                     bgcolor=ft.Colors.RED))
+            e.control.value = self.user_mask_suffix
             self.settings.page.update()
             return
         self.user_mask_suffix = str(e.control.value)

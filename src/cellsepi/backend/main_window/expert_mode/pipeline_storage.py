@@ -24,6 +24,9 @@ def get_major_dict(data):
 
 
 class PipelineStorage:
+    """
+    Handels loading and saving of Pipelines.
+    """
     def __init__(self,pipeline_gui):
         self.schema_name = "csp.schema.json"
         self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -33,6 +36,9 @@ class PipelineStorage:
         self.schema = load_schema(schema_path=self.schema_directory)
 
     def save_as_pipeline(self,file_path:str= ""):
+        """
+        Saves the pipeline as a JSON file at a specified path.
+        """
         pipeline_dict = self.generate_pipline_dict()
 
         self.pipeline_gui.pipeline_directory = Path(file_path).parent
@@ -48,6 +54,9 @@ class PipelineStorage:
             json.dump(pipeline_dict, f, indent=2, ensure_ascii=False)
 
     def save_pipeline(self):
+        """
+        Saves the pipeline as a JSON file.
+        """
         pipeline_dict = self.generate_pipline_dict()
 
         self.pipeline_gui.pipeline_dict = pipeline_dict
@@ -66,6 +75,9 @@ class PipelineStorage:
         return file_path
 
     def generate_pipline_dict(self,without_view:bool=False):
+        """
+        Generate a dictionary(dict) that represents the pipeline from a PipelineGUI instance.
+        """
         modules: List[Dict[str, Any]] = []
         pipes: List[Dict[str, Any]] = []
         if not without_view:
@@ -108,6 +120,9 @@ class PipelineStorage:
 
 
     def load_pipeline(self,file_path: str):
+        """
+        Loads the pipeline into the PipelineGui from the file located at file_path.
+        """
         filename = Path(file_path)
         pipeline_dict = {}
 
@@ -128,6 +143,4 @@ class PipelineStorage:
         self.pipeline_gui.pipeline_directory = filename.parent
         self.pipeline_gui.pipeline_name = filename.stem
         self.pipeline_gui.pipeline_dict = pipeline_dict
-        self.pipeline_gui.reset()
-        self.pipeline_gui.load_pipeline()
 

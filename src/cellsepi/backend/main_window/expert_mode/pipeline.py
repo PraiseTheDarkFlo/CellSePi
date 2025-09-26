@@ -19,11 +19,11 @@ class Pipeline:
         self.pipes_in: Dict[str,List[Pipe]] = {} #dict[target,[Pipe]]
         self.pipes_out: Dict[str,List[Pipe]] = {} #dict[source,[Pipe]]
         self.run_order: deque[str] = deque()
+        self.modules_executed = 0
         self.executing: str = ""
         self.running: bool = False
         self._continue_event = threading.Event()
         self._cancel_event = threading.Event()
-        self.found: bool = False
         self.event_manager: EventManager = EventManager()
 
     def add_module(self, module_class: Type[Module]) -> Module:
@@ -227,7 +227,11 @@ class Pipeline:
         """
         Executes the steps of the Pipeline.
         Skips steps of the Pipeline if min. one of the mandatory inputs is None.
+
+        Arguments:
+            ignore_modules: List of modules to ignore.
         """
+        self.modules_executed = 0
         self._continue_event.clear()
         try:
             self.run_order = self.get_run_order()
@@ -255,6 +259,7 @@ class Pipeline:
                         self._continue_event.clear()
                     module.finished()
                     self.executing = ""
+                    self.modules_executed += 1
                     self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if self._cancel_event.is_set():
                         self.running = False
@@ -268,14 +273,21 @@ class Pipeline:
                     self.executing = ""
                     return
             else:
+                self.modules_executed += 1
                 self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
         self.running = False
 
     def resume(self):
+        """
+        Resumes the pipeline after the execution of the pipeline got paused.
+        """
         self._continue_event.set()
 
     def cancel(self):
+        """
+        Cancels the pipeline after the currently executed module is finished.
+        """
         self._cancel_event.set()
         self._continue_event.set()
 

@@ -75,6 +75,37 @@ class DummyModuleListener(EventListener):
     def _update(self, event: Event) -> None:
         self.last_event = event
 
+class DummyPauseListener(EventListener):
+    def __init__(self,pipeline,cancel= False):
+        self.last_event: PipelinePauseEvent | None = None
+        self.event_type = PipelinePauseEvent
+        self.count = 0
+        self.pipeline = pipeline
+        self.cancel = cancel
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def _update(self, event: Event) -> None:
+        self.count += 1
+        assert event.module_id.startswith("testPause"), "Something went wrong when pausing the pipeline"
+        self.last_event = event
+        if event.resume == False and not self.cancel:
+            self.pipeline.resume()
+        elif event.resume == False and self.cancel:
+            self.pipeline.cancel()
+
+class DummyCancelListener(EventListener):
+    def __init__(self):
+        self.last_event: PipelineCancelEvent | None = None
+        self.event_type = PipelineCancelEvent
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def _update(self, event: Event) -> None:
+        self.last_event = event
+
 
 def test_notify_listener():
     manager = EventManager()

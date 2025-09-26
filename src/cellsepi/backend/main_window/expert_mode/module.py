@@ -240,7 +240,7 @@ class Module(ABC):
     @abstractmethod
     def run(self) -> bool: #pragma: no cover
         """
-        Returns True if the pipeline should stop.
+        Returns True if the pipeline should pause.
         """
         pass
 

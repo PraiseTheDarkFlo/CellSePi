@@ -10,6 +10,7 @@ from cellsepi.backend.main_window.expert_mode.modules.read_lif import ReadLif
 from cellsepi.backend.main_window.expert_mode.modules.read_tif import ReadTif
 from cellsepi.backend.main_window.expert_mode.modules.review import Review
 
+#Constants used in the PipelineBuildingTool(ExpertMode)
 BUILDER_WIDTH = 1000
 BUILDER_HEIGHT = 400
 MODULE_WIDTH = 235
@@ -31,9 +32,13 @@ ZOOM_VALUE = 0.20
 BOTTOM_SPACING = 20
 MAIN_ACTIVE_COLOR = ft.Colors.WHITE60
 THROTTLE_UPDATE_LINES = 0.036 #~30FPS
-DEBUG = False
+DEBUG = True
 
 class ModuleType(Enum):
+    """
+    Enum for all Modules.
+    Register new Modules here!
+    """
     BATCH_IMAGE_READOUT = BatchImageReadoutModule
     BATCH_IMAGE_SEG = BatchImageSegModule
     READ_LIF = ReadLif

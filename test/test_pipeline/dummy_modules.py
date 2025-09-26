@@ -67,3 +67,28 @@ class DummyModule4(Module):
     def run(self):
         result = self.inputs["port2"].data + " == " + str(self.inputs["port1"].data)
         self.outputs["port3"].data = result
+
+class DummyPauseModule(Module):
+    _gui_config = ModuleGuiConfig("testPause", None, None)
+    def __init__(self, module_id: str):
+        super().__init__(module_id)
+        self.inputs = {
+            "port1": Port("port1", int),
+        }
+        self.outputs = {
+            "port1": Port("port1", int)
+        }
+        self._on_settings_dismiss = self.test
+        self._event_manager = None
+        self.user_test1: int = 1
+        self.user_test2: int = 2
+        self.user_test3: int = 3
+        self.user_test4: int = 4
+
+    def test(self):
+        self.user_test4 +=1
+
+    def run(self):
+        result = 42 + 25
+        self.outputs["port1"].data = result
+        return True

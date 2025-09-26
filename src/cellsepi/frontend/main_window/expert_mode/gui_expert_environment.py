@@ -2,7 +2,6 @@ import flet as ft
 import asyncio
 
 class ExpertEnvironment(ft.Container):
-
     def __init__(self, gui):
         super().__init__()
         self.gui = gui
@@ -16,7 +15,7 @@ class ExpertEnvironment(ft.Container):
             ),
             on_click=lambda e: self.change_environment(e),
         )
-        self.switch_icon = ft.Icon(ft.Icons.REBASE_EDIT) #Icon options: Icons.MODE, Icons.HANDYMAN, Icons.NOW_WIDGETS, Icons.PLUMBING, Icons.POLYLINE_OUTLINED, Icons.REBASE_EDIT
+        self.switch_icon = ft.Icon(ft.Icons.REBASE_EDIT)
         self.button_expert_environment_menu = ft.PopupMenuButton(
             items=[self.button_event],
             content=self.switch_icon,
@@ -29,8 +28,11 @@ class ExpertEnvironment(ft.Container):
         self.old_view: (float, float,float) = (0.0, 0.0, 1.0)
 
     def change_environment(self, e):
+        """
+        Changing between modes.
+        """
         if self.text.value == "Go To Expert Mode":
-            self.go_to_training_environment(e)
+            self.go_to_expert_environment(e)
         else:
             self.old_view = self.gui.builder_environment.interactive_view.get_transformation_data()
             self.gui.ref_builder_environment.current.visible = False
@@ -40,7 +42,10 @@ class ExpertEnvironment(ft.Container):
             self.gui.page.update()
             self.text.value = "Go To Expert Mode"
 
-    def go_to_training_environment(self, e):
+    def go_to_expert_environment(self, e):
+        """
+        Switching to expert mode.
+        """
         self.gui.ref_builder_environment.current.visible = True
         self.gui.ref_gallery_environment.current.visible = False
         self.gui.ref_training_environment.current.visible = False
@@ -53,6 +58,9 @@ class ExpertEnvironment(ft.Container):
         self.page.run_task(self._update_view)
 
     async def _update_view(self):
+        """
+        Loads the view of the expert environment, so its view has the orginal state when leaving the environment.
+        """
         await asyncio.sleep(0.1)
         self.gui.builder_environment.interactive_view.set_transformation_data(self.old_view[0], self.old_view[1],self.old_view[2],300)
         self.gui.builder_environment.interactive_view.update()

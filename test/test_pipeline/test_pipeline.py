@@ -4,7 +4,7 @@ from cellsepi.backend.main_window.expert_mode.module import IdNumberManager, Fil
 from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from src.cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
 from test.test_pipeline.dummy_modules import *
-from test.test_pipeline.test_event_manager import DummyPipelineErrorListener
+from test.test_pipeline.test_event_manager import DummyPipelineErrorListener, DummyPauseListener
 
 
 @pytest.fixture(autouse=True)
@@ -147,13 +147,33 @@ def test_run_valid(two_module_pipeline):
     assert two_module_pipeline.module_map["test20"].inputs["port1"].data == 67, "Something went wrong when running the pipeline"
     assert two_module_pipeline.module_map["test20"].outputs[
                "port2"].data == "The resulting data is: 67", "Something went wrong when running the pipeline"
+    assert two_module_pipeline.modules_executed == 2, "Something went wrong when running the pipeline"
+
+def test_run_with_pause(two_module_pipeline):
+    pause_listener = DummyPauseListener(two_module_pipeline)
+    two_module_pipeline.event_manager.subscribe(pause_listener)
+    mod3 = two_module_pipeline.add_module(DummyPauseModule)
+    pipe = Pipe(two_module_pipeline.module_map["test10"], mod3, ["port1"])
+    two_module_pipeline.add_connection(pipe)
+    two_module_pipeline.run()
+    assert pause_listener.count == 2, "Something went wrong when pausing the pipeline"
+    assert two_module_pipeline.modules_executed == 3, "Something went wrong when running the pipeline"
+
+def test_run_with_pause_and_cancel(two_module_pipeline):
+    pause_listener = DummyPauseListener(two_module_pipeline,cancel=True)
+    two_module_pipeline.event_manager.subscribe(pause_listener)
+    mod4 = two_module_pipeline.add_module(DummyPauseModule)
+    pipe = Pipe(two_module_pipeline.module_map["test10"], mod4, ["port1"])
+    two_module_pipeline.add_connection(pipe)
+    two_module_pipeline.run()
+    assert pause_listener.count == 2, "Something went wrong when pausing the pipeline"
 
 def test_run_n_to_one_module_valid(two_module_pipeline):
     mod1 = two_module_pipeline.module_map["test10"]
     mod2 = two_module_pipeline.module_map["test20"]
-    mod4 = two_module_pipeline.add_module(DummyModule4)
-    pipe2 = Pipe(mod1, mod4, ["port1"])
-    pipe3 = Pipe(mod2, mod4, ["port2"])
+    mod3 = two_module_pipeline.add_module(DummyModule4)
+    pipe2 = Pipe(mod1, mod3, ["port1"])
+    pipe3 = Pipe(mod2, mod3, ["port2"])
     two_module_pipeline.add_connection(pipe2)
     two_module_pipeline.add_connection(pipe3)
     two_module_pipeline.run()
@@ -162,14 +182,16 @@ def test_run_n_to_one_module_valid(two_module_pipeline):
                "port1"].data == 67, "Something went wrong when transferring the data with the pipe from m1 to m2"
     assert mod2.outputs[
                "port2"].data == "The resulting data is: 67", "Something went wrong when running the second module"
-    assert mod4.inputs[
+    assert mod3.inputs[
                "port2"].data == "The resulting data is: 67", "Something went wrong when transferring the data with the pipe from the m1 to m4"
-    assert mod4.inputs[
+    assert mod3.inputs[
                "port1"].data == 67, "Something went wrong when transferring the data with the pipe from m1 to m4"
-    assert mod4.outputs[
+    assert mod3.outputs[
                "port3"].data == "The resulting data is: 67 == 67", "Something went wrong when running the fourth module"
     for mod in two_module_pipeline.modules:
         assert mod.event_manager is not None, "Something went wrong by setting the event_manager attribute"
+    assert two_module_pipeline.modules_executed == 3, "Something went wrong when running the pipeline"
+
 
 def test_run_one_module_invalid(two_module_pipeline):
     mod1 = two_module_pipeline.module_map["test10"]
@@ -191,6 +213,7 @@ def test_cycled_graph(two_module_pipeline):
     two_module_pipeline.event_manager.subscribe(pipeline_error)
     two_module_pipeline.run()
     assert pipeline_error.last_event.error_name == "Cycle in Pipeline", "Something went wrong when detecting the cycle in the pipeline"
+    assert two_module_pipeline.modules_executed == 0, "Something went wrong went wrong when detecting the cycle in the pipeline"
 
 def test_free_number(two_module_pipeline):
     mod1 = two_module_pipeline.module_map["test10"]

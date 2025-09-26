@@ -6,6 +6,9 @@ from cellsepi.backend.main_window.expert_mode.listener import EventListener, OnP
     PipelineCancelEvent, PipelineErrorEvent
 
 class PipelineChangeListener(EventListener):
+    """
+    Gets notified when a OnPipelineChangeEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self,builder):
         self.event_type = OnPipelineChangeEvent
         self.builder = builder
@@ -80,9 +83,15 @@ class PipelineChangeListener(EventListener):
                 self.builder.start_button.disabled = True
                 self.builder.page.title = f"CellSePi - {self.builder.pipeline_gui.pipeline_name}"
                 self.builder.page.update()
+        if self.builder.pipeline_gui.pipeline.running:
             self.builder.update_modules_executed()
+        else:
+            self.builder.update_modules_executed(reset=True)
 
 class DragAndDropListener(EventListener):
+    """
+    Gets notified when a DragAndDropEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self,builder):
         self.event_type = DragAndDropEvent
         self.builder = builder
@@ -104,6 +113,9 @@ class DragAndDropListener(EventListener):
                 self.builder.help_text.update()
 
 class ModuleExecutedListener(EventListener):
+    """
+    Gets notified when a ModuleExecutedEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self,builder):
         self.event_type = ModuleExecutedEvent
         self.builder = builder
@@ -117,7 +129,6 @@ class ModuleExecutedListener(EventListener):
 
     def _update(self, event: Event) -> None:
         self.builder.pipeline_gui.modules[event.module_id].enable_tools()
-        self.builder.pipeline_gui.modules_executed += 1
         if self.builder.pipeline_gui.source_module != "":
             self.builder.pipeline_gui.check_for_valid(event.module_id)
         self.builder.pipeline_gui.lines_gui.update_delete_buttons(self.builder.pipeline_gui.modules[event.module_id])
@@ -130,6 +141,9 @@ class ModuleExecutedListener(EventListener):
 
 
 class ModuleStartedListener(EventListener):
+    """
+    Gets notified when a ModuleStartedEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self,builder):
         self.event_type = ModuleStartedEvent
         self.builder = builder
@@ -150,6 +164,9 @@ class ModuleStartedListener(EventListener):
         self.builder.running_module.update()
 
 class PipelinePauseListener(EventListener):
+    """
+    Gets notified when a PipelinePauseEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self,builder):
         self.event_type = PipelinePauseEvent
         self.builder = builder
@@ -202,6 +219,9 @@ class PipelinePauseListener(EventListener):
         self.builder.cancel_button.update()
 
 class ModuleProgressListener(EventListener):
+    """
+    Gets notified when a ProgressEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self, builder):
         self.event_type = ProgressEvent
         self.builder = builder
@@ -231,6 +251,9 @@ class ModuleProgressListener(EventListener):
         self.builder.page.update()
 
 class ModuleErrorListener(EventListener):
+    """
+    Gets notified when a ErrorEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self, builder):
         self.event_type = ErrorEvent
         self.builder = builder
@@ -253,7 +276,7 @@ class ModuleErrorListener(EventListener):
                 self.builder.pipeline_gui.pipeline.executing].module_container.border = ft.border.all(4,
                                                                                                       ft.Colors.RED)
             self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].module_container.update()
-            self.builder.pipeline_gui.toggle_all_stuck_in_running()
+            self.builder.pipeline_gui.enables_all_stuck_in_running()
             self.builder.info_text.value = ""
             self.builder.info_text.spans = [
             ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
@@ -267,6 +290,9 @@ class ModuleErrorListener(EventListener):
 
 
 class PipelineCancelListener(EventListener):
+    """
+    Gets notified when a PipelineCancelEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self, builder):
         self.event_type = PipelineCancelEvent
         self.builder = builder
@@ -283,7 +309,7 @@ class PipelineCancelListener(EventListener):
         self.builder.info_text.spans = []
         self.builder.info_text.value = "Idle, waiting for start."
         self.builder.info_text.update()
-        self.builder.pipeline_gui.toggle_all_stuck_in_running()
+        self.builder.pipeline_gui.enables_all_stuck_in_running()
         self.builder.running_module.value = "Module"
         self.builder.running_module.update()
         self.builder.category_icon.color = ft.Colors.GREEN
@@ -299,6 +325,9 @@ class PipelineCancelListener(EventListener):
         self.builder.page.update()
 
 class PipelineErrorListener(EventListener):
+    """
+    Gets notified when a PipelineErrorEvent is happening and updates all GUI elements related to the event.
+    """
     def __init__(self, builder):
         self.event_type = PipelineErrorEvent
         self.builder = builder
@@ -317,7 +346,7 @@ class PipelineErrorListener(EventListener):
             ft.TextSpan("Error: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
             ft.TextSpan(event.error_msg, style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
         self.builder.info_text.update()
-        self.builder.pipeline_gui.toggle_all_stuck_in_running()
+        self.builder.pipeline_gui.enables_all_stuck_in_running()
         self.builder.running_module.value = "Pipeline"
         self.builder.running_module.update()
         self.builder.category_icon.color = ft.Colors.RED
