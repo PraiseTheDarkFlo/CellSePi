@@ -7,8 +7,8 @@ from cellsepi.backend.main_window.images import BatchImageSegmentation, BatchIma
 from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 
-class BatchImageReadoutModule(Module, ABC):
-    _gui_config = ModuleGuiConfig("BatchImageReadout",Categories.OUTPUTS,"This module handles the readout of the segmented images and saves them in an .xlsx file.")
+class ImageReadoutModule(Module, ABC):
+    _gui_config = ModuleGuiConfig("ImageReadout",Categories.OUTPUTS,"This module handles the readout of the segmented images and saves them in an .xlsx file.")
     def __init__(self, module_id: str) -> None:
         super().__init__(module_id)
         self.inputs = {

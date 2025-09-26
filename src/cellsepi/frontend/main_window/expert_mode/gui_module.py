@@ -649,10 +649,11 @@ class ModuleGUI(ft.GestureDetector):
             typ = type(value)
             if typ in (int, float, str):
                 ref = ft.Ref[ft.Text]()
+                setattr(self.module,"ref_" + attribute_name, ref)
                 items.append(ft.TextField(
                             label=attribute_name.removeprefix("user_"),
                             border_color=ft.Colors.BLUE_ACCENT,
-                            value=value,
+                            value=str(value),
                             ref=ref,
                             on_blur=lambda e,attr_name= attribute_name,reference=ref,type_atr = typ: self.on_change(e,attr_name,reference,type_atr),
                             height=60,
@@ -660,10 +661,11 @@ class ModuleGUI(ft.GestureDetector):
             elif typ == bool:
                 text = ft.Text(attribute_name.removeprefix("user_"),weight=ft.FontWeight.BOLD)
                 index = 0 if not value else 1
+                setattr(self.module,"on_change_" + attribute_name, lambda: None)
                 slider_bool = ft.CupertinoSlidingSegmentedButton(
                     selected_index=index,
                     thumb_color=ft.Colors.BLUE_400,
-                    on_change=lambda e: self.update_bool(e,attribute_name),
+                    on_change=lambda e, attr_name=attribute_name: self.update_bool(e,attr_name),
                     padding=ft.padding.symmetric(0, 0),
                     controls=[
                         ft.Text("False"),
@@ -753,7 +755,7 @@ class ModuleGUI(ft.GestureDetector):
                     ft.Text(f"{attribute_name_without_prefix} must be not empty!",
                             color=ft.Colors.WHITE),
                     bgcolor=ft.Colors.RED))
-            e.control.value = getattr(self.module, attr_name)
+            e.control.value = str(getattr(self.module, attr_name))
             self.pipeline_gui.page.update()
             return
         try:
@@ -762,7 +764,7 @@ class ModuleGUI(ft.GestureDetector):
             self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
         except ValueError:
             self.pipeline_gui.page.open(ft.SnackBar(ft.Text(f"{attribute_name_without_prefix} only allows {typ.__name__}'s.",color=ft.Colors.WHITE),bgcolor=ft.Colors.RED))
-            reference.current.value = getattr(self.module, attr_name)
+            reference.current.value = str(getattr(self.module, attr_name))
             self.pipeline_gui.page.update()
 
     def update_bool(self,e,attr_name):
@@ -773,6 +775,8 @@ class ModuleGUI(ft.GestureDetector):
             setattr(self.module, attr_name, True)
         else:
             setattr(self.module, attr_name, False)
+        getattr(self.module, "on_change_" + attr_name)()
+        self.pipeline_gui.page.update()
         self.pipeline_gui.pipeline.event_manager.notify(OnPipelineChangeEvent("user_attr_change"))
 
     def open_options(self,e):
