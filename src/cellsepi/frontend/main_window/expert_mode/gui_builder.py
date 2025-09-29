@@ -216,20 +216,22 @@ class Builder:
         """
         To cancel the pipeline after the currently executed module is finished.
         """
+        if self.cancel_button.visible:
+            self.running_module.value = f"Pipeline"
+            self.running_module.update()
+            self.category_icon.color = ft.Colors.RED
+            self.category_icon.update()
+            self.cancel_button.disabled = True
+            self.cancel_button.color = None
+            self.cancel_button.update()
+            self.info_text.value = ""
+            self.info_text.spans = [
+                ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
+                ft.TextSpan("...", style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
+            self.info_text.update()
+            self.page.update()
+
         self.pipeline_gui.pipeline.cancel()
-        self.running_module.value = f"Pipeline"
-        self.running_module.update()
-        self.category_icon.color = ft.Colors.RED
-        self.category_icon.update()
-        self.cancel_button.disabled = True
-        self.cancel_button.color = None
-        self.cancel_button.update()
-        self.info_text.value = ""
-        self.info_text.spans = [
-            ft.TextSpan("Canceling: ", style=ft.TextStyle(weight=ft.FontWeight.BOLD, color=ft.Colors.RED)),
-            ft.TextSpan("...", style=ft.TextStyle(color=ft.Colors.WHITE60)), ]
-        self.info_text.update()
-        self.page.update()
 
     def run(self,ignore_check=False):
         """

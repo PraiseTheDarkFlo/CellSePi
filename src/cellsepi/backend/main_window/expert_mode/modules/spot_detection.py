@@ -118,6 +118,5 @@ class SpotDetectionModule(Module, ABC):
                 if iN == 0:
                     print("1")
                     radius_mean = np.mean(radius_px)
-
                     plot.plot_detection(rna, spots,radius=radius_mean, contrast=True)
                     print("2")

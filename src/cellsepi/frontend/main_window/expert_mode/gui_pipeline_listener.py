@@ -267,6 +267,10 @@ class ModuleErrorListener(EventListener):
         self._update(event)
 
     def _update(self, event: Event) -> None:
+            self.builder.cancel_button.visible = False
+            self.builder.cancel_button.disabled = False
+            self.builder.cancel_button.color = ft.Colors.RED
+            self.builder.cancel_button.update()
             self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.visible = True
             self.builder.pipeline_gui.modules[self.builder.pipeline_gui.pipeline.executing].error_stack.update()
             wrapped_text = "\n".join(textwrap.wrap(event.error_msg, width=30))
@@ -284,10 +288,6 @@ class ModuleErrorListener(EventListener):
             self.builder.info_text.update()
             self.builder.category_icon.color = ft.Colors.RED
             self.builder.category_icon.update()
-            if self.builder.cancel_button.disabled:
-                self.builder.cancel_button.disabled = False
-                self.builder.cancel_button.color = ft.Colors.RED
-                self.builder.cancel_button.update()
             self.builder.progress_bar_module_text.value = f"{0}%"
             self.builder.progress_bar_module.value = 0
             self.builder.page.update()
