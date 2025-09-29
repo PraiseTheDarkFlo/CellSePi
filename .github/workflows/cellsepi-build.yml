@@ -25,6 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clean previous build & temp
+        run: |
+          rm -rf build/
+          sudo rm -rf /tmp/*
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
