@@ -1,0 +1,40 @@
+name: Flet Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  flet-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install flet
+        run: pip install flet
+
+      - name: First (dummy) build
+        run: flet build || true
+
+      - name: Patch pubspec.yaml
+        run: |
+          sed -i 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
+          echo "==== Patched pubspec.yaml ===="
+          grep webview_flutter_android build/flutter/pubspec.yaml
+
+      - name: Final build
+        run: flet build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flet-${{ matrix.os }}
+          path: build/*
