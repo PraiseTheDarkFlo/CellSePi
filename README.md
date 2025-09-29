@@ -143,8 +143,9 @@ This command automatically installs all required dependencies as specified in th
 - `pandas`
 - `openpyxl`
 - `cellpose==3.1.1.1`
-- `flet==0.25.2`
-- `flet-desktop==0.25.2`
+- `flet==0.28.3`
+- `flet-cli==0.28.3`
+- `flet-desktop==0.28.3`
 - `flet-runtime==0.24.1`
 - `matplotlib`
 - `pytest`

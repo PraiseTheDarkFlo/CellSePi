@@ -35,20 +35,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Dummy Flet Build Linux
-        shell: bash
-        run: |
-          export CI=true
-          flet build linux --verbose || true
-
-      - name: Patch pubspec.yaml Linux
-        shell: bash
-        run: |
-          if [ -f build/flutter/pubspec.yaml ]; then
-            sed -i 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
-          fi
-
-      - name: Final Flet Build Linux
+      - name: Flet Build Linux
         shell: bash
         run: |
           sudo apt-get update -y
@@ -79,20 +66,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Dummy Flet Build macOS
-        shell: bash
-        run: |
-          export CI=true
-          flet build macos --verbose || true
-
-      - name: Patch pubspec.yaml macOS
-        shell: bash
-        run: |
-          if [ -f build/flutter/pubspec.yaml ]; then
-            sed -i '' 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
-          fi
-
-      - name: Final Flet Build macOS
+      - name: Flet Build macOS
         shell: bash
         run: |
           export CI=true
@@ -121,19 +95,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Dummy Flet Build Windows
-        shell: pwsh
-        run: |
-          $env:CI='true'
-          flet build windows --verbose || exit 0
-
-      - name: Patch pubspec.yaml Windows
-        shell: pwsh
-        run: |
-          if (Test-Path build\flutter\pubspec.yaml) {
-            (Get-Content build\flutter\pubspec.yaml) -replace 'webview_flutter_android: \^4.0.0','webview_flutter_android: 4.10.1' | Set-Content -Encoding UTF8 build\flutter\pubspec.yaml
-          }
 
       - name: Final Flet Build Windows
         shell: pwsh
