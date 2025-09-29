@@ -11,7 +11,6 @@ readme = "README.md"
 path = "src/cellsepi"
 
 [tool.flet]
-app.module = "__main__"
 org = "SOS_Lab"
 product = "CellSePi"
 company = "SOS_Lab"
