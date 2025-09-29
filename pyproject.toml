@@ -2,12 +2,17 @@
 webview_flutter_android = "4.10.1"
 
 [project]
+name = "CellSePi"
+description = "Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose."
 version = "0.1.0"
+readme = "README.md"
+
+[tool.flet.app]
+path = "src/cellsepi"
 
 [tool.flet]
-path = "src/cellsepi"
 app.module = "__main__.py"
 org = "SOS lab"
-name = "CellSePi"
+product = "CellSePi"
 build_number = 1
 compile.cleanup = true
