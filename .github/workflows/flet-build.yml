@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install flet
+      - name: Install Flet
         run: pip install flet
 
       - name: First (dummy) build
@@ -29,16 +29,19 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             sed -i '' 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
-          else
+          elif [[ "$RUNNER_OS" == "Linux" ]]; then
             sed -i 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
+          else
+            powershell -Command "(gc build/flutter/pubspec.yaml) -replace 'webview_flutter_android: \^4.0.0','webview_flutter_android: 4.10.1' | Out-File -Encoding UTF8 build/flutter/pubspec.yaml"
           fi
           echo "==== Patched pubspec.yaml ===="
-          grep webview_flutter_android build/flutter/pubspec.yaml
+          cat build/flutter/pubspec.yaml || type build\flutter\pubspec.yaml
 
       - name: Final build
         run: flet build
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: flet-${{ matrix.os }}
           path: build/*
