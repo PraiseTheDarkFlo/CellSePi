@@ -12,7 +12,7 @@ path = "src/cellsepi"
 
 [tool.flet]
 app.module = "__main__.py"
-org = "SOS lab"
+org = "SOS_Lab"
 product = "CellSePi"
 build_number = 1
 compile.cleanup = true

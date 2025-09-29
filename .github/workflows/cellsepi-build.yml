@@ -26,6 +26,8 @@ jobs:
       - name: Clean previous build & temp
         run: |
           df -h
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*
+          sudo rm -rf /home/runner/work/_temp/*
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
