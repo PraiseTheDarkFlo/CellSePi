@@ -1,5 +1,6 @@
 numpy==1.26.4
 flet==0.28.3
+flet-cli == 0.28.3
 flet-desktop == 0.28.3
 flet-runtime == 0.24.1
 flet_core == 0.24.1
