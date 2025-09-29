@@ -27,7 +27,11 @@ jobs:
 
       - name: Patch pubspec.yaml
         run: |
-          sed -i 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
+          else
+            sed -i 's/webview_flutter_android: \^4.0.0/webview_flutter_android: 4.10.1/' build/flutter/pubspec.yaml
+          fi
           echo "==== Patched pubspec.yaml ===="
           grep webview_flutter_android build/flutter/pubspec.yaml
 
