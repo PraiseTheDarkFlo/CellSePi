@@ -27,11 +27,11 @@ jobs:
       - name: (dummy) Flet build
         run: |
               if [[ "$RUNNER_OS" == "Windows" ]]; then
-                flet build -r windows
+                flet build windows -v
               elif [[ "$RUNNER_OS" == "macOS" ]]; then
-                flet build -r macos
+                flet build macos -v
               else
-                flet build -r linux
+                flet build linux -v
               fi    || true
 
       - name: Patch pubspec.yaml
@@ -49,11 +49,11 @@ jobs:
       - name: (Final) Flet build
         run: |
               if [[ "$RUNNER_OS" == "Windows" ]]; then
-                flet build -r windows
+                flet build windows -v
               elif [[ "$RUNNER_OS" == "macOS" ]]; then
-                flet build -r macos
+                flet build macos -v
               else
-                flet build -r linux
+                flet build linux -v
               fi
 
       - name: Upload artifacts
