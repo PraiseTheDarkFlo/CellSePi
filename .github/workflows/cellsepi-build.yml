@@ -30,9 +30,10 @@ jobs:
           df -h
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          echo "Disk space after cleanup:"
+          sudo rm -rf /tmp/*
+          rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
           df -h
 
       - name: Setup Python
@@ -57,6 +58,9 @@ jobs:
         run: |
               rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
               rm -rf /tmp/*
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/temp
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/cache
+              df -h
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
