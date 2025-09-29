@@ -291,8 +291,7 @@ class Builder:
         self.update_modules_executed(reset=True)
 
         self.pipeline_gui.pipeline.run(show_room_module_ids)
-
-        if len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2 != self.pipeline_gui.module_count:
+        if len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2 != self.pipeline_gui.module_count or self.pipeline_gui.module_count != self.pipeline_gui.pipeline.modules_executed:
             self.update_modules_executed(reset=True)
         self.start_button.visible = True
         self.start_button.update()

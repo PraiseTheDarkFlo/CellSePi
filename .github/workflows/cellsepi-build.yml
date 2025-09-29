@@ -1,4 +1,4 @@
-name: Flet Build
+name: CellSePi Build
 
 on:
   release:
