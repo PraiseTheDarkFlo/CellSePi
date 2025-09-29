@@ -1,5 +1,13 @@
 [tool.flet.flutter.pubspec.dependency_overrides]
 webview_flutter_android = "4.10.1"
 
-[tool.flet.app]
-path = "src"
+[project]
+version = "0.1.0"
+
+[tool.flet]
+path = "src/cellsepi"
+app.module = "__main__.py"
+org = "SOS lab"
+name = "CellSePi"
+build_number = 1
+compile.cleanup = true
