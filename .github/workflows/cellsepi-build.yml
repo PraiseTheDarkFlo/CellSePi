@@ -53,6 +53,11 @@ jobs:
           export CI=true
           flet build linux --verbose --build-number=$BUILD_NUMBER --build-version=$BUILD_VERSION
 
+      - name: Cleanup temp dirs
+        run: |
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
+              rm -rf /tmp/*
+
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
