@@ -284,6 +284,10 @@ class ModuleErrorListener(EventListener):
             self.builder.info_text.update()
             self.builder.category_icon.color = ft.Colors.RED
             self.builder.category_icon.update()
+            if self.builder.cancel_button.disabled:
+                self.builder.cancel_button.disabled = False
+                self.builder.cancel_button.color = ft.Colors.RED
+                self.builder.cancel_button.update()
             self.builder.progress_bar_module_text.value = f"{0}%"
             self.builder.progress_bar_module.value = 0
             self.builder.page.update()

@@ -190,6 +190,7 @@ class ModuleGUI(ft.GestureDetector):
         )],height=self.module_container.height,
         )
         self.page_overlay = PageOverlay(self.pipeline_gui.page,self.module.settings,self.close_options)
+        self._ports_lock = asyncio.Lock()
 
     def disable_tools(self):
         """
@@ -205,12 +206,7 @@ class ModuleGUI(ft.GestureDetector):
         self.options_button.icon_color = DISABLED_BUTTONS_COLOR
         self.copy_button.disabled = True
         self.copy_button.icon_color = DISABLED_BUTTONS_COLOR
-        if self.show_ports:
-            self.ports_in_out_clicked(disable=True)
-        else:
-            self.ports_in_out_button.disabled = True
-            self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
-            self.ports_in_out_button.update()
+        self.ports_in_out_clicked(disable=True)
         self.connect_button.update()
         self.options_button.update()
         self.copy_button.update()
@@ -243,12 +239,10 @@ class ModuleGUI(ft.GestureDetector):
         self.options_button.icon_color = ft.Colors.WHITE60
         self.copy_button.disabled = False
         self.copy_button.icon_color = ft.Colors.WHITE60
-        self.ports_in_out_button.disabled = False
-        self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+        self.ports_in_out_clicked(disable=False)
         self.connect_button.update()
         self.options_button.update()
         self.copy_button.update()
-        self.ports_in_out_button.update()
 
     def on_enter_click_module(self):
         """
@@ -328,47 +322,59 @@ class ModuleGUI(ft.GestureDetector):
         self.connect_button.update()
         self.pipeline_gui.page.update()
 
-    def ports_in_out_clicked(self, update: bool = True,disable:bool = False):
+    def ports_in_out_clicked(self, update: bool = True,disable:bool = None):
         self.pipeline_gui.page.run_task(self.async_ports_in_out_clicked, update=update,disable=disable)
 
-    async def async_ports_in_out_clicked(self, update:bool=True,disable:bool=False):
+    async def async_ports_in_out_clicked(self, update:bool=True,disable:bool=None):
         """
         Handles the event when the show ports button gets pressed.
         """
-        if not self.show_ports:
-            if self.port_selection:
-                self.connect_clicked(False)
-                await asyncio.sleep(0.02)
+        async with self._ports_lock:
+            if self.module_id not in self.pipeline_gui.modules:
+                return
+            if not self.show_ports and disable is None:
+                if self.port_selection:
+                    self.connect_clicked(False)
+                    await asyncio.sleep(0.02)
 
-            self.ports_in_out_button.icon_color = ft.Colors.BLACK38
-            self.ports_in_out_button.update()
-            self.content.height = MODULE_HEIGHT * 2 + self.module_container.height - 15
-            self.content.update()
-            self.ports_container.height = MODULE_HEIGHT * 2
-            self.ports_container.opacity = 1
-            self.ports_container.update()
-            await asyncio.sleep(0.14)
-            self.ports_column.scroll=ft.ScrollMode.ALWAYS
-            self.ports_column.update()
-            self.show_ports = True
-        else:
-            if not disable:
-                self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+                self.ports_in_out_button.icon_color = ft.Colors.BLACK38
                 self.ports_in_out_button.update()
+                self.content.height = MODULE_HEIGHT * 2 + self.module_container.height - 15
+                if self.module_id in self.pipeline_gui.modules:
+                    self.content.update()
+                self.ports_container.height = MODULE_HEIGHT * 2
+                self.ports_container.opacity = 1
+                if self.module_id in self.pipeline_gui.modules:
+                    self.ports_container.update()
+                await asyncio.sleep(0.14)
+                self.ports_column.scroll=ft.ScrollMode.ALWAYS
+                if self.module_id in self.pipeline_gui.modules:
+                    self.ports_column.update()
+                self.show_ports = True
             else:
-                self.ports_in_out_button.disabled = True
-                self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
-                self.ports_in_out_button.update()
+                if not disable:
+                    self.ports_in_out_button.disabled = False
+                    self.ports_in_out_button.icon_color = ft.Colors.WHITE60
+                    if self.module_id in self.pipeline_gui.modules:
+                        self.ports_in_out_button.update()
+                else:
+                    self.ports_in_out_button.disabled = True
+                    self.ports_in_out_button.icon_color = DISABLED_BUTTONS_COLOR
+                    if self.module_id in self.pipeline_gui.modules:
+                        self.ports_in_out_button.update()
 
-            self.ports_column.scroll=ft.ScrollMode.HIDDEN
-            self.ports_column.update()
-            self.ports_container.height = 0
-            self.ports_container.opacity = 0
-            self.ports_container.update()
-            await asyncio.sleep(0.22)
-            self.content.height = self.module_container.height
-            self.content.update()
-            self.show_ports = False
+                self.ports_column.scroll=ft.ScrollMode.HIDDEN
+                if self.module_id in self.pipeline_gui.modules:
+                    self.ports_column.update()
+                self.ports_container.height = 0
+                self.ports_container.opacity = 0
+                if self.module_id in self.pipeline_gui.modules:
+                    self.ports_container.update()
+                await asyncio.sleep(0.22)
+                self.content.height = self.module_container.height
+                if self.module_id in self.pipeline_gui.modules:
+                    self.content.update()
+                self.show_ports = False
 
 
     def set_valid(self):

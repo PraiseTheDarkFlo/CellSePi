@@ -271,6 +271,7 @@ class Pipeline:
                     self.running = False
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     self.executing = ""
+                    self._cancel_event.clear()
                     return
             else:
                 self.modules_executed += 1
