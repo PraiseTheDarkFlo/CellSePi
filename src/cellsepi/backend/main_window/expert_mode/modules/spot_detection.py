@@ -155,7 +155,7 @@ def create_spot_mask(spots,mask, radius):
 
                 h, w = masks.shape
 
-                y_grid, x_grid = np.ogrid[:h, :w]
+                x_grid,y_grid,  = np.ogrid[:h, :w]
 
                 dist = np.sqrt((x_grid - x) ** 2 + (y_grid - y) ** 2)
 
