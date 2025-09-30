@@ -68,13 +68,13 @@ class BatchImageSegmentation(Notifier):
     def get_contour_from_labeled_mask(label_mask):
         outlines = np.zeros_like(label_mask, dtype=np.uint8)
         obj_ids = np.unique(label_mask)
-        obj_ids = obj_ids[obj_ids != 0]  # exclude background
+        obj_ids = obj_ids[obj_ids != 0]
 
         for obj_id in obj_ids:
             mask = label_mask == obj_id
             eroded = binary_erosion(mask)
             outline = mask & (~eroded)
-            outlines[outline] = 255  # or 1 if you want binary outlines
+            outlines[outline] = 255
 
         return outlines
 

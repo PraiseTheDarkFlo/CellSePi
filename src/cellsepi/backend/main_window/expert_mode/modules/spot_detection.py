@@ -1,11 +1,10 @@
 import os
 
-from skimage.morphology import ball, disk, dilation, erosion
 import bigfish.detection as detection
-import bigfish.plot as plot
 import numpy as np
 import tifffile
 
+from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.expert_mode.module import *
 from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningException
 
@@ -15,10 +14,10 @@ class SpotDetectionModule(Module, ABC):
     def __init__(self, module_id: str) -> None:
         super().__init__(module_id)
         self.inputs = {
-            "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
+            "image_paths": Port("image_paths", dict),
         }
         self.outputs = {
-            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict),
         }
         self.user_remove_duplicate:bool = True
         self.user_use_threshold: bool = False
@@ -88,6 +87,8 @@ class SpotDetectionModule(Module, ABC):
     def run(self):
         mask_paths = {}
         image_paths = self.inputs["image_paths"].data
+        n_series = len(list(image_paths))
+        self.event_manager.notify(ProgressEvent(percent=0, process=f"Spot detection: Starting"))
         for iN, image_id in enumerate(list(image_paths)):
             if self.user_segmentation_channel in image_paths[image_id] and os.path.isfile(self.inputs["image_paths"].data[image_id][self.user_segmentation_channel]):
                 image_path = self.inputs["image_paths"].data[image_id][self.user_segmentation_channel]
@@ -108,60 +109,52 @@ class SpotDetectionModule(Module, ABC):
                                                               minimum_distance=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels) if image.ndim == 2 else (self.user_minimum_distance_z_pixels, self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels))
                 except Exception as e:
                     raise PipelineRunningException("Spot Detection Error",str(e))
-                """
-                if self.user_use_log_kernel_and_minimum_distance:
-                    radius_px = self.user_spot_radius_pixels
-                else:
-                    
-                    if image.ndim == 3:
-                        radius_px = tuple(r / v for r, v in zip((self.user_spot_radius_z_nm, self.user_spot_radius_y_nm,
-                                                                 self.user_spot_radius_x_nm),
-                                                                (self.user_voxel_size_z_nm, self.user_voxel_size_y_nm,
-                                                                 self.user_voxel_size_x_nm)))
-                    else:
-                        radius_px = tuple(r / v for r, v in zip((self.user_spot_radius_y_nm,
-                                                                 self.user_spot_radius_x_nm),
-                                                                (self.user_voxel_size_y_nm,
-                                                                 self.user_voxel_size_x_nm)))
-                    radius_mean = np.mean(radius_px)
-                """
 
                 if image.ndim == 2:
                     empty_mask = {
-                        "masks": np.zeros((len(image[0]), len(image[1])), dtype=np.uint8),
-                        "outlines": np.zeros((len(image[0]), len(image[1])), dtype=np.uint8)
+                        "masks": np.zeros(image.shape, dtype=np.uint8),
+                        "outlines": np.zeros(image.shape, dtype=np.uint8)
                     }
                 else:
+                    mask_shape = np.transpose(image, (1, 2, 0)).shape
                     empty_mask = {
-                        "masks": np.zeros((len(image[2]), len(image[0]), len(image[1])), dtype=np.uint8),
-                        "outlines": np.zeros((len(image[2]), len(image[0]), len(image[1])), dtype=np.uint8)
+                        "masks": np.zeros(mask_shape, dtype=np.uint8),
+                        "outlines": np.zeros(mask_shape, dtype=np.uint8)
                     }
                 mask = create_spot_mask(spots,empty_mask,self.user_spot_radius_pixels)
                 np.save(new_path, mask)
 
+                self.event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_series * 100),
+                                                        process=f"Spot detection images: {iN + 1}/{n_series}"))
+
         self.outputs["mask_paths"].data = mask_paths
+        self.event_manager.notify(ProgressEvent(percent=100, process=f"Spot detection: Finished"))
 
 def create_spot_mask(spots,mask, radius):
     spots = [spots]
+    bool_3d = mask["masks"].ndim == 3
+    masks = mask["masks"]
+    print(masks.shape)
     for i, coordinates in enumerate(spots):
         spot_id = i+1
-
-        bool_3d = mask["masks"].ndim == 3
-        masks = mask["masks"]
-
         if not bool_3d:
             for y, x in coordinates:
                 y, x = int(round(y)), int(round(x))
-
                 h, w = masks.shape
 
                 x_grid,y_grid,  = np.ogrid[:h, :w]
-
                 dist = np.sqrt((x_grid - x) ** 2 + (y_grid - y) ** 2)
 
                 masks[dist <= radius] = spot_id
         else:
-            pass
+            for z, y, x in coordinates:
+                z, y, x = int(round(z)), int(round(y)), int(round(x))
+                d, h, w = masks.shape
+                z_grid,x_grid,y_grid,  = np.ogrid[:d, :h, :w]
+                dist = np.sqrt((z_grid - z) ** 2+(x_grid - x) ** 2+(y_grid - y) ** 2)
+
+
+                masks[dist <= radius] = spot_id
 
     return mask
 

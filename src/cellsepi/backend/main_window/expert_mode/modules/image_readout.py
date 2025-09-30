@@ -12,8 +12,8 @@ class ImageReadoutModule(Module, ABC):
     def __init__(self, module_id: str) -> None:
         super().__init__(module_id)
         self.inputs = {
-            "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]]
-            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
+            "image_paths": Port("image_paths", dict),
+            "mask_paths": Port("mask_paths", dict),
         }
         self.user_directory_path: DirectoryPath = DirectoryPath()
         self.user_segmentation_channel: str = "2"

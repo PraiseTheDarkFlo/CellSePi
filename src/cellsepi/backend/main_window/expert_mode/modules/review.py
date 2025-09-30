@@ -28,11 +28,11 @@ class Review(Module, ABC):
         #regular modul
         super().__init__(module_id)
         self.inputs = {
-            "image_paths": Port("image_paths", dict), #dict[str,dict[str,str]],
-            "mask_paths": Port("mask_paths", dict,True), #dict[str,dict[str,str]]
+            "image_paths": Port("image_paths", dict),
+            "mask_paths": Port("mask_paths", dict,True),
         }
         self.outputs = {
-            "mask_paths": Port("mask_paths", dict), #dict[str,dict[str,str]]
+            "mask_paths": Port("mask_paths", dict),
         }
         self._on_settings_dismiss = self.dismiss
         self.user_segmentation_channel: str = "2"
