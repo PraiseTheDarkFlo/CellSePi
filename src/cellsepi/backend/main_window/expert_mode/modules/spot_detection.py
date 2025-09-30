@@ -131,32 +131,30 @@ class SpotDetectionModule(Module, ABC):
         self.event_manager.notify(ProgressEvent(percent=100, process=f"Spot detection: Finished"))
 
 def create_spot_mask(spots,mask, radius,thickness=1):
-    spots = [spots]
     bool_3d = mask["masks"].ndim == 3
     masks = mask["masks"]
     outlines = mask["outlines"]
     for i, coordinates in enumerate(spots):
         spot_id = i+1
-        print(i)
-        print(spot_id)
         if not bool_3d:
-            for y, x in coordinates:
-                y, x = int(round(y)), int(round(x))
-                h, w = masks.shape
+            y, x = coordinates
+            y, x = int(round(y)), int(round(x))
+            h, w = masks.shape
 
-                x_grid,y_grid,  = np.ogrid[:h, :w]
-                dist = np.sqrt((x_grid - x) ** 2 + (y_grid - y) ** 2)
+            x_grid,y_grid,  = np.ogrid[:h, :w]
+            dist = np.sqrt((x_grid - x) ** 2 + (y_grid - y) ** 2)
 
-                masks[dist <= radius] = spot_id
-                outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
+            masks[dist <= radius] = spot_id
+            outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
         else:
-            for z, y, x in coordinates:
-                z, y, x = int(round(z)), int(round(y)), int(round(x))
-                d, h, w = masks.shape
-                z_grid,x_grid,y_grid,  = np.ogrid[:d, :h, :w]
-                dist = np.sqrt((z_grid - z) ** 2+(x_grid - x) ** 2+(y_grid - y) ** 2)
+            z, y, x = coordinates
+            z, y, x = int(round(z)), int(round(y)), int(round(x))
+            d, h, w = masks.shape
+            z_grid,x_grid,y_grid,  = np.ogrid[:d, :h, :w]
+            dist = np.sqrt((z_grid - z) ** 2+(x_grid - x) ** 2+(y_grid - y) ** 2)
 
-                masks[dist <= radius] = spot_id
-                outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
+            masks[dist <= radius] = spot_id
+            outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
+
     return mask
 
