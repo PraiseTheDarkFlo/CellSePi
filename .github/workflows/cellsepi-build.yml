@@ -1,124 +1,140 @@
-name: CellSePi Desktop Builds (Linux, macOS, Windows)
+name: CellSePi Desktop Builds
 
 on:
-  # Runs on push to any of the below branches
   push:
     branches:
       - main
-
-  # Runs on pull request events that target one of the below branches
   pull_request:
     branches:
       - main
-
-  # Allows you to run this workflow manually from the Actions tab of the repository
+  release:
+    types: [published]
   workflow_dispatch:
 
 env:
-  # Python version to use
   PYTHON_VERSION: 3.12.8
-
-  # flet-cli version to install for `flet build`
-  FLET_CLI_VERSION: 0.28.3
-
-  # Ensures Python uses UTF-8 encoding by default
   PYTHONUTF8: 1
-
-  # Disables rich text formatting in Flet CLI output
   FLET_CLI_NO_RICH_OUTPUT: 1
-
-  # Disables progress bars when using UV
   UV_NO_PROGRESS: 1
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Clean previous build & temp
+        run: |
+          df -h
+          sudo rm -rf /home/runner/actions-runner/cached/_diag/*
+          sudo rm -rf /home/runner/work/_temp/*
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /tmp/*
+          rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
+          df -h
 
-    - name: Install flet-cli ${{ env.FLET_CLI_VERSION }}
-      run: |
-        python -m pip install --upgrade pip
-        pip install flet-cli==$FLET_CLI_VERSION
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Patch for linux build
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y ninja-build libgtk-3-dev
+      - name: Install dependencies
+        run: |
+          pip cache purge
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
-    - name: Flet Build Linux
-      run: |
-        flet build linux --verbose
+      - name: Disable lazy loader for scikit-image
+        run: echo "SCIKIT_IMAGE_NO_LAZY=1" >> $GITHUB_ENV
 
-    - name: Upload Linux Artifact
-      uses: actions/upload-artifact@v4.3.4
-      with:
-        name: linux-build-artifact
-        path: build/linux
-        if-no-files-found: warn
-        overwrite: false
+      - name: Flet Build Linux
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          export CI=true
+          flet build linux --no-rich-output
+
+      - name: Cleanup temp dirs
+        run: |
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
+              rm -rf /tmp/*
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/temp
+              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/cache
+              df -h
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-artifact
+          path: build/linux
+          if-no-files-found: warn
+          overwrite: false
 
   build-macos:
     runs-on: macos-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install flet-cli ${{ env.FLET_CLI_VERSION }}
-      run: |
-        python -m pip install --upgrade pip
-        pip install flet-cli==$FLET_CLI_VERSION
+      - name: Install dependencies
+        run: |
+          pip cache purge
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
-    - name: Flet Build macOS
-      run: |
-        flet build macos --verbose
+      - name: Disable lazy loader for scikit-image
+        run: echo "SCIKIT_IMAGE_NO_LAZY=1" >> $GITHUB_ENV
 
-    - name: Upload macOS Artifact
-      uses: actions/upload-artifact@v4.3.4
-      with:
-        name: macos-build-artifact
-        path: build/macos
-        if-no-files-found: warn
-        overwrite: false
+      - name: Flet Build macOS
+        shell: bash
+        run: |
+          export CI=true
+          flet build macos --no-rich-output
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-artifact
+          path: build/macos
+          if-no-files-found: warn
+          overwrite: false
 
   build-windows:
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install flet-cli ${{ env.FLET_CLI_VERSION }}
-      run: |
-        python -m pip install --upgrade pip
-        pip install flet-cli==$env:FLET_CLI_VERSION
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          pip cache purge
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
-    - name: Flet Build Windows
-      run: |
-        flet build windows --verbose --no-rich-output
+      - name: Final Flet Build Windows
+        shell: pwsh
+        run: |
+          $env:SCIKIT_IMAGE_NO_LAZY = "1"
+          $env:CI='true'
+          flet build windows --no-rich-output --source-packages skimage
 
-    - name: Upload Windows Artifact
-      uses: actions/upload-artifact@v4.3.4
-      with:
-        name: windows-build-artifact
-        path: build/windows
-        if-no-files-found: warn
-        overwrite: false
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-artifact
+          path: build/windows
+          if-no-files-found: warn
+          overwrite: false
