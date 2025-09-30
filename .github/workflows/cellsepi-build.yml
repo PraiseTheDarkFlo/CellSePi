@@ -23,32 +23,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clean previous build & temp
-        run: |
-          df -h
-          sudo rm -rf /home/runner/actions-runner/cached/_diag/*
-          sudo rm -rf /home/runner/work/_temp/*
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo rm -rf /tmp/*
-          rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
-          df -h
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          pip cache purge
-          python -m pip install --upgrade pip
-          pip install --no-cache-dir --only-binary :all: -r requirements.txt
-
-      - name: Disable lazy loader for scikit-image
-        run: echo "SCIKIT_IMAGE_NO_LAZY=1" >> $GITHUB_ENV
 
       - name: Flet Build Linux
         shell: bash
@@ -57,14 +35,6 @@ jobs:
           sudo apt-get install -y ninja-build libgtk-3-dev
           export CI=true
           flet build linux --no-rich-output
-
-      - name: Cleanup temp dirs
-        run: |
-              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/.dart_tool
-              rm -rf /tmp/*
-              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/temp
-              rm -rf /home/runner/work/CellSePi/CellSePi/build/flutter/build/cache
-              df -h
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
@@ -83,15 +53,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          pip cache purge
-          python -m pip install --upgrade pip
-          pip install --no-cache-dir --only-binary :all: -r requirements.txt
-
-      - name: Disable lazy loader for scikit-image
-        run: echo "SCIKIT_IMAGE_NO_LAZY=1" >> $GITHUB_ENV
 
       - name: Flet Build macOS
         shell: bash
@@ -116,13 +77,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        shell: pwsh
-        run: |
-          pip cache purge
-          python -m pip install --upgrade pip
-          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
       - name: Final Flet Build Windows
         shell: pwsh
