@@ -123,9 +123,7 @@ jobs:
           pip cache purge
           python -m pip install --upgrade pip
           pip install --no-cache-dir --only-binary :all: -r requirements.txt
-
-      - name: Disable lazy loader for scikit-image
-        run: echo "SCIKIT_IMAGE_NO_LAZY=1" >> $GITHUB_ENV
+          setx SCIKIT_IMAGE_NO_LAZY 1
 
       - name: Final Flet Build Windows
         shell: pwsh
