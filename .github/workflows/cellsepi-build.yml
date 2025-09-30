@@ -123,11 +123,11 @@ jobs:
           pip cache purge
           python -m pip install --upgrade pip
           pip install --no-cache-dir --only-binary :all: -r requirements.txt
-          setx SCIKIT_IMAGE_NO_LAZY 1
 
       - name: Final Flet Build Windows
         shell: pwsh
         run: |
+          $env:SCIKIT_IMAGE_NO_LAZY = "1"
           $env:CI='true'
           flet build windows --no-rich-output --source-packages skimage
 
