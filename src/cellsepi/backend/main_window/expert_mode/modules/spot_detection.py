@@ -116,7 +116,7 @@ class SpotDetectionModule(Module, ABC):
                         "outlines": np.zeros(image.shape, dtype=np.uint8)
                     }
                 else:
-                    mask_shape = np.transpose(image, (1, 2, 0)).shape
+                    mask_shape = np.transpose(image, (2, 0, 1)).shape
                     empty_mask = {
                         "masks": np.zeros(mask_shape, dtype=np.uint8),
                         "outlines": np.zeros(mask_shape, dtype=np.uint8)
@@ -130,13 +130,15 @@ class SpotDetectionModule(Module, ABC):
         self.outputs["mask_paths"].data = mask_paths
         self.event_manager.notify(ProgressEvent(percent=100, process=f"Spot detection: Finished"))
 
-def create_spot_mask(spots,mask, radius):
+def create_spot_mask(spots,mask, radius,thickness=1):
     spots = [spots]
     bool_3d = mask["masks"].ndim == 3
     masks = mask["masks"]
-    print(masks.shape)
+    outlines = mask["outlines"]
     for i, coordinates in enumerate(spots):
         spot_id = i+1
+        print(i)
+        print(spot_id)
         if not bool_3d:
             for y, x in coordinates:
                 y, x = int(round(y)), int(round(x))
@@ -146,6 +148,7 @@ def create_spot_mask(spots,mask, radius):
                 dist = np.sqrt((x_grid - x) ** 2 + (y_grid - y) ** 2)
 
                 masks[dist <= radius] = spot_id
+                outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
         else:
             for z, y, x in coordinates:
                 z, y, x = int(round(z)), int(round(y)), int(round(x))
@@ -153,8 +156,7 @@ def create_spot_mask(spots,mask, radius):
                 z_grid,x_grid,y_grid,  = np.ogrid[:d, :h, :w]
                 dist = np.sqrt((z_grid - z) ** 2+(x_grid - x) ** 2+(y_grid - y) ** 2)
 
-
                 masks[dist <= radius] = spot_id
-
+                outlines[(dist > radius) & (dist <= radius + thickness)] = spot_id
     return mask
 
