@@ -107,7 +107,6 @@ class SpotDetectionModule(Module, ABC):
                 else:
                     rna = np.transpose(image, (1,0)) #Y,X for big-fish
                 try:
-                    pass
                     spots, threshold = detect_spots(rna, remove_duplicate=self.user_remove_duplicate, threshold=None if not self.user_use_threshold else self.user_threshold, return_threshold=True,
                                                               voxel_size=(self.user_voxel_size_y_nm, self.user_voxel_size_x_nm) if image.ndim == 2 else (self.user_voxel_size_z_nm, self.user_voxel_size_y_nm, self.user_voxel_size_x_nm), spot_radius=(self.user_spot_radius_y_nm, self.user_spot_radius_x_nm) if image.ndim == 2 else (self.user_spot_radius_z_nm, self.user_spot_radius_y_nm, self.user_spot_radius_x_nm), log_kernel_size=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels) if image.ndim == 2 else (self.user_log_kernel_z_pixels, self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels),
                                                               minimum_distance=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels) if image.ndim == 2 else (self.user_minimum_distance_z_pixels, self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels))
