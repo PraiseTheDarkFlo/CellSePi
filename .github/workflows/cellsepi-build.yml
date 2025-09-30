@@ -43,8 +43,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip cache purge
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
       - name: Flet Build Linux
         shell: bash
@@ -82,8 +83,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip cache purge
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
       - name: Flet Build macOS
         shell: bash
@@ -112,8 +114,9 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          pip cache purge
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir --only-binary :all: -r requirements.txt
 
       - name: Final Flet Build Windows
         shell: pwsh
