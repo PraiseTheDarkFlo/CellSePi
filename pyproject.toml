@@ -6,6 +6,31 @@ name = "CellSePi"
 description = "Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose."
 version = "0.1.0"
 readme = "README.md"
+dependencies = [
+    "numpy==2.2.6",
+    "flet==0.28.3",
+    "flet-cli == 0.28.3",
+    "flet-desktop == 0.28.3",
+    "flet-runtime == 0.24.1",
+    "flet_core == 0.24.1",
+    "cellpose==4.0.6",
+    "bioio==3.0.0",
+    "bioio-base==3.0.0",
+    "bioio-lif==1.4.1",
+    "numba==0.62.1",
+    "flet_contrib",
+    "pillow",
+    "pandas",
+    "openpyxl",
+    "matplotlib",
+    "pytest",
+    "pyqt5",
+    "torchvision >= 0.17.2",
+    "jsonschema == 4.25.1",
+    "flet-extended-interactive-viewer == 0.1.2",
+    "scikit-image==0.25.2",
+    "big-fish == 0.6.2",
+]
 
 [tool.flet.app]
 path = "src"
