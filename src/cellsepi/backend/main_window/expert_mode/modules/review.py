@@ -342,7 +342,7 @@ class Review(Module, ABC):
         self._main_image.content.src_base64 = auto_adjust(self.inputs["image_paths"].data[img_id][channel_id], get_slice=int(self._slider_2_5d.value) if self.user_2_5d else -1)
         self._main_image.update()
         image = tifffile.imread(self.inputs["image_paths"].data[self.image_id][self.channel_id])
-        self._text_field_mask_suffix.visible = not(self.image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[self.image_id] and self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel] is not None) and self._edit_allowed
+        self._text_field_mask_suffix.visible = not(self.inputs["mask_paths"].data is not None and self.image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[self.image_id] and self.inputs["mask_paths"].data[self.image_id][self.user_segmentation_channel] is not None) and self._edit_allowed
         self._text_field_mask_suffix.update()
 
         if image.ndim == 3:
