@@ -136,6 +136,7 @@ def create_spot_mask(spots,mask, radius,thickness=1):
     outlines = mask["outlines"]
     for i, coordinates in enumerate(spots):
         spot_id = i+1
+        print(coordinates)
         if not bool_3d:
             y, x = coordinates
             y, x = int(round(y)), int(round(x))
