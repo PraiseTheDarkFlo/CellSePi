@@ -8,9 +8,10 @@ version = "0.1.0"
 readme = "README.md"
 
 [tool.flet.app]
-path = "src/cellsepi"
+path = "src"
 
 [tool.flet]
+app.module = "cellsepi.main.py"
 org = "SOS_Lab"
 product = "CellSePi"
 company = "SOS_Lab"
