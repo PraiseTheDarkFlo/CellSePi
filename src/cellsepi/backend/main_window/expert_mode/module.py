@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
 from typing import Callable
+from typing import Dict,List
 
 import flet as ft
-from typing import List
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 
@@ -55,6 +55,23 @@ class Port:
     def __str__(self):
         return f"port_name: '{self.name}', port_data_type: '{self.data_type.__name__}', opt: {self.opt}, data: {self.data}"
 
+class InputPort(Port):
+    """
+    InputPorts defines an input of a module.
+    Ports with the same names in different modules are considered as the same type of ports
+    and their data can be transferred with pipes to each other.
+    """
+    def __init__(self, name: str, data_type: type, opt: bool = False):
+        super().__init__(name, data_type, opt)
+
+class OutputPort(Port):
+    """
+    OutputPorts defines an output of a module.
+    Ports with the same names in different modules are considered as the same type of ports
+    and their data can be transferred with pipes to each other.
+    """
+    def __init__(self, name: str, data_type: type):
+        super().__init__(name, data_type)
 
 class Categories(Enum):
     """
@@ -126,10 +143,10 @@ class Module(ABC):
     """
     @abstractmethod
     def __init__(self,module_id: str):
-        self.module_id = module_id
+        self.module_id:str = module_id
         self.event_manager: EventManager | None = None
-        self.inputs = {}
-        self.outputs = {}
+        self.inputs: Dict[str,InputPort] = {}
+        self.outputs: Dict[str,OutputPort] = {}
         self._settings: ft.Stack | None = None
         self._on_settings_dismiss: Callable[[], None] | None = lambda : None
         """

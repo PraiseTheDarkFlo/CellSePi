@@ -17,10 +17,10 @@ class Project3dTo2d(Module, ABC):
     def __init__(self, module_id: str) -> None:
         super().__init__(module_id)
         self.inputs = {
-            "image_paths": Port("image_paths", dict),
+            "image_paths": InputPort("image_paths", dict),
         }
         self.outputs = {
-            "image_paths": Port("image_paths", dict),
+            "image_paths": OutputPort("image_paths", dict),
         }
 
     def run(self):

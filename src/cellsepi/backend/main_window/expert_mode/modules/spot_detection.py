@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-#from bigfish.detection.spot_detection import detect_spots
+from bigfish.detection.spot_detection import detect_spots
 import numpy as np
 import tifffile
 from scipy.ndimage import binary_dilation
@@ -108,9 +108,9 @@ class SpotDetectionModule(Module, ABC):
                     rna = np.transpose(image, (1,0)) #Y,X for big-fish
                 try:
                     pass
-                    #spots, threshold = detect_spots(rna, remove_duplicate=self.user_remove_duplicate, threshold=None if not self.user_use_threshold else self.user_threshold, return_threshold=True,
-                    #                                          voxel_size=(self.user_voxel_size_y_nm, self.user_voxel_size_x_nm) if image.ndim == 2 else (self.user_voxel_size_z_nm, self.user_voxel_size_y_nm, self.user_voxel_size_x_nm), spot_radius=(self.user_spot_radius_y_nm, self.user_spot_radius_x_nm) if image.ndim == 2 else (self.user_spot_radius_z_nm, self.user_spot_radius_y_nm, self.user_spot_radius_x_nm), log_kernel_size=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels) if image.ndim == 2 else (self.user_log_kernel_z_pixels, self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels),
-                    #                                          minimum_distance=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels) if image.ndim == 2 else (self.user_minimum_distance_z_pixels, self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels))
+                    spots, threshold = detect_spots(rna, remove_duplicate=self.user_remove_duplicate, threshold=None if not self.user_use_threshold else self.user_threshold, return_threshold=True,
+                                                              voxel_size=(self.user_voxel_size_y_nm, self.user_voxel_size_x_nm) if image.ndim == 2 else (self.user_voxel_size_z_nm, self.user_voxel_size_y_nm, self.user_voxel_size_x_nm), spot_radius=(self.user_spot_radius_y_nm, self.user_spot_radius_x_nm) if image.ndim == 2 else (self.user_spot_radius_z_nm, self.user_spot_radius_y_nm, self.user_spot_radius_x_nm), log_kernel_size=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels) if image.ndim == 2 else (self.user_log_kernel_z_pixels, self.user_log_kernel_y_pixels, self.user_log_kernel_x_pixels),
+                                                              minimum_distance=None if not self.user_use_log_kernel_and_minimum_distance else (self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels) if image.ndim == 2 else (self.user_minimum_distance_z_pixels, self.user_minimum_distance_y_pixels, self.user_minimum_distance_x_pixels))
                 except Exception as e:
                     raise PipelineRunningException("Spot Detection Error",str(e))
 
@@ -130,8 +130,8 @@ class SpotDetectionModule(Module, ABC):
                 if self.inputs["mask_paths"].data is not None:
                     if image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[image_id]:
                         mask_seg = np.load(Path(self.inputs["mask_paths"].data[image_id][self.user_segmentation_channel]),allow_pickle=True).item()
-                #mask = create_spot_mask(spots, empty_mask,mask_seg, self.user_spot_radius_pixels)
-                #np.save(new_path, mask)
+                mask = create_spot_mask(spots, empty_mask,mask_seg, self.user_spot_radius_pixels)
+                np.save(new_path, mask)
 
                 self.event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_series * 100),
                                                         process=f"Spot detection images: {iN + 1}/{n_series}"))

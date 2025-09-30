@@ -8,8 +8,8 @@ class ReadTif(Module,ABC):
     def __init__(self, module_id: str) -> None:
         super().__init__(module_id)
         self.outputs = {
-            "image_paths": Port("image_paths", dict),
-            "mask_paths": Port("mask_paths", dict),
+            "image_paths": OutputPort("image_paths", dict),
+            "mask_paths": OutputPort("mask_paths", dict),
         }
         self.user_directory_path: DirectoryPath = DirectoryPath()
         self.user_channel_prefix: str = "c"

@@ -1,5 +1,5 @@
 from typing import Callable
-from cellsepi.backend.main_window.expert_mode.module import ModuleGuiConfig
+from cellsepi.backend.main_window.expert_mode.module import ModuleGuiConfig, OutputPort, InputPort
 from src.cellsepi.backend.main_window.expert_mode.module import Module,Port
 
 class DummyModule1(Module):
@@ -7,7 +7,7 @@ class DummyModule1(Module):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.outputs = {
-            "port1": Port("port1", int)
+            "port1": OutputPort("port1", int)
         }
         self._on_settings_dismiss = self.test
         self._event_manager = None
@@ -29,10 +29,10 @@ class DummyModule2(Module):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.inputs = {
-            "port1": Port("port1", int)
+            "port1": InputPort("port1", int)
         }
         self.outputs = {
-            "port2": Port("port2", str)
+            "port2": OutputPort("port2", str)
         }
 
     def run(self):
@@ -44,7 +44,7 @@ class DummyModule3(Module):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.inputs = {
-            "port1": Port("port1", str),
+            "port1": InputPort("port1", str),
         }
 
     def run(self):
@@ -55,14 +55,14 @@ class DummyModule4(Module):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.inputs = {
-            "port1": Port("port1", int),
-            "port2": Port("port2", str),
-            "port4": Port("port4", str,True),
-            "port5": Port("port5", str,True),
+            "port1": InputPort("port1", int),
+            "port2": InputPort("port2", str),
+            "port4": InputPort("port4", str,True),
+            "port5": InputPort("port5", str,True),
         }
         self.outputs = {
-            "port!": Port("port1", int),
-            "port3": Port("port3", str),
+            "port!": OutputPort("port1", int),
+            "port3": OutputPort("port3", str),
         }
     def run(self):
         result = self.inputs["port2"].data + " == " + str(self.inputs["port1"].data)
@@ -73,10 +73,10 @@ class DummyPauseModule(Module):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.inputs = {
-            "port1": Port("port1", int),
+            "port1": InputPort("port1", int),
         }
         self.outputs = {
-            "port1": Port("port1", int)
+            "port1": OutputPort("port1", int)
         }
         self._on_settings_dismiss = self.test
         self._event_manager = None
