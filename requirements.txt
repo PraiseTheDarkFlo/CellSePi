@@ -16,7 +16,7 @@ openpyxl
 matplotlib
 pytest
 pyqt5
-torchvision == 0.23.0
+torchvision == 0.17.2
 jsonschema == 4.25.1
 flet-extended-interactive-viewer == 0.1.2
 #scikit-image == 0.25.2
