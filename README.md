@@ -127,18 +127,34 @@ Train your own models using the **Cellpose** framework. Two training modes are a
 ## ⬇️ Installation
 
 To install CellSePi, simply run:
+- Using Pip  
+    ```bash
+    pip install cellsepi
+    ```
 
-```bash
-pip install cellsepi
-```
+    This command automatically installs all required dependencies as specified in the [package configuration](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/requirements.txt).
 
-This command automatically installs all required dependencies as specified in the package configuration.
+Build your app:
+- Using Linux:
 
-[Requirements Packages](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/requirements.txt)
+    ```bash
+    flet build linux -v
+    ```
+- Using Mac:
+
+    ```bash
+    flet build macos -v
+    ```
+- Using Windows:
+
+    ```bash
+    flet build windows -v
+    ```
 
 ## 📚 Citations
 
-Our segmentation and models are powered by [CellPose](https://github.com/MouseLand/cellpose).
+Our segmentation and models are powered by [CellPose](https://github.com/MouseLand/cellpose) 
+and our spot detection is powered by [Big-FISH](https://github.com/fish-quant/big-fish).
 
 - **Stringer, C., Wang, T., Michaelos, M., & Pachitariu, M. (2021). Cellpose:**  
   a generalist algorithm for cellular segmentation. *Nature Methods, 18*(1), 100-106.
@@ -150,6 +166,7 @@ Our segmentation and models are powered by [CellPose](https://github.com/MouseLa
   Image Reading, Metadata Conversion, and Image Writing for Microscopy Images in Pure Python [Computer software]. [GitHub](https://github.com/bioio-devs/bioio)
 - **dilli_hangrae(2024):**
   Scanline Filling Algorithm. [Website](https://medium.com/@dillihangrae/scanline-filling-algorithm-852ad47fb0dd)
+- **Arthur Imbert, Wei Ouyang, Adham Safieddine, Emeline Coleno, Christophe Zimmer, Edouard Bertrand, Thomas Walter, Florian Mueller. FISH-quant v2:** a scalable and modular analysis tool for smFISH image analysis. bioRxiv (2021) [Paper](https://doi.org/10.1101/2021.07.20.453024)
 
 ## ✍️ Authors
 

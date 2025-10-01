@@ -95,7 +95,7 @@ class ModuleGuiConfig:
 
 class IdNumberManager:
     """
-    Manages the module ID's so every module
+    Manages the module ID's so every module has a unique ID.
     """
     def __init__(self):
         self._occupied_id_numbers = set()

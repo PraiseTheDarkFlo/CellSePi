@@ -8,7 +8,7 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="cellsepi",
-    version="1.1.3",
+    version="1.1.4",
     license="Apache License 2.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},

@@ -758,7 +758,7 @@ class ModuleGUI(ft.GestureDetector):
         if str(e.control.value) == "":
             self.pipeline_gui.page.open(
                 ft.SnackBar(
-                    ft.Text(f"{attribute_name_without_prefix} must be not empty!",
+                    ft.Text(f"{attribute_name_without_prefix} must not be empty!",
                             color=ft.Colors.WHITE),
                     bgcolor=ft.Colors.RED))
             e.control.value = str(getattr(self.module, attr_name))

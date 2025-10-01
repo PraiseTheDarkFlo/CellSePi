@@ -27,7 +27,7 @@ class SpotDetectionModule(Module, ABC):
         self.user_use_log_kernel_and_minimum_distance:bool = False
         self.user_segmentation_channel: str = "2"
         self.user_mask_suffix: str = "_sdm" #spot detection mask
-        self.user_spot_radius_pixels: float = 3.0
+        self.user_mask_spot_radius_pixels: float = 3.0
         self.user_threshold: float = 355.0
         self.user_log_kernel_x_pixels: float = 1.456
         self.user_log_kernel_y_pixels: float = 1.456
