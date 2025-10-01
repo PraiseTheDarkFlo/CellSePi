@@ -14,14 +14,11 @@ def build():
     elif system == "linux":
         target = "linux"
     else:
-        print("Unknown system")
+        print("Flet build failed: unknown system")
         sys.exit(1)
 
     try:
-        subprocess.check_call(["flet", "build", target, "-v"])
-    except FileNotFoundError:
-        print("Flet build failed: Flet not found!")
-        sys.exit(1)
+            subprocess.check_call([sys.executable, "-m", "flet.cli", "build", target, "-v"])
     except subprocess.CalledProcessError as e:
         print(f"Flet build failed: {e}")
         sys.exit(1)
