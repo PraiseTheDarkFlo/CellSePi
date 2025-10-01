@@ -8,7 +8,7 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="cellsepi",
-    version="1.1.6",
+    version="1.1.7",
     license="Apache License 2.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
@@ -28,6 +28,7 @@ setup(
     entry_points={
         "console_scripts": [
             "cellsepi = cellsepi.main:main",
+            "cellsepi-build = cellsepi.cli:build"
         ],
     },
     package_data={
