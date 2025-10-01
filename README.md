@@ -134,30 +134,7 @@ pip install cellsepi
 
 This command automatically installs all required dependencies as specified in the package configuration.
 
-**Required Packages (with versions):**
-
-- **Python 3.8+**
-- `numpy==1.26.4`
-- `numba>=0.59.0`
-- `pillow`
-- `pandas`
-- `openpyxl`
-- `cellpose==3.1.1.1`
-- `flet==0.28.3`
-- `flet-cli==0.28.3`
-- `flet-desktop==0.28.3`
-- `flet-runtime==0.24.1`
-- `matplotlib`
-- `pytest`
-- `pyqt5`
-- `flet_contrib`
-- `flet_core==0.24.1`
-- `bioio==1.2.0`
-- `bioio-lif==1.0.0`
-- `bioio-base==1.0.4`
-- `torchvision==0.23.0`
-- `jsonschema == 4.25.1`
-- `flet-extended-interactive-viewer == 0.1.2`
+[Requirements Packages](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/requirements.txt)
 
 ## 📚 Citations
 

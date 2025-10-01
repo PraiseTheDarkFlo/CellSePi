@@ -2,7 +2,7 @@
 webview_flutter_android = "4.10.1"
 
 [project]
-name = "CellSePi"
+name = "cellsepi"
 description = "Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose."
 version = "0.1.0"
 readme = "README.md"
