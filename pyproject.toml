@@ -1,18 +1,2 @@
 [tool.flet.flutter.pubspec.dependency_overrides]
 webview_flutter_android = "4.10.1"
-
-[project]
-name = "cellsepi"
-description = "Segmentation of microscopy images and data analysis pipeline with a graphical user interface, powered by Cellpose."
-version = "0.1.0"
-readme = "README.md"
-
-[tool.flet.app]
-path = "src"
-
-[tool.flet]
-org = "SOS_Lab"
-product = "CellSePi"
-company = "SOS_Lab"
-build_number = 1
-compile.cleanup = true
