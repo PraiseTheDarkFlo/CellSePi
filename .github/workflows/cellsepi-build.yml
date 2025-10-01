@@ -1,12 +1,6 @@
 name: CellSePi Desktop Builds
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   release:
     types: [published]
   workflow_dispatch:
