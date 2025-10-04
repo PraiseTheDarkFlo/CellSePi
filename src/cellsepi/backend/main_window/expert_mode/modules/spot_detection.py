@@ -127,7 +127,7 @@ class SpotDetectionModule(Module, ABC):
                 if self.inputs["mask_paths"].data is not None:
                     if image_id in self.inputs["mask_paths"].data and self.user_segmentation_channel in self.inputs["mask_paths"].data[image_id]:
                         mask_seg = np.load(Path(self.inputs["mask_paths"].data[image_id][self.user_segmentation_channel]),allow_pickle=True).item()
-                mask = create_spot_mask(spots, empty_mask,mask_seg, self.user_spot_radius_pixels)
+                mask = create_spot_mask(spots, empty_mask,mask_seg, self.user_mask_spot_radius_pixels)
                 np.save(new_path, mask)
 
                 self.event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_series * 100),

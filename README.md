@@ -126,29 +126,24 @@ Train your own models using the **Cellpose** framework. Two training modes are a
 
 ## ⬇️ Installation
 
-To install CellSePi, simply run:
-- Using Pip  
+- Install CellSePi:
     ```bash
     pip install cellsepi
     ```
 
-    This command automatically installs all required dependencies as specified in the [package configuration](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/requirements.txt).
+    This command automatically installs all required dependencies as specified in the [package configuration](https://github.com/PraiseTheDarkFlo/CellSePi/blob/main/pyproject.toml).
 
-Build your app:
-- Using Linux:
 
+- Build CellSePi:
     ```bash
-    flet build linux -v
+    python -m cellsepi build
     ```
-- Using Mac:
+  For Windows you need [Visual Studio 2022](https://learn.microsoft.com/en-us/visualstudio/install/install-visual-studio?view=vs-2022) with Desktop development with C++ workload installed ([Flet Windows build docs](https://flet.dev/docs/publish/windows/)).
 
-    ```bash
-    flet build macos -v
-    ```
-- Using Windows:
 
+- Run CellSePi:
     ```bash
-    flet build windows -v
+    python -m cellsepi
     ```
 
 ## 📚 Citations
