@@ -5,7 +5,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 class ReadLif(Module,ABC):
     _gui_config = ModuleGuiConfig("ReadLif",Categories.INPUTS,"This module handles the read in of .lif files and if available reads in the mask of the images.")
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str = None) -> None:
         super().__init__(module_id)
         self.outputs = {
             "image_paths": OutputPort("image_paths", dict),

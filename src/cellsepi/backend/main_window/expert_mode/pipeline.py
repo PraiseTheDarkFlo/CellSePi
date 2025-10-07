@@ -30,7 +30,7 @@ class Pipeline:
         """
         Creates a module of the given class and adds it to the pipeline.
         """
-        module = module_class(module_id=module_class.get_id())
+        module = module_class()
         return self._add_module(module,module_class)
 
     def add_module_with_id(self, module_class: Type[Module],module_id: str) -> Module:
@@ -59,7 +59,7 @@ class Pipeline:
         if not module_id_old in self.module_map:
             raise ValueError(f"Module id '{module_id_old}' doesen't exists")
         self.module_map[module_id_old].free_id_number(self.module_map[module_id_old].get_id_number())
-        module_id_new = self.module_map[module_id_old].get_id()
+        module_id_new = self.module_map[module_id_old].get_new_id()
         self.module_map[module_id_old].module_id = module_id_new
         self.module_map[module_id_new] = self.module_map[module_id_old]
         del self.module_map[module_id_old]

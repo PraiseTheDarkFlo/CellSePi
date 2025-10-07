@@ -9,7 +9,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 class ImageReadoutModule(Module, ABC):
     _gui_config = ModuleGuiConfig("ImageReadout",Categories.OUTPUTS,"This module handles the readout of the segmented images and saves them in an .xlsx file.")
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str = None) -> None:
         super().__init__(module_id)
         self.inputs = {
             "image_paths": InputPort("image_paths", dict),

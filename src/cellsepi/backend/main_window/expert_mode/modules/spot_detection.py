@@ -13,7 +13,7 @@ from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningExc
 
 class SpotDetectionModule(Module, ABC):
     _gui_config = ModuleGuiConfig("SpotDetection",Categories.SEGMENTATION,"This module handles spot detection in cells for each series on the given segmentation_channel with the big-fish python package.")
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str = None) -> None:
         super().__init__(module_id)
         self.inputs = {
             "image_paths": InputPort("image_paths", dict),

@@ -9,7 +9,7 @@ from cellsepi.frontend.main_window.gui_directory import DirectoryCard
 
 class ImageSegmentationModule(Module, ABC):
     _gui_config = ModuleGuiConfig("ImageSegmentation",Categories.SEGMENTATION,"This module handles the segmentation of cells for each series on the given segmentation_channel with the provided model in model_path.")
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str = None) -> None:
         super().__init__(module_id)
         self.inputs = {
             "image_paths": InputPort("image_paths", dict),

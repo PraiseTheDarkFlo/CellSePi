@@ -24,7 +24,7 @@ class Review(Module, ABC):
     outline_color = (0, 255, 0)
     _instances = []
     _gui_config = ModuleGuiConfig("Review",Categories.MANUAL,"This module allows you to manually review and edit masks. Also you can create new masks when no mask are given.")
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str = None) -> None:
         #regular modul
         super().__init__(module_id)
         self.inputs = {

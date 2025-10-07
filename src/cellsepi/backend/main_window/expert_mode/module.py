@@ -142,8 +142,8 @@ class Module(ABC):
     With these automatic overlay gets created if settings is None.
     """
     @abstractmethod
-    def __init__(self,module_id: str):
-        self.module_id:str = module_id
+    def __init__(self,module_id: str = None):
+        self.module_id:str = self.get_new_id() if module_id is None else module_id
         self.event_manager: EventManager | None = None
         self.inputs: Dict[str,InputPort] = {}
         self.outputs: Dict[str,OutputPort] = {}
@@ -167,7 +167,7 @@ class Module(ABC):
 
 
     @classmethod
-    def get_id(cls) -> str:
+    def get_new_id(cls) -> str:
         """
         Returns the module ID.
         """

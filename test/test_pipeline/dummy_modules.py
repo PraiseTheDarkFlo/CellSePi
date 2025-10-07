@@ -4,7 +4,7 @@ from src.cellsepi.backend.main_window.expert_mode.module import Module,Port
 
 class DummyModule1(Module):
     _gui_config = ModuleGuiConfig("test1", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.outputs = {
             "port1": OutputPort("port1", int)
@@ -26,7 +26,7 @@ class DummyModule1(Module):
 
 class DummyModule2(Module):
     _gui_config = ModuleGuiConfig("test2", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.inputs = {
             "port1": InputPort("port1", int)
@@ -41,7 +41,7 @@ class DummyModule2(Module):
 
 class DummyModule3(Module):
     _gui_config = ModuleGuiConfig("test3", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.inputs = {
             "port1": InputPort("port1", str),
@@ -52,7 +52,7 @@ class DummyModule3(Module):
 
 class DummyModule4(Module):
     _gui_config = ModuleGuiConfig("test4", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.inputs = {
             "port1": InputPort("port1", int),
@@ -70,7 +70,7 @@ class DummyModule4(Module):
 
 class DummyPauseModule(Module):
     _gui_config = ModuleGuiConfig("testPause", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.inputs = {
             "port1": InputPort("port1", int),

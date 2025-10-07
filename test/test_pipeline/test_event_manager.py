@@ -8,7 +8,7 @@ import pytest
 
 class DummyErrorModule(Module):
     _gui_config = ModuleGuiConfig("ErrorModule", None, None)
-    def __init__(self, module_id: str):
+    def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self._name = module_id
         self._event_manager = None
