@@ -12,8 +12,8 @@ from cellsepi.backend.main_window.expert_mode.modules.review import Review
 from cellsepi.backend.main_window.expert_mode.modules.spot_detection import SpotDetectionModule
 
 #Constants used in the PipelineBuildingTool(ExpertMode)
-BUILDER_WIDTH = 1000
-BUILDER_HEIGHT = 400
+CANVAS_HEIGHT = 10000
+CANVAS_WIDTH = 10000
 MODULE_WIDTH = 235
 MODULE_HEIGHT = 80
 SPACING_X = 10

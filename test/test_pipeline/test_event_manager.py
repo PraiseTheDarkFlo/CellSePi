@@ -95,16 +95,6 @@ class DummyPauseListener(EventListener):
         elif event.resume == False and self.cancel:
             self.pipeline.cancel()
 
-class DummyCancelListener(EventListener):
-    def __init__(self):
-        self.last_event: PipelineCancelEvent | None = None
-        self.event_type = PipelineCancelEvent
-
-    def get_event_type(self) -> Type[Event]:
-        return self.event_type
-
-    def _update(self, event: Event) -> None:
-        self.last_event = event
 
 
 def test_notify_listener():
@@ -130,13 +120,19 @@ def test_notify_listener():
 def test_module_listener():
     manager = EventManager()
     listener = DummyModuleListener()
+    listener2 = DummyModuleListener()
 
     manager.subscribe(listener=listener)
+    manager.subscribe(listener=listener2)
     event = ModuleExecutedEvent("test")
-    assert manager._listeners[type(event)] == [listener]
+    assert manager._listeners[type(event)] == [listener,listener2]
     manager.notify(event)
     assert listener.last_event is not None, "Listener was not notified"
+    assert listener2.last_event is not None, "Listener was not notified"
     assert listener.last_event.module_id == "test", "Something went wrong when notifying the listener"
+    assert listener2.last_event.module_id == "test", "Something went wrong when notifying the listener"
+    manager.unsubscribe(listener=listener)
+    assert manager._listeners[type(event)] == [listener2]
 
 def test_event_listener_update_wrong_type():
     listener = DummyListener()

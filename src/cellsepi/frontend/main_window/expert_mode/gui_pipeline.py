@@ -27,8 +27,6 @@ class PipelineGUI(ft.Stack):
         self.modules = {} #without show_room modules, identiefierer is the module_id
         self.show_room_size = len(ModuleType) if len(ModuleType) < SHOWROOM_MODULE_COUNT else SHOWROOM_MODULE_COUNT
         self.show_room_modules = [] #saves all modules within the show_room
-        self.width = BUILDER_WIDTH
-        self.height = BUILDER_HEIGHT
         self.source_module: str = ""
         self.show_ports:bool = False
         self.show_delete_button:bool = False

@@ -7,7 +7,8 @@ class DummyModule1(Module):
     def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.outputs = {
-            "port1": OutputPort("port1", int)
+            "port1": OutputPort("port1", int),
+            "port5": OutputPort("port5", str),
         }
         self._on_settings_dismiss = self.test
         self._event_manager = None
@@ -29,7 +30,8 @@ class DummyModule2(Module):
     def __init__(self, module_id: str = None):
         super().__init__(module_id)
         self.inputs = {
-            "port1": InputPort("port1", int)
+            "port1": InputPort("port1", int),
+            "port5": InputPort("port5", str,True),
         }
         self.outputs = {
             "port2": OutputPort("port2", str)
@@ -47,7 +49,7 @@ class DummyModule3(Module):
             "port1": InputPort("port1", str),
         }
 
-    def run(self):
+    def run(self): #pragma: no cover
             pass
 
 class DummyModule4(Module):
@@ -78,15 +80,11 @@ class DummyPauseModule(Module):
         self.outputs = {
             "port1": OutputPort("port1", int)
         }
-        self._on_settings_dismiss = self.test
         self._event_manager = None
         self.user_test1: int = 1
         self.user_test2: int = 2
         self.user_test3: int = 3
         self.user_test4: int = 4
-
-    def test(self):
-        self.user_test4 +=1
 
     def run(self):
         result = 42 + 25

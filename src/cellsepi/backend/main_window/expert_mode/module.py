@@ -125,11 +125,15 @@ class IdNumberManager:
     def free_id_number(self, id_number: int) -> None:
         """
         Frees the id number given.
+        Raises:
+            ValueError: if the id_number given is not occupied.
         """
         if id_number in self._occupied_id_numbers:
             self._occupied_id_numbers.discard(id_number)
             if self._next_id_number > id_number >= 0:
                 self._next_id_number = id_number
+        else:
+            raise ValueError(f"Number {id_number} not occupied!")
 
 
 class Module(ABC):
@@ -189,8 +193,9 @@ class Module(ABC):
         """
         Gives the given id number free for other modules.
         """
-        if hasattr(cls, "_id_number_manager"):
-            cls._id_number_manager.free_id_number(id_number)
+        if not hasattr(cls, "_id_number_manager"):
+            cls._id_number_manager = IdNumberManager()
+        cls._id_number_manager.free_id_number(id_number)
 
     @classmethod
     def destroy_id_number_manager(cls):
@@ -215,6 +220,8 @@ class Module(ABC):
         if id_number != "":
             number = int(id_number)
             self.occupy_id_number(number)
+        else:
+            raise ValueError("module_id dosen't contain a number!")
 
     def get_id_number(self)-> int:
         """
@@ -226,11 +233,15 @@ class Module(ABC):
     def destroy(self):
         """
         Module gets distroyed so free the id_number for other modules.
+        Raises:
+            ValueError: If the module_id dosen't contain a number.
         """
         id_number = self.module_id.removeprefix(self.gui_config().name)
         if id_number != "":
             number = int(id_number)
             self.free_id_number(number)
+        else:
+            raise ValueError("module_id dosen't contain a number!")
 
     def get_mandatory_inputs(self) -> List[str]:
         """
@@ -268,7 +279,11 @@ class Module(ABC):
         """
         Returns the list of attributes of the module's user attributes.
         """
-        return [k for k in self.__dict__ if k.startswith("user_")]
+        keys = []
+        for k in self.__dict__:
+            if k.startswith("user_"):
+                keys.append(k)
+        return keys
 
     @abstractmethod
     def run(self) -> bool: #pragma: no cover

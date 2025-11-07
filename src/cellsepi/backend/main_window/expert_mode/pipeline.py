@@ -73,16 +73,20 @@ class Pipeline:
         Removes a module from the pipeline.
         Raises:
             RuntimeError: If the module is still connected to other modules.
+            ValueError: If the module is not part of the pipeline.
         """
-        if not self.is_disconnected(module.module_id):
-            raise RuntimeError(f"Cannot remove module '{module.module_id}' from pipeline while connections to other modules still exists.")
         if module in self.modules:
+            if not self.is_disconnected(module.module_id):
+                raise RuntimeError(
+                    f"Cannot remove module '{module.module_id}' from pipeline while connections to other modules still exists.")
             self.modules.remove(module)
             del self.module_map[module.module_id]
             del self.pipes_in[module.module_id]
             del self.pipes_out[module.module_id]
             module.destroy()
             self.event_manager.notify(OnPipelineChangeEvent(f"Removed module {module.gui_config().name}"))
+        else:
+            raise ValueError(f"Module '{module.module_id}' does not exist in the pipeline.")
 
     def is_disconnected(self, module_name: str) -> bool:
         """
@@ -167,7 +171,10 @@ class Pipeline:
         """
         Returns a dictionary mapping module names to incoming degree (incoming degree is how many pipes are going into a module).
         """
-        return {module.module_id: len(self.pipes_in[module.module_id]) for module in self.modules}
+        result = {}
+        for module in self.modules:
+            result[module.module_id] = len(self.pipes_in[module.module_id])
+        return result
 
     def get_run_order(self) -> deque[str]:
         """

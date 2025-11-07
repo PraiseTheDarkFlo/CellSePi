@@ -6,7 +6,7 @@ from cellsepi.frontend.main_window.expert_mode.gui_pipeline import PipelineGUI
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
 from cellsepi.frontend.main_window.expert_mode.gui_pipeline_listener import PipelineChangeListener, ModuleExecutedListener, ModuleStartedListener, \
     ModuleProgressListener, ModuleErrorListener, DragAndDropListener, PipelinePauseListener, PipelineCancelListener, PipelineErrorListener
-from cellsepi.backend.main_window.expert_mode.pipeline_storage import PipelineStorage
+from cellsepi.frontend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
 class Builder:
     def __init__(self,gui):
@@ -187,7 +187,6 @@ class Builder:
             animate_opacity=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             animate=ft.Animation(duration=300, curve=ft.AnimationCurve.LINEAR_TO_EASE_OUT),
             )
-        self.work_area = None
         self.setup()
         self.page_forward = ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT_SHARP, on_click=lambda e: self.press_page_forward(),
                                           icon_color=MAIN_ACTIVE_COLOR,
@@ -627,14 +626,14 @@ class Builder:
         """
         Setup all the GUI elements.
         """
-        self.work_area = ft.Stack([self.help_text,ft.Container(
+        canvas = ft.Stack([self.help_text,ft.Container(
             content=self.pipeline_gui,
-            width=10000,
-            height=10000,
+            width=CANVAS_WIDTH,
+            height=CANVAS_HEIGHT,
             bgcolor=ft.Colors.TRANSPARENT,
         )])
 
-        self.interactive_view = FletExtendedInteractiveViewer(content=self.work_area, constrained=False,
+        self.interactive_view = FletExtendedInteractiveViewer(content=canvas, constrained=False,
                                                               height=self.page.window.height,
                                                               width=self.page.window.width, scale_enabled=False,)
 

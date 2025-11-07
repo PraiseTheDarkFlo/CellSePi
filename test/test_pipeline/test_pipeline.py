@@ -21,7 +21,7 @@ def two_module_pipeline():
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2, ["port1"])
     pipeline.add_connection(pipe)
-    assert pipeline.check_ports_occupied(mod1.module_id, ["port1"]) == False, "Something went wrong when adding the connection "
+    assert pipeline.check_ports_occupied(mod1.module_id, ["port1","port2"]) == False, "Something went wrong when adding the connection "
     assert pipeline.check_ports_occupied(mod2.module_id, ["port1"]) == True, "Something went wrong when adding the connection"
     assert str(mod1.outputs["port1"]) == "port_name: 'port1', port_data_type: 'int', opt: False, data: None"
     assert pipeline.modules == [mod1, mod2], "Something went wrong when adding the modules to the pipeline"
@@ -229,3 +229,35 @@ def test_files_directory():
     assert file_path.suffix == ["lif","test"], "Something went wrong initialising the file path"
     directory_path = DirectoryPath("test1")
     assert directory_path.path == "test1", "Something went wrong initialising the directory path"
+
+def test_remove_module_not_in_pipeline():
+    pipeline = Pipeline()
+    mod = DummyModule1(DummyModule1.gui_config().name)
+    with pytest.raises(ValueError):
+        pipeline.remove_module(mod)
+
+def test_ports_occupied():
+    pipeline = Pipeline()
+    mod1 = pipeline.add_module(DummyModule1)
+    mod2 = pipeline.add_module(DummyModule2)
+    mod3 = pipeline.add_module(DummyModule1)
+    pipe = Pipe(mod1, mod2, ["port1"])
+    pipe2 = Pipe(mod3, mod2, ["port5"])
+    pipeline.add_connection(pipe)
+    pipeline.add_connection(pipe2)
+    assert pipeline.check_ports_occupied(mod1.module_id, ["port1",
+                                                          "port2"]) == False, "Something went wrong when adding the connection "
+    assert pipeline.check_ports_occupied(mod2.module_id,
+                                         ["port1"]) == True, "Something went wrong when adding the connection"
+    assert pipeline.check_ports_occupied(mod2.module_id,
+                                         ["port3"]) == False, "Something went wrong when adding the connection"
+    assert str(mod1.outputs["port1"]) == "port_name: 'port1', port_data_type: 'int', opt: False, data: None"
+    assert pipeline.modules == [mod1, mod2, mod3], "Something went wrong when adding the modules to the pipeline"
+    assert pipeline.pipes_in == {"test10": [],
+                                 "test20": [pipe, pipe2],
+                                 "test11": [], }, "Something went wrong when adding the pipes to the pipeline"
+    assert pipeline.pipes_out == {"test10": [pipe],
+                                  "test20": [],
+                                  "test11": [pipe2]}, "Something went wrong when adding the pipes to the pipeline"
+    pipe3 = pipeline.get_pipe("test11","test20")
+    assert pipe3 == pipe2, "Something went wrong when getting the pipe"

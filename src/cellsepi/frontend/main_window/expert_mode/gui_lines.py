@@ -8,7 +8,6 @@ from typing import List, Dict
 from flet_core import canvas
 
 from cellsepi.frontend.main_window.expert_mode.expert_constants import MODULE_WIDTH, ARROW_PADDING, MODULE_HEIGHT, \
-    BUILDER_WIDTH, BUILDER_HEIGHT, \
     ARROW_COLOR, ARROW_LENGTH, ARROW_ANGLE, VALID_COLOR, THROTTLE_UPDATE_LINES
 from cellsepi.frontend.main_window.expert_mode.gui_module import ModuleGUI
 
@@ -83,8 +82,6 @@ class LinesGUI(canvas.Canvas):
         self.shapes = []
         self.connections: Dict[(str, str),Dict[str]] = {}
         self.pipeline_gui = pipeline_gui
-        self.width = BUILDER_WIDTH
-        self.height = BUILDER_HEIGHT
         self.expand = True
         self._lock = RLock()
         self._last_update_per_module = {}
