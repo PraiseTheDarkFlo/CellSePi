@@ -1,5 +1,9 @@
 import flet as ft
+from typing import Type
 import asyncio
+
+from cellsepi.backend.main_window.expert_mode.listener import EventListener, PipelineStateChangeEvent, Event, PipelineStates
+
 
 class ExpertEnvironment(ft.Container):
     def __init__(self, gui):
@@ -65,3 +69,16 @@ class ExpertEnvironment(ft.Container):
         self.gui.builder_environment.interactive_view.set_transformation_data(self.old_view[0], self.old_view[1],self.old_view[2],300)
         self.gui.builder_environment.interactive_view.update()
 
+class PipelineStateListener(EventListener):
+    def __init__(self,gui):
+        self.gui = gui
+        self.event_type = PipelineStateChangeEvent
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def _update(self,event: Event) -> None:
+        if event.pipeline_state == PipelineStates.IDLE:
+            self.gui.training_environment.enable_switch_environment()
+        elif event.pipeline_state == PipelineStates.RUNNING:
+            self.gui.training_environment.disable_switch_environment()

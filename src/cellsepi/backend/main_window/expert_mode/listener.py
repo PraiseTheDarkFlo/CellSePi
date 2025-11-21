@@ -37,6 +37,14 @@ class ErrorEvent(Event):
     def __str__(self):
         return f"Error_name: {self.error_name} Error_msg: {self.error_msg}"
 
+class PipelineStates(Enum):
+    IDLE = 0
+    RUNNING = 1
+
+class PipelineStateChangeEvent(Event):
+    def __init__(self,pipeline_state: PipelineStates):
+        self.pipeline_state = pipeline_state
+
 class DragAndDropEvent(Event):
     def __init__(self,drag:bool):
         self.drag = drag #False if it is no longer dragging or not valid dragging

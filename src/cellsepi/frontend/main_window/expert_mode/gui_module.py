@@ -535,8 +535,12 @@ class ModuleGUI(ft.GestureDetector):
             else:
                 self.pipeline_gui.pipeline.event_manager.notify(DragAndDropEvent(False))
 
-        self.top = max(0, self.top + e.delta_y)
-        self.left = max(0, self.left + e.delta_x)
+        if self.show_mode:
+            self.top = self.top + e.delta_y
+            self.left = self.left + e.delta_x
+        else:
+            self.top = min(max(0, self.top + e.delta_y), CANVAS_HEIGHT - MODULE_HEIGHT)
+            self.left = min(max(0, self.left + e.delta_x), CANVAS_WIDTH - MODULE_WIDTH)
         self.pipeline_gui.lines_gui.update_lines(self)
         self.update()
 
@@ -595,8 +599,8 @@ class ModuleGUI(ft.GestureDetector):
                 self.name_text.value = self.module_id
             self.pipeline_gui.refill_show_room(self,self.visible,index,show_room_id)
             self.pipeline_gui.page_stack.controls.remove(self)
-            self.left = check_left
-            self.top = check_top
+            self.left = min(max(0,check_left),CANVAS_WIDTH-MODULE_WIDTH)
+            self.top = min(max(0,check_top),CANVAS_HEIGHT-MODULE_HEIGHT)
             self.pipeline_gui.controls.append(self)
             self.click_container.disabled = True
             self.click_container.bgcolor = INVALID_COLOR

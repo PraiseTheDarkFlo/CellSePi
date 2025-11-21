@@ -6,7 +6,8 @@ from itertools import chain
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from cellsepi.backend.main_window.expert_mode.listener import ErrorEvent, OnPipelineChangeEvent, ModuleExecutedEvent, \
-    ModuleStartedEvent, PipelinePauseEvent, PipelineCancelEvent, PipelineErrorEvent
+    ModuleStartedEvent, PipelinePauseEvent, PipelineCancelEvent, PipelineErrorEvent, PipelineStateChangeEvent, \
+    PipelineStates
 from cellsepi.backend.main_window.expert_mode.module import Module,Port
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict, Type
@@ -247,6 +248,7 @@ class Pipeline:
             return
         while self.run_order:
             self.running = True
+            self.event_manager.notify(PipelineStateChangeEvent(PipelineStates.RUNNING))
             module_name = self.run_order.popleft()
             if ignore_modules is not None and module_name in ignore_modules:
                 continue
@@ -270,12 +272,14 @@ class Pipeline:
                     self.event_manager.notify(ModuleExecutedEvent(module_name))
                     if self._cancel_event.is_set():
                         self.running = False
+                        self.event_manager.notify(PipelineStateChangeEvent(PipelineStates.IDLE))
                         self.event_manager.notify(PipelineCancelEvent(self.executing))
                         self._cancel_event.clear()
                         return
 
                 except PipelineRunningException as e:
                     self.running = False
+                    self.event_manager.notify(PipelineStateChangeEvent(PipelineStates.IDLE))
                     self.event_manager.notify(ErrorEvent(e.error_type,e.description))
                     self.executing = ""
                     self._cancel_event.clear()
@@ -285,6 +289,7 @@ class Pipeline:
                 self.event_manager.notify(ModuleExecutedEvent(module_name))
                 continue
         self.running = False
+        self.event_manager.notify(PipelineStateChangeEvent(PipelineStates.IDLE))
 
     def resume(self):
         """

@@ -6,7 +6,7 @@ import flet as ft
 
 from cellsepi.backend.main_window.avg_diameter import AverageDiameter
 from cellsepi.frontend.main_window.expert_mode.gui_builder import Builder
-from cellsepi.frontend.main_window.expert_mode.gui_expert_environment import ExpertEnvironment
+from cellsepi.frontend.main_window.expert_mode.gui_expert_environment import ExpertEnvironment, PipelineStateListener
 from cellsepi.frontend.main_window.gui_page_overlay import PageOverlay
 from cellsepi.frontend.main_window.gui_segmentation import GUISegmentation
 from cellsepi.frontend.main_window.gui_options import Options
@@ -101,7 +101,9 @@ class GUI:
         self.training_environment=Training(self)
         self.ref_seg_environment = ft.Ref[ft.Column]()
         self.ref_training_environment = ft.Ref[ft.Column]()
-        self.builder_environment = Builder(self)
+        self.builder_environment = Builder(self.page)
+        pipeline_state_listener = PipelineStateListener(self)
+        self.builder_environment.pipeline_gui.pipeline.event_manager.subscribe(listener=pipeline_state_listener)
         self.ref_builder_environment = ft.Ref[ft.Column]()
         self.ref_gallery_environment = ft.Ref[ft.Column]()
         if self.csp.config.get_auto_button():

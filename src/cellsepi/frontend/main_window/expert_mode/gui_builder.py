@@ -8,10 +8,26 @@ from cellsepi.frontend.main_window.expert_mode.gui_pipeline_listener import Pipe
     ModuleProgressListener, ModuleErrorListener, DragAndDropListener, PipelinePauseListener, PipelineCancelListener, PipelineErrorListener
 from cellsepi.frontend.main_window.expert_mode.pipeline_storage import PipelineStorage
 
+
+def is_rendert(control):
+    """
+    Checks if a control is realy render by checking the parents of the control.
+    """
+    if not control.visible:
+        return False
+
+    #checks iterative the parents if they are visible, because they effect if the child is rendert
+    parent = control.parent
+    while parent is not None:
+        if not parent.visible:
+            return False
+        parent = parent.parent
+
+    return True
+
 class Builder:
-    def __init__(self,gui):
-        self.gui = gui
-        self.page = gui.page
+    def __init__(self,page: ft.Page):
+        self.page = page
         self.builder_page_stack = None
         self.pipeline_gui = PipelineGUI(self.page)
         self.pipeline_gui.interactive_view = None
@@ -286,9 +302,7 @@ class Builder:
             module.error_stack.visible = False
             module.error_stack.update()
             module.check_warning()
-        self.gui.training_environment.disable_switch_environment()
         self.update_modules_executed(reset=True)
-
         self.pipeline_gui.pipeline.run(show_room_module_ids)
         if len(self.pipeline_gui.pipeline.modules) - len(ModuleType) * 2 != self.pipeline_gui.module_count or self.pipeline_gui.module_count != self.pipeline_gui.pipeline.modules_executed:
             self.update_modules_executed(reset=True)
@@ -299,7 +313,6 @@ class Builder:
         self.load_button.disabled = False
         self.load_button.icon_color = MAIN_ACTIVE_COLOR
         self.load_button.update()
-        self.gui.training_environment.enable_switch_environment()
         if self.pipeline_running_event is not None:
             self.pipeline_running_event.set()
 
@@ -331,7 +344,7 @@ class Builder:
         All Keyboard shortcuts of the ExpertMode.
         Only working when ExpertMode visible
         """
-        if not self.gui.ref_builder_environment.current.visible:
+        if self.builder_page_stack is None or not is_rendert(self.builder_page_stack):
             return
         if e.shift and e.ctrl and e.key == "S" and not e.alt and not e.meta:
             if not self.save_as_button.disabled:

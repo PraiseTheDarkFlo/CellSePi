@@ -64,6 +64,17 @@ class DummyDragDropListener(EventListener):
     def _update(self,event: Event) -> None:
         self.last_event = event
 
+class DummyPipelineStateListener(EventListener):
+    def __init__(self):
+        self.last_event: PipelineStateChangeEvent | None = None
+        self.event_type = PipelineStateChangeEvent
+
+    def get_event_type(self) -> Type[Event]:
+        return self.event_type
+
+    def _update(self,event: Event) -> None:
+        self.last_event = event
+
 class DummyModuleListener(EventListener):
     def __init__(self):
         self.last_event: ModuleExecutedEvent | None = None
@@ -97,7 +108,7 @@ class DummyPauseListener(EventListener):
 
 
 
-def test_notify_listener():
+def test_notify_and_pipeline_state_listener():
     manager = EventManager()
     listener = DummyListener()
 
@@ -116,6 +127,7 @@ def test_notify_listener():
     listener.last_event = None
     manager.notify(event)
     assert listener.last_event is None, "Listener was notified after unsubscribe"
+
 
 def test_module_listener():
     manager = EventManager()
@@ -165,4 +177,15 @@ def test_drag_and_drop_event():
     manager.notify(DragAndDropEvent(True))
     assert drag_drop_listener.last_event.drag is True, "Something went wrong when notifying the drag and drop listener"
 
+def test_pipeline_states_event():
+    manager = EventManager()
+    pipeline_state_listener = DummyPipelineStateListener()
+    manager.subscribe(listener=pipeline_state_listener)
+
+    state_event = PipelineStateChangeEvent(PipelineStates.IDLE)
+    manager.notify(state_event)
+    assert pipeline_state_listener.last_event.pipeline_state is PipelineStates.IDLE, "Something went wrong when notifying the listener"
+    state_event = PipelineStateChangeEvent(PipelineStates.RUNNING)
+    manager.notify(state_event)
+    assert pipeline_state_listener.last_event.pipeline_state is PipelineStates.RUNNING, "Something went wrong when notifying the listener"
 
