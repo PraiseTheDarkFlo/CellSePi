@@ -574,6 +574,8 @@ class BatchImageReadout(Notifier):
             cell_ids = np.unique(mask)
             if len(cell_ids) == 1:
                 if event_manager is None:
+                    kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",
+                              "current_image": {"image_id": image_id}}
                     self._call_update_listeners(**kwargs)
                 else:
                     event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),
@@ -611,9 +613,10 @@ class BatchImageReadout(Notifier):
                     cur_row_entries[iX][f"background {channel_name}"] = background_val
             row_entries += cur_row_entries
 
-            kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",
-                      "current_image": {"image_id": image_id}}
+
             if event_manager is None:
+                kwargs = {"progress": str(int((iN + 1) / n_images * 100)) + "%",
+                          "current_image": {"image_id": image_id}}
                 self._call_update_listeners(**kwargs)
             else:
                 event_manager.notify(ProgressEvent(percent=int((iN + 1) / n_images * 100),process=f"Readout Images: {iN+1}/{n_images} (Latest Image: {image_id})"))
@@ -622,8 +625,8 @@ class BatchImageReadout(Notifier):
         readout_path = os.path.join(self.directory, "readout.xlsx")
         df = pd.DataFrame(row_entries)
         df.to_excel(readout_path, index=False)
-        kwargs = {}
         if event_manager is None:
+            kwargs = {}
             self._call_completion_listeners(readout=df, readout_path=readout_path, **kwargs)
         else:
             event_manager.notify(ProgressEvent(100,"Completed Readout"))
