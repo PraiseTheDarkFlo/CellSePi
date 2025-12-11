@@ -11,7 +11,7 @@ import tifffile
 
 from cellsepi.backend.main_window.expert_mode.event_manager import EventManager
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
-from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningException
+from cellsepi.backend.main_window.expert_mode.pipeline_manager import PipelineRunningException
 from cellsepi.frontend.main_window.gui_canvas import update_main_image
 from cellsepi.frontend.main_window.gui_fluorescence import fluorescence_button
 from cellsepi.backend.main_window.data_util import extract_from_lif_file, copy_files_between_directories, load_directory, transform_image_path, \

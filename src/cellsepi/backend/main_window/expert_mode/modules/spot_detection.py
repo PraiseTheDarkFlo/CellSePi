@@ -8,7 +8,7 @@ from scipy.ndimage import binary_dilation
 
 from cellsepi.backend.main_window.expert_mode.listener import ProgressEvent
 from cellsepi.backend.main_window.expert_mode.module import *
-from cellsepi.backend.main_window.expert_mode.pipeline import PipelineRunningException
+from cellsepi.backend.main_window.expert_mode.pipeline_manager import PipelineRunningException
 
 
 class SpotDetectionModule(Module, ABC):

@@ -1,7 +1,7 @@
 import flet as ft
 
 from cellsepi.backend.main_window.expert_mode.module import Module, Port, ModuleGuiConfig
-from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline, PipelineRunningException
+from cellsepi.backend.main_window.expert_mode.pipeline_manager import PipelineManager, PipelineRunningException
 from cellsepi.backend.main_window.expert_mode.event_manager import *
 from cellsepi.backend.main_window.expert_mode.listener import *
 import pytest
@@ -161,7 +161,7 @@ def test_pipe_error_listener():
     manager = EventManager()
     error_listener = DummyErrorListener()
     manager.subscribe(listener=error_listener)
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     pipeline.add_module(DummyErrorModule)
     pipeline.event_manager = manager
     pipeline.run()

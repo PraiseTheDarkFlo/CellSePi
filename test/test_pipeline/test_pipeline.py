@@ -2,7 +2,7 @@ import pytest
 
 from cellsepi.backend.main_window.expert_mode.module import IdNumberManager, FilePath, DirectoryPath
 from src.cellsepi.backend.main_window.expert_mode.pipe import Pipe
-from src.cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
+from src.cellsepi.backend.main_window.expert_mode.pipeline_manager import PipelineManager
 from test.test_pipeline.dummy_modules import *
 from test.test_pipeline.test_event_manager import DummyPipelineErrorListener, DummyPauseListener
 
@@ -16,7 +16,7 @@ def clean_up_fixture():
 
 @pytest.fixture
 def two_module_pipeline():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module(DummyModule1)
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2, ["port1"])
@@ -32,12 +32,12 @@ def two_module_pipeline():
     yield pipeline
 
 def test_add_module():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module(DummyModule1)
     assert pipeline.modules == [mod1], "Something went wrong when adding a module to the pipeline"
 
 def test_add_module_with_id():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module_with_id(DummyModule1,DummyModule1.gui_config().name + "1")
     assert pipeline.modules == [mod1], "Something went wrong with adding a module with a specific id"
     assert mod1.get_id_number() == 1, "Something went wrong with adding a module with a specific id"
@@ -54,14 +54,14 @@ def test_add_module_with_id():
     assert mod5.get_id_number() == 3, "Something went wrong with adding a module with a specific id"
 
 def test_add_module_with_wrong_id():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     with pytest.raises(ValueError):
         pipeline.add_module_with_id(DummyModule1,"lol")
     with pytest.raises(ValueError):
         pipeline.get_new_module_id("lol")
 
 def test_expand_connections():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module(DummyModule1)
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2, ["port1"])
@@ -69,13 +69,13 @@ def test_expand_connections():
     assert pipe.ports == ["port1", "port2"], "Something went wrong when expanding connections"
 
 def test_add_module_with_all_ready_occupied_id():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     pipeline.add_module(DummyModule1)
     with pytest.raises(ValueError):
         pipeline.add_module_with_id(DummyModule1,DummyModule1.gui_config().name + "0")
 
 def test_add_module_next_id_move():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module_with_id(DummyModule1, DummyModule1.gui_config().name + "0")
     assert pipeline.modules == [mod1], "Something went wrong with adding a module with a specific id"
     assert mod1.get_id_number() == 0, "Something went wrong with adding a module with a specific id"
@@ -83,7 +83,7 @@ def test_add_module_next_id_move():
     assert mod2.get_id_number() == 1, "Something went wrong with adding a module with a specific id"
 
 def test_add_connection_source_not_added():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = DummyModule1("")
     mod2 = pipeline.add_module(DummyModule2)
     pipe = Pipe(mod1, mod2,["port1"])
@@ -91,7 +91,7 @@ def test_add_connection_source_not_added():
         pipeline.add_connection(pipe)
 
 def test_add_connection_target_not_added():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod2 = DummyModule2("")
     mod1 = pipeline.add_module(DummyModule1)
     pipe = Pipe(mod1, mod2,["port1"])
@@ -212,7 +212,7 @@ def test_cycled_graph(two_module_pipeline):
     pipeline_error= DummyPipelineErrorListener()
     two_module_pipeline.event_manager.subscribe(pipeline_error)
     two_module_pipeline.run()
-    assert pipeline_error.last_event.error_name == "Cycle in Pipeline", "Something went wrong when detecting the cycle in the pipeline"
+    assert pipeline_error.last_event.error_name == "Cycle in pipeline", "Something went wrong when detecting the cycle in the pipeline"
     assert two_module_pipeline.modules_executed == 0, "Something went wrong went wrong when detecting the cycle in the pipeline"
 
 def test_free_number(two_module_pipeline):
@@ -231,13 +231,13 @@ def test_files_directory():
     assert directory_path.path == "test1", "Something went wrong initialising the directory path"
 
 def test_remove_module_not_in_pipeline():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod = DummyModule1(DummyModule1.gui_config().name)
     with pytest.raises(ValueError):
         pipeline.remove_module(mod)
 
 def test_ports_occupied():
-    pipeline = Pipeline()
+    pipeline = PipelineManager()
     mod1 = pipeline.add_module(DummyModule1)
     mod2 = pipeline.add_module(DummyModule2)
     mod3 = pipeline.add_module(DummyModule1)

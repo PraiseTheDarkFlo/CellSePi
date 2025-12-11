@@ -6,7 +6,7 @@ import flet as ft
 
 from cellsepi.backend.main_window.expert_mode.listener import OnPipelineChangeEvent
 from cellsepi.backend.main_window.expert_mode.pipe import Pipe
-from cellsepi.backend.main_window.expert_mode.pipeline import Pipeline
+from cellsepi.backend.main_window.expert_mode.pipeline_manager import PipelineManager
 from cellsepi.frontend.main_window.expert_mode.expert_constants import *
 from cellsepi.frontend.main_window.expert_mode.gui_lines import LinesGUI
 from cellsepi.frontend.main_window.expert_mode.gui_module import ModuleGUI
@@ -16,7 +16,7 @@ class PipelineGUI(ft.Stack):
     def __init__(self,page:ft.Page):
         super().__init__()
         self.controls = []
-        self.pipeline = Pipeline()
+        self.pipeline = PipelineManager()
         self.module_count = 0 #without show_room modules
         self.loading = False
         self.interactive_view = None

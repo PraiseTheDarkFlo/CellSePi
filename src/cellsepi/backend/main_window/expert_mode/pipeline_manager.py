@@ -13,7 +13,7 @@ from cellsepi.backend.main_window.expert_mode.pipe import Pipe
 from typing import List, Dict, Type
 
 
-class Pipeline:
+class PipelineManager:
     def __init__(self):
         self.modules: List[Module] = [] #running order
         self.module_map: Dict[str, Module] = {} #mapping for fast access to the modules
@@ -233,8 +233,8 @@ class Pipeline:
 
     def run(self,ignore_modules: List[str] = None) -> None:
         """
-        Executes the steps of the Pipeline.
-        Skips steps of the Pipeline if min. one of the mandatory inputs is None.
+        Executes the steps of the pipeline.
+        Skips steps of the pipeline if min. one of the mandatory inputs is None.
 
         Arguments:
             ignore_modules: List of modules to ignore.
@@ -244,7 +244,7 @@ class Pipeline:
         try:
             self.run_order = self.get_run_order()
         except RuntimeError as e:
-            self.event_manager.notify(PipelineErrorEvent("Cycle in Pipeline",e.args[0]))
+            self.event_manager.notify(PipelineErrorEvent("Cycle in pipeline",e.args[0]))
             return
         while self.run_order:
             self.running = True
